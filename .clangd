@@ -1,0 +1,19 @@
+CompileFlags:
+  Add:
+    - -Wall
+    - -Wextra
+    - -std=c++23
+  CompilationDatabase: ./build
+
+Diagnostics:
+  UnusedIncludes: Strict
+
+InlayHints:
+  Enabled: true
+  ParameterNames: true
+  DeducedTypes: true
+
+Hover:
+  ShowAKA: true
+
+# vim:ft=yaml
