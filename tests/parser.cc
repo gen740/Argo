@@ -38,6 +38,7 @@ TEST(ArgoTest, ExceptionThow) {
   auto parser = argo.addArg<int, Argo::arg("arg1")>()  //
                     .addArg<float, Argo::arg("arg2")>();
 
+  EXPECT_THROW(parser.getArg<Argo::arg("arg1")>(), Argo::ParseError);
   EXPECT_THROW(parser.parse(argc, argv), Argo::InvalidArgument);
 }
 
@@ -53,4 +54,25 @@ TEST(ArgoTest, EqualAssign) {
 
   EXPECT_EQ(parser.getArg<Argo::arg("arg1")>(), 42);
   EXPECT_EQ(parser.getArg<Argo::arg("arg2")>(), "Hello,World");
+}
+
+TEST(ArgoTest, FlagArgument) {
+  const int argc = 8;
+  char* argv[argc] = {"./main", "--arg1", "--arg2=true", "--arg3=1",
+                      "--arg4", "true",   "--arg5",      "1"};
+
+  auto argo = Argo::Parser();
+  auto parser = argo.addArg<bool, Argo::arg("arg1")>()
+                    .addArg<bool, Argo::arg("arg2")>()
+                    .addArg<bool, Argo::arg("arg3")>()
+                    .addArg<bool, Argo::arg("arg4")>()
+                    .addArg<bool, Argo::arg("arg5")>();
+
+  parser.parse(argc, argv);
+
+  EXPECT_EQ(parser.getArg<Argo::arg("arg1")>(), true);
+  EXPECT_EQ(parser.getArg<Argo::arg("arg2")>(), true);
+  EXPECT_EQ(parser.getArg<Argo::arg("arg3")>(), true);
+  EXPECT_EQ(parser.getArg<Argo::arg("arg4")>(), true);
+  EXPECT_EQ(parser.getArg<Argo::arg("arg5")>(), true);
 }

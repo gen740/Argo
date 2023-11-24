@@ -27,6 +27,7 @@ using ::std::string;
 
 // cstring
 using ::std::strlen;
+using ::std::strcmp;
 
 // print
 using ::std::format;
@@ -52,5 +53,6 @@ using ::std::is_floating_point_v;
 // exception/stdexcept
 using ::std::exception;
 using ::std::invalid_argument;
+using ::std::runtime_error;
 
 }  // namespace std

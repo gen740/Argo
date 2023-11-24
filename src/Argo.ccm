@@ -3,23 +3,27 @@ module;
 export module Argo;
 import std_module;
 
-// template <std::string arg, class T>
-// class Tag {
-//
-// };
-
-export namespace Argo {
+namespace Argo {
 
 /*!
  * InvalidArgument exception class
  */
-class InvalidArgument : public std::invalid_argument {
+export class InvalidArgument : public std::invalid_argument {
  public:
   explicit InvalidArgument(const std::string& msg)
       : std::invalid_argument(msg) {}
 
   [[nodiscard]] const char* what() const noexcept override {
     return std::invalid_argument::what();
+  }
+};
+
+export class ParseError : public std::runtime_error {
+ public:
+  explicit ParseError(const std::string& msg) : std::runtime_error(msg) {}
+
+  [[nodiscard]] const char* what() const noexcept override {
+    return std::runtime_error::what();
   }
 };
 
@@ -83,7 +87,7 @@ struct SearchIndex<std::tuple<Head, Tails...>, T, Index> {
 /*!
  * convert const char[] to std::array<char, N>
  */
-template <std::size_t N>
+export template <std::size_t N>
 consteval auto arg(const char (&a)[N]) {
   std::array<char, N> arr{};
   for (std::size_t i = 0; i < N; ++i) {
@@ -92,8 +96,92 @@ consteval auto arg(const char (&a)[N]) {
   return arr;
 }
 
-template <class Args = std::tuple<>>
+/*!
+ * Helper class of assigning value
+ */
+struct Assigner {
+  template <int Index, typename Head, typename... Tails>
+  struct AssignImpl {};
+
+  template <int Index>
+  struct AssignImpl<Index, std::tuple<>> {
+    template <typename Lhs>
+    static auto eval([[maybe_unused]] const char* key,
+                     [[maybe_unused]] const char* val) {
+      throw Argo::InvalidArgument(std::format("Invalid argument {}", key));
+    }
+  };
+
+  template <int Index, typename Head, typename... Tails>
+  struct AssignImpl<Index, std::tuple<Head, Tails...>> {
+    template <typename Lhs>
+    static auto eval(const char* key, const char* value) {
+      using current =
+          std::remove_cvref_t<decltype(std::get<Index>(std::declval<Lhs>()))>;
+      if (cmpCharArr(current::name, key)) {
+        if constexpr (std::is_same_v<typename current::type, bool>) {
+          if (std::strcmp("true", value) == 0 || std::strcmp("1", value) == 0) {
+            current::value = true;
+          } else {
+            current::value = false;
+          }
+        } else if constexpr (std::is_integral_v<typename current::type>) {
+          current::value = std::stoi(value);
+        } else if constexpr (std::is_floating_point_v<typename current::type>) {
+          current::value = std::stof(value);
+        } else {
+          current::value = static_cast<current::type>(value);
+        }
+        return;
+      }
+      AssignImpl<1 + Index, std::tuple<Tails...>>::template eval<Lhs>(key,
+                                                                      value);
+    }
+  };
+
+  template <typename Lhs>
+  static auto assign(const char* key, const char* val) {
+    AssignImpl<0, Lhs>::template eval<Lhs>(key, val);
+  };
+};
+
+struct IsBool {
+  template <int Index, typename Head, typename... Tails>
+  struct AssignImpl {};
+
+  template <int Index>
+  struct AssignImpl<Index, std::tuple<>> {
+    template <typename Lhs>
+    [[noreturn]] static auto eval([[maybe_unused]] const char* key) -> bool {
+      throw Argo::InvalidArgument(std::format("Invalid argument {}", key));
+    }
+  };
+
+  template <int Index, typename Head, typename... Tails>
+  struct AssignImpl<Index, std::tuple<Head, Tails...>> {
+    template <typename Lhs>
+    static auto eval(const char* key) -> bool {
+      using current =
+          std::remove_cvref_t<decltype(std::get<Index>(std::declval<Lhs>()))>;
+      if (cmpCharArr(current::name, key)) {
+        return static_cast<bool>(std::is_same_v<typename current::type, bool>);
+      }
+      return AssignImpl<1 + Index, std::tuple<Tails...>>::template eval<Lhs>(
+          key);
+    }
+  };
+
+  template <typename Lhs>
+  static auto isBool(const char* key) -> bool {
+    return AssignImpl<0, Lhs>::template eval<Lhs>(key);
+  };
+};
+
+export template <class Args = std::tuple<>>
 class Parser {
+ private:
+  bool parsed_ = false;
+
  public:
   using Arguments = Args;
   Args value;
@@ -109,73 +197,61 @@ class Parser {
 
   template <auto Name>
   auto getArg() {
+    if (!this->parsed_) {
+      throw ParseError("Parser did not parse argument, call parse first");
+    }
     using P = std::remove_cvref_t<
         decltype(std::get<SearchIndex<Arguments, Name>::value>(this->value))>;
     return P::value;
   }
 
-  struct Assigner {
-    template <int Index, typename Head, typename... Tails>
-    struct AssignImpl {};
-
-    template <int Index>
-    struct AssignImpl<Index, std::tuple<>> {
-      template <typename Lhs>
-      static constexpr auto eval([[maybe_unused]] const char* key,
-                                 [[maybe_unused]] const char* val) {
-        throw Argo::InvalidArgument(std::format("Invalid argument {}", key));
-      }
-    };
-
-    template <int Index, typename Head, typename... Tails>
-    struct AssignImpl<Index, std::tuple<Head, Tails...>> {
-      template <typename Lhs>
-      static constexpr auto eval(const char* key, const char* value) {
-        using current =
-            std::remove_cvref_t<decltype(std::get<Index>(std::declval<Lhs>()))>;
-        if (cmpCharArr(current::name, key)) {
-          if constexpr (std::is_integral_v<typename current::type>) {
-            current::value = std::stoi(value);
-          } else if constexpr (std::is_floating_point_v<
-                                   typename current::type>) {
-            current::value = std::stof(value);
-          } else {
-            current::value = static_cast<current::type>(value);
-          }
-          return;
-        }
-        AssignImpl<1 + Index, std::tuple<Tails...>>::template eval<Lhs>(key,
-                                                                        value);
-      }
-    };
-
-    template <typename Lhs>
-    static auto assign(const char* key, const char* val) {
-      AssignImpl<0, Lhs>::template eval<Lhs>(key, val);
-    };
-  };
-
+ private:
   auto setArg(const char* key, const char* val) {
-    Assigner::template assign<Arguments>(key, val);
+    Assigner::assign<Arguments>(key, val);
   }
 
+  auto isBool(const char* key) {
+    return IsBool::isBool<Arguments>(key);
+  }
+
+ public:
+  /*!
+   * Parse State
+   */
   enum class ArgumentParseState { ExpectValue, ExpectArg };
 
+  /*!
+   * Parse function
+   */
   auto parse([[maybe_unused]] int argc, [[maybe_unused]] char* argv[]) -> void {
     auto parseState = ArgumentParseState::ExpectArg;
-    const char* argBuffer;
+    std::string argBuffer;
     for (int i = 1; i < argc; i++) {
       switch (parseState) {
         case ArgumentParseState::ExpectArg: {
           auto argValue = std::string(argv[i]);
-          if (argValue.find("--") == 0) {
+          if (argValue.contains("--") && argValue.find("--") == 0) {
             if (argValue.contains("=")) {
               auto find_pos = argValue.find('=');
               this->setArg(argValue.substr(2, find_pos - 2).c_str(),
                            argValue.substr(find_pos + 1).c_str());
               continue;
             }
-            argBuffer = argValue.substr(2).c_str();
+            argBuffer = argValue.substr(2);
+
+            if (this->isBool(argBuffer.c_str())) {
+              if (i + 1 < argc) {
+                auto nextArg = std::string(argv[i + 1]);
+                if (nextArg.contains("--")) {
+                  this->setArg(argBuffer.c_str(), "true");
+                  argBuffer = "";
+                  continue;
+                }
+              } else {
+                this->setArg(argBuffer.c_str(), "true");
+              }
+            }
+
           } else {
             throw Argo::InvalidArgument("Expect flag");
           }
@@ -183,11 +259,12 @@ class Parser {
           parseState = ArgumentParseState::ExpectValue;
         } break;
         case ArgumentParseState::ExpectValue:
-          this->setArg(argBuffer, argv[i]);
+          this->setArg(argBuffer.c_str(), argv[i]);
           parseState = ArgumentParseState::ExpectArg;
           break;
       }
     }
+    this->parsed_ = true;
   }
 };
 
