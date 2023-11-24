@@ -10,6 +10,9 @@ auto main(int argc, char* argv[]) -> int {
 
   parser.parse(argc, argv);
 
+  std::println("{}", parser.getArg<Argo::arg("foo")>());
+  std::println("{}", parser.getArg<Argo::arg("bar")>());
+
   static_assert(
       std::is_same_v<decltype(parser.getArg<Argo::arg("foo")>()), int>);
   static_assert(

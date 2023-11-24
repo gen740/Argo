@@ -2,8 +2,11 @@ module;
 
 // Declare all stds in this file
 #include <array>
+#include <cstring>
+#include <exception>
 #include <format>
 #include <print>
+#include <stdexcept>
 #include <string>
 #include <tuple>
 #include <utility>
@@ -18,7 +21,11 @@ using ::std::get;
 using ::std::size_t;
 
 // string
+using ::std::stoi;
 using ::std::string;
+
+// cstring
+using ::std::strlen;
 
 // print
 using ::std::format;
@@ -35,8 +42,12 @@ using ::std::tuple_cat;
 
 // type_traits
 using ::std::declval;
+using ::std::is_same_v;
 using ::std::remove_cvref;
 using ::std::remove_cvref_t;
-using ::std::is_same_v;
+
+// exception/stdexcept
+using ::std::exception;
+using ::std::invalid_argument;
 
 }  // namespace std

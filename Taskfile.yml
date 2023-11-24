@@ -17,5 +17,5 @@ tasks:
       - cmake --build build
   execute:
     cmds:
-      - ./build/main
+      - ./build/main --foo 42 --bar "Hello,World"
     silent: true
