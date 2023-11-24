@@ -22,6 +22,7 @@ using ::std::size_t;
 
 // string
 using ::std::stoi;
+using ::std::stof;
 using ::std::string;
 
 // cstring
@@ -45,6 +46,8 @@ using ::std::declval;
 using ::std::is_same_v;
 using ::std::remove_cvref;
 using ::std::remove_cvref_t;
+using ::std::is_integral_v;
+using ::std::is_floating_point_v;
 
 // exception/stdexcept
 using ::std::exception;

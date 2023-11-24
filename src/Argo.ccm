@@ -92,14 +92,15 @@ consteval auto arg(const char (&a)[N]) {
   return arr;
 }
 
-template <class Args>
+template <class Args = std::tuple<>>
 class Parser {
  public:
   using Arguments = Args;
   Args value;
 
   template <class Type, auto Name>
-  consteval auto addArg() {
+  auto addArg(Type default_value = {}) {
+    Arg<Name, Type>::value = default_value;
     return Parser<decltype(std::tuple_cat(           //
         std::declval<Arguments>(),                   //
         std::declval<std::tuple<Arg<Name, Type>>>()  //
@@ -133,8 +134,11 @@ class Parser {
         using current =
             std::remove_cvref_t<decltype(std::get<Index>(std::declval<Lhs>()))>;
         if (cmpCharArr(current::name, key)) {
-          if constexpr (std::is_same_v<typename current::type, int>) {
+          if constexpr (std::is_integral_v<typename current::type>) {
             current::value = std::stoi(value);
+          } else if constexpr (std::is_floating_point_v<
+                                   typename current::type>) {
+            current::value = std::stof(value);
           } else {
             current::value = static_cast<current::type>(value);
           }
@@ -175,14 +179,6 @@ class Parser {
           break;
       }
     }
-  }
-};
-
-class Argo {
- public:
-  template <class Type, auto Name>
-  consteval auto addArg() {
-    return Parser<std::tuple<Arg<Name, Type>>>();
   }
 };
 
