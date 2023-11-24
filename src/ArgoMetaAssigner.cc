@@ -38,7 +38,9 @@ struct Assigner {
             throw ParserInternalError("Invalid Argument expect bool");
           }
         } else if constexpr (std::is_integral_v<typename current::type>) {
-          std::from_chars(std::begin(value), std::end(value), current::value);
+          typename current::type tmpValue;
+          std::from_chars(std::begin(value), std::end(value), tmpValue);
+          current::value = tmpValue;
         } else if constexpr (std::is_floating_point_v<typename current::type>) {
           current::value = static_cast<current::type>(std::stod(std::string(value)));
         } else if constexpr (std::is_same_v<typename current::type, const char*>) {
@@ -47,8 +49,11 @@ struct Assigner {
           current::value = static_cast<current::type>(value);
         }
         if (current::validator) {
-          (*current::validator)(
-              std::string_view(std::begin(current::name), std::end(current::name)), current::value);
+          if constexpr (!std::is_same_v<decltype(current::value), bool>) {
+            (*current::validator)(
+                std::string_view(std::begin(current::name), std::end(current::name)),
+                current::value.value());
+          }
         }
         return;
       }

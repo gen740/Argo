@@ -5,7 +5,9 @@ module;
 #include <charconv>
 #include <cstring>
 #include <exception>
+#include <optional>
 #include <format>
+#include <functional>
 #include <memory>
 #include <print>
 #include <stdexcept>
@@ -86,5 +88,13 @@ using ::std::runtime_error;
 
 // memory
 using ::std::unique_ptr;
+
+// functional
+using ::std::function;
+
+// optional
+using ::std::optional;
+using ::std::nullopt;
+using ::std::nullopt_t;
 
 }  // namespace std

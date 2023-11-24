@@ -81,10 +81,11 @@ target_link_libraries(YOUR_TARGET PRIVATE Argo)
 - [x] Support for short option
 - [x] Combining Boolean Flag
 - [x] Validation
-- [ ] Support for multiple parser
+- [x] Support for multiple parser
+- [ ] Optional argument
+- [ ] "narg" argument
 - [ ] Custom class casting
 - [ ] Argument duplication validation
-- [ ] Optional argument
 - [ ] Description and help auto generation
-- [ ] "narg" argument
+- [ ] Standard validations
 - [ ] Positional argument

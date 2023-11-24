@@ -33,7 +33,7 @@ struct TypeChecker {
       if (std::string_view(std::begin(current::name), std::end(current::name)) == key) {
         auto ret = CheckOptions();
         ret.isBool = std::is_same_v<typename current::type, CheckType>;
-        ret.isFlag = current::flagArg;
+        ret.isFlag = std::is_same_v<decltype(current::value), bool>;
         return ret;
       }
       return TypeCheckerImpl<1 + Index, std::tuple<Tails...>>::template eval<Lhs>(key);

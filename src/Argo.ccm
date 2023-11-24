@@ -49,9 +49,9 @@ class Parser {
     Arg<bool, Name, ShortName, ID>::value = false;
     Arg<bool, Name, ShortName, ID>::flagArg = true;
     Initializer<bool, Name, ShortName, ID>::init(std::forward<T>(args)...);
-    return Parser<ID, decltype(std::tuple_cat(                                        //
-                          std::declval<Arguments>(),                                  //
-                          std::declval<std::tuple<Arg<bool, Name, ShortName, ID>>>()  //
+    return Parser<ID, decltype(std::tuple_cat(                                      //
+                          std::declval<Arguments>(),                                //
+                          std::declval<std::tuple<FlagArg<Name, ShortName, ID>>>()  //
                           ))>();
   }
 
@@ -63,6 +63,12 @@ class Parser {
     using P =
         std::remove_cvref_t<decltype(std::get<SearchIndex<Arguments, Name>::value>(this->value))>;
     return P::value;
+  }
+
+  template <auto Name>
+  auto getArgOr(std::remove_cvref_t<decltype(std::get<SearchIndex<Arguments, Name>::value>(
+                    std::declval<Arguments>))>::type val) {
+    return this->getArg<Name>.value_or(val);
   }
 
  private:
