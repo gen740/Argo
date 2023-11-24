@@ -25,6 +25,7 @@ struct Arg {
   inline static type value = {};
   inline static std::string_view description;
   inline static bool flagArg = {};
+
 };
 
 /*!
@@ -119,10 +120,31 @@ class Parser {
             }
           } else if (argValue.contains('-') && argValue.find('-') == 0) {
             auto shortArg = argValue.substr(1);
-            if (shortArg.size() != 1) {
-              throw Argo::InvalidArgument("Short arg must be one letter");
+            if (shortArg.size() == 1) {
+              argBuffer = GetNameFromShortName<Arguments>::eval(shortArg.at(0));
+              auto check = TypeChecker<bool>::check<Arguments>(argBuffer);
+              if (check.isBool && check.isFlag) {
+                this->setArg(argBuffer, "true");
+                break;
+              }
+            } else {
+              argBuffer = "";
+              for (char i : shortArg) {
+                auto optionName = GetNameFromShortName<Arguments>::eval(i);
+                auto check = TypeChecker<bool>::check<Arguments>(optionName);
+                if (check.isBool && check.isFlag) {
+                  this->setArg(optionName, "true");
+                } else {
+                  if (!argBuffer.empty()) {
+                    throw Argo::InvalidArgument("Combining two more optional argument");
+                  }
+                  argBuffer = std::string(optionName);  // copy
+                }
+              }
+              if (argBuffer.empty()) {
+                break;
+              }
             }
-            argBuffer = GetNameFromShortName<Arguments>::eval(shortArg.at(0));
           } else {
             throw Argo::InvalidArgument("Expect flag");
           }
@@ -130,6 +152,7 @@ class Parser {
           break;
         case ArgumentParseState::ExpectValue:
           this->setArg(argBuffer, argValue);
+          argBuffer = "";
           parseState = ArgumentParseState::ExpectArg;
           break;
       }

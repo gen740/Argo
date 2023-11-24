@@ -131,3 +131,45 @@ TEST(ArgoTest, ShortArgument) {
   EXPECT_EQ(parser.getArg<Argo::arg("arg2")>(), 42);
   EXPECT_FLOAT_EQ(parser.getArg<Argo::arg("arg3")>(), 3.1415);
 }
+
+TEST(ArgoTest, CombiningFlags) {
+  const int argc = 3;
+  char* argv[argc] = {
+      "./main", "-abd", "-e"  //
+  };
+
+  auto argo = Argo::Parser();
+  auto parser = argo.addFlag<Argo::arg("arg1"), 'a'>()
+                    .addFlag<Argo::arg("arg2"), 'b'>()
+                    .addFlag<Argo::arg("arg3"), 'c'>()
+                    .addFlag<Argo::arg("arg4"), 'd'>()
+                    .addFlag<Argo::arg("arg5"), 'e'>();
+
+  parser.parse(argc, argv);
+
+  EXPECT_TRUE(parser.getArg<Argo::arg("arg1")>());
+  EXPECT_TRUE(parser.getArg<Argo::arg("arg2")>());
+  EXPECT_FALSE(parser.getArg<Argo::arg("arg3")>());
+  EXPECT_TRUE(parser.getArg<Argo::arg("arg4")>());
+  EXPECT_TRUE(parser.getArg<Argo::arg("arg5")>());
+}
+
+TEST(ArgoTest, CombiningFlagsWithOptionalArg) {
+  const int argc = 3;
+  char* argv[argc] = {
+      "./main", "-abcd", "Hello,World"  //
+  };
+
+  auto argo = Argo::Parser();
+  auto parser = argo.addFlag<Argo::arg("arg1"), 'a'>()
+                    .addFlag<Argo::arg("arg2"), 'b'>()
+                    .addArg<std::string, Argo::arg("arg3"), 'c'>()
+                    .addFlag<Argo::arg("arg4"), 'd'>();
+
+  parser.parse(argc, argv);
+
+  EXPECT_TRUE(parser.getArg<Argo::arg("arg1")>());
+  EXPECT_TRUE(parser.getArg<Argo::arg("arg2")>());
+  EXPECT_EQ(parser.getArg<Argo::arg("arg3")>(), "Hello,World");
+  EXPECT_TRUE(parser.getArg<Argo::arg("arg4")>());
+}

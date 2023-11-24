@@ -35,4 +35,13 @@ class ParserInternalError : public std::runtime_error {
   }
 };
 
+class ValidationError : public std::runtime_error {
+ public:
+  explicit ValidationError(const std::string& msg) : std::runtime_error(msg) {}
+
+  [[nodiscard]] const char* what() const noexcept override {
+    return std::runtime_error::what();
+  }
+};
+
 }  // namespace Argo
