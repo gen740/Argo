@@ -1,6 +1,9 @@
 # Argo
 C++ mordern argument parser, using C++ module and metaprogramming.
 
+## Requirement
+- **C++23 compiler** clang >= 17
+- **C++ Modles supported CMake** cmake >= 3.28
 
 ## Example
 ```cpp
@@ -35,4 +38,30 @@ auto main(int argc, char* argv[]) -> int {
 }
 ```
 
+## Usage(CMake)
 
+### Using submodule
+1. clone this repository into you project
+```
+git clone https://github.com/gen740/Argo.git
+```
+2. Add subdirectory
+```camke
+add_subdirectory("path/to/Argo")
+target_link_libraries(YOUR_TARGET Argo)
+```
+
+### Using FetchContent
+```cmake
+include(FetchContent)
+
+FetchContent_Declare(
+  Argo
+  GIT_REPOSITORY https://github.com/gen740/Argo.git
+  GIT_TAG        master  # or use a specific commit/tag
+)
+
+FetchContent_MakeAvailable(Argo)
+
+target_link_libraries(YOUR_TARGET PRIVATE Argo)
+```
