@@ -66,7 +66,7 @@ TEST(ArgoTest, AllTypes) {
 }
 
 TEST(ArgoTest, ExceptionThow) {
-  const int argc = 5;
+  const int argc = 3;
   char* argv[argc] = {"./main", "arg1=42", "--arg2=23.4"};
 
   auto argo = Argo::Parser();

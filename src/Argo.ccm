@@ -26,14 +26,33 @@ export class ParseError : public std::runtime_error {
   }
 };
 
+class ParserInternalError : public std::runtime_error {
+ public:
+  explicit ParserInternalError(const std::string& msg) : std::runtime_error(msg) {}
+
+  [[nodiscard]] const char* what() const noexcept override {
+    return std::runtime_error::what();
+  }
+};
+
 /*!
  * Arg type this holds argument value
  */
-template <auto Name, class Type>
+template <auto Name, class Type, auto ShortName = std::array<char, 0>()>
 struct Arg {
   static constexpr auto name = Name;
   using type = Type;
   inline static type value = {};
+  inline static std::string_view description;
+};
+
+template <auto Name, auto ShortName>
+struct Arg<Name, bool, ShortName> {
+  static constexpr auto name = Name;
+  using type = bool;
+  inline static bool value = {};
+  inline static std::string_view description;
+  inline static bool flagArg{};
 };
 
 template <auto T, auto U>
@@ -103,10 +122,13 @@ struct Assigner {
       using current = std::remove_cvref_t<decltype(std::get<Index>(std::declval<Lhs>()))>;
       if (std::string_view(std::begin(current::name), std::end(current::name)) == key) {
         if constexpr (std::is_same_v<typename current::type, bool>) {
-          if ((value == "true") || (value == "1")) {
+          if ((value == "true") || (value == "True") || (value == "TRUE") || (value == "1")) {
             current::value = true;
-          } else {
+          } else if ((value == "false") || (value == "False") || (value == "FALSE") ||
+                     (value == "0")) {
             current::value = false;
+          } else {
+            throw ParserInternalError("Invalid Argument expect bool");
           }
         } else if constexpr (std::is_integral_v<typename current::type>) {
           std::from_chars(std::begin(value), std::end(value), current::value);
