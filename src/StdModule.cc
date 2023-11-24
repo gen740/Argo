@@ -2,18 +2,22 @@ module;
 
 // Declare all stds in this file
 #include <array>
+#include <charconv>
 #include <cstring>
 #include <exception>
 #include <format>
 #include <print>
 #include <stdexcept>
 #include <string>
-#include <charconv>
 #include <string_view>
 #include <tuple>
 #include <utility>
 
 export module std_module;
+
+export {
+  using ::__stderrp;
+}
 
 export namespace std {
 // utility
@@ -26,9 +30,9 @@ using ::std::end;
 using ::std::size_t;
 
 // string
-using ::std::stoi;
-using ::std::stof;
 using ::std::stod;
+using ::std::stof;
+using ::std::stoi;
 using ::std::string;
 using ::std::string_literals::operator""s;
 
@@ -37,12 +41,12 @@ using ::std::string_view;
 using ::std::string_view_literals::operator""sv;
 
 // charconv
-using ::std::from_chars;
 using ::std::chars_format;
+using ::std::from_chars;
 
 // cstring
-using ::std::strlen;
 using ::std::strcmp;
+using ::std::strlen;
 
 // print
 using ::std::format;
@@ -59,11 +63,11 @@ using ::std::tuple_cat;
 
 // type_traits
 using ::std::declval;
+using ::std::is_floating_point_v;
+using ::std::is_integral_v;
 using ::std::is_same_v;
 using ::std::remove_cvref;
 using ::std::remove_cvref_t;
-using ::std::is_integral_v;
-using ::std::is_floating_point_v;
 using ::std::void_t;
 
 // exception/stdexcept

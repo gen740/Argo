@@ -2,7 +2,7 @@ module;
 
 import std_module;
 export module Argo:MetaAssigner;
-import :Exception;
+import :Exceptions;
 
 export namespace Argo {
 

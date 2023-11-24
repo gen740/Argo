@@ -3,11 +3,12 @@ module;
 export module Argo;
 import std_module;
 
-export import :Exception;
+export import :Exceptions;
 
 import :TypeTraits;
 import :MetaAssigner;
 import :MetaChecker;
+import :MetaLookup;
 
 namespace Argo {
 
@@ -19,6 +20,7 @@ constexpr char NULLCHAR = '\0';
 template <class Type, auto Name, char ShortName = NULLCHAR>
 struct Arg {
   static constexpr auto name = Name;
+  static constexpr char shortName = ShortName;
   using type = Type;
   inline static type value = {};
   inline static std::string_view description;
@@ -115,6 +117,12 @@ class Parser {
               this->setArg(argBuffer, "true");
               break;
             }
+          } else if (argValue.contains('-') && argValue.find('-') == 0) {
+            auto shortArg = argValue.substr(1);
+            if (shortArg.size() != 1) {
+              throw Argo::InvalidArgument("Short arg must be one letter");
+            }
+            argBuffer = GetNameFromShortName<Arguments>::eval(shortArg.at(0));
           } else {
             throw Argo::InvalidArgument("Expect flag");
           }

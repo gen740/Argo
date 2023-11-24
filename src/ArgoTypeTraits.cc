@@ -2,10 +2,9 @@ module;
 
 import std_module;
 export module Argo:TypeTraits;
-import :Exception;
+import :Exceptions;
 
 export namespace Argo {
-
 
 template <auto T, auto U>
 struct ConstexprStringCmp {

@@ -110,3 +110,24 @@ TEST(ArgoTest, FlagArgument) {
   EXPECT_EQ(parser.getArg<Argo::arg("arg4")>(), true);
   EXPECT_EQ(parser.getArg<Argo::arg("arg5")>(), true);
 }
+
+TEST(ArgoTest, ShortArgument) {
+  const int argc = 7;
+  char* argv[argc] = {
+      "./main",                 //
+      "-a",     "Hello,World",  //
+      "-b",     "42",           //
+      "-c",     "3.1415"        //
+  };
+
+  auto argo = Argo::Parser();
+  auto parser = argo.addArg<std::string, Argo::arg("arg1"), 'a'>()
+                    .addArg<int, Argo::arg("arg2"), 'b'>()
+                    .addArg<float, Argo::arg("arg3"), 'c'>();
+
+  parser.parse(argc, argv);
+
+  EXPECT_EQ(parser.getArg<Argo::arg("arg1")>(), "Hello,World");
+  EXPECT_EQ(parser.getArg<Argo::arg("arg2")>(), 42);
+  EXPECT_FLOAT_EQ(parser.getArg<Argo::arg("arg3")>(), 3.1415);
+}
