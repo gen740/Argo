@@ -1,3 +1,93 @@
 module;
 
 export module Argo;
+import std_module;
+
+// template <std::string arg, class T>
+// class Tag {
+//
+// };
+
+export namespace Argo {
+
+template <auto Name, class Type>
+struct Arg {
+  static constexpr auto name = Name;
+  using type = Type;
+  inline static type value = {};
+};
+
+template <auto T, auto U>
+struct StringCmp {
+  static consteval auto eval() {
+    if (T.size() != U.size()) {
+      return false;
+    }
+    for (int i = 0; i < T.size(); i++) {
+      if (T[i] != U[i]) {
+        return false;
+      }
+    }
+    return true;
+  }
+};
+
+template <typename Tuple, auto T, int Index = 0>
+struct SearchIndex;
+
+template <auto T, std::size_t Index>
+struct SearchIndex<std::tuple<>, T, Index> {
+  static constexpr int value = -1;
+};
+
+template <auto T, std::size_t Index, typename Head, typename... Tails>
+struct SearchIndex<std::tuple<Head, Tails...>, T, Index> {
+  static constexpr bool matched = StringCmp<Head::name, T>::eval();
+  static constexpr int value =
+      matched ? Index : SearchIndex<std::tuple<Tails...>, T, Index + 1>::value;
+};
+
+template <std::size_t N>
+consteval auto arg(const char (&a)[N]) {
+  std::array<char, N> arr{};
+  for (std::size_t i = 0; i < N; ++i) {
+    arr[i] = a[i];
+  }
+  return arr;
+}
+
+template <class Args>
+class Parser {
+ public:
+  using arguments = Args;
+  Args value;
+
+  template <class Type, auto Name>
+  consteval auto addArg() {
+    return Parser<decltype(std::tuple_cat(           //
+        std::declval<arguments>(),                   //
+        std::declval<std::tuple<Arg<Name, Type>>>()  //
+        ))>();
+  }
+
+  template <auto Name>
+  auto getArg() {
+    using P = std::remove_cvref_t<
+        decltype(std::get<SearchIndex<arguments, Name>::value>(this->value))>;
+    return P::value;
+  }
+
+  auto parse([[maybe_unused]] int argc, [[maybe_unused]] char* argv[]) -> void {
+
+  }
+};
+
+class Argo {
+ public:
+  template <class Type, auto Name>
+  consteval auto addArg() {
+    return Parser<std::tuple<Arg<Name, Type>>>();
+  }
+};
+
+}  // namespace Argo

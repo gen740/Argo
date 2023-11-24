@@ -1,0 +1,5 @@
+BasedOnStyle: Google
+MaxEmptyLinesToKeep: 1
+AllowShortBlocksOnASingleLine: Empty
+AllowShortFunctionsOnASingleLine: Empty
+SeparateDefinitionBlocks: Always

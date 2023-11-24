@@ -12,7 +12,10 @@ tasks:
     env:
       CC: /usr/local/opt/llvm/bin/clang
       CXX: /usr/local/opt/llvm/bin/clang++
-  default:
+  compile:
     cmds:
-      - echo "{{.GREETING}}"
+      - cmake --build build
+  execute:
+    cmds:
+      - ./build/main
     silent: true
