@@ -3,7 +3,7 @@ C++ mordern argument parser, using C++ module and metaprogramming.
 
 ## Requirement
 - **C++23 compiler** clang >= 17
-- **C++ Modles supported CMake** cmake >= 3.28
+- **C++ Modules supported CMake** cmake >= 3.28
 
 ## Example
 ```cpp
