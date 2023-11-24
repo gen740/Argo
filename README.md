@@ -67,8 +67,12 @@ target_link_libraries(YOUR_TARGET PRIVATE Argo)
 ```
 
 ## Roadmap
-- [ ] Support for shorten option
 - [ ] Boolean Flag support
+- [ ] Support for shorten option
+- [ ] Validation
+- [ ] Custom class casting
+- [ ] Argument duplication validation
+- [ ] Optional argument
 - [ ] Description and help auto generation
 - [ ] "narg" argument
 - [ ] Positional argument

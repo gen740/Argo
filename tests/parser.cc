@@ -96,7 +96,7 @@ TEST(ArgoTest, FlagArgument) {
                       "--arg4", "true",   "--arg5",      "1"};
 
   auto argo = Argo::Parser();
-  auto parser = argo.addArg<bool, Argo::arg("arg1")>()
+  auto parser = argo.addFlag<Argo::arg("arg1")>()
                     .addArg<bool, Argo::arg("arg2")>()
                     .addArg<bool, Argo::arg("arg3")>()
                     .addArg<bool, Argo::arg("arg4")>()

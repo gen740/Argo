@@ -3,42 +3,18 @@ module;
 export module Argo;
 import std_module;
 
+export import :Exception;
+
+import :TypeTraits;
+
 namespace Argo {
 
-/*!
- * InvalidArgument exception class
- */
-export class InvalidArgument : public std::invalid_argument {
- public:
-  explicit InvalidArgument(const std::string& msg) : std::invalid_argument(msg) {}
-
-  [[nodiscard]] const char* what() const noexcept override {
-    return std::invalid_argument::what();
-  }
-};
-
-export class ParseError : public std::runtime_error {
- public:
-  explicit ParseError(const std::string& msg) : std::runtime_error(msg) {}
-
-  [[nodiscard]] const char* what() const noexcept override {
-    return std::runtime_error::what();
-  }
-};
-
-class ParserInternalError : public std::runtime_error {
- public:
-  explicit ParserInternalError(const std::string& msg) : std::runtime_error(msg) {}
-
-  [[nodiscard]] const char* what() const noexcept override {
-    return std::runtime_error::what();
-  }
-};
+constexpr char NULLCHAR = '\0';
 
 /*!
  * Arg type this holds argument value
  */
-template <auto Name, class Type, auto ShortName = std::array<char, 0>()>
+template <class Type, auto Name, char ShortName = NULLCHAR>
 struct Arg {
   static constexpr auto name = Name;
   using type = Type;
@@ -46,46 +22,13 @@ struct Arg {
   inline static std::string_view description;
 };
 
-template <auto Name, auto ShortName>
-struct Arg<Name, bool, ShortName> {
+template <auto Name, char ShortName>
+struct Arg<bool, Name, ShortName> {
   static constexpr auto name = Name;
   using type = bool;
   inline static bool value = {};
   inline static std::string_view description;
   inline static bool flagArg{};
-};
-
-template <auto T, auto U>
-struct ConstexprStringCmp {
-  static consteval auto eval() {
-    if (T.size() != U.size()) {
-      return false;
-    }
-    for (int i = 0; i < T.size(); i++) {
-      if (T[i] != U[i]) {
-        return false;
-      }
-    }
-    return true;
-  }
-};
-
-/*!
- * Index Search meta function
- */
-template <typename Tuple, auto T, int Index = 0>
-struct SearchIndex;
-
-template <auto T, std::size_t Index>
-struct SearchIndex<std::tuple<>, T, Index> {
-  static constexpr int value = -1;
-};
-
-template <auto T, std::size_t Index, typename Head, typename... Tails>
-struct SearchIndex<std::tuple<Head, Tails...>, T, Index> {
-  static constexpr int value = ConstexprStringCmp<Head::name, T>::eval()
-                                   ? Index
-                                   : SearchIndex<std::tuple<Tails...>, T, Index + 1>::value;
 };
 
 /*!
@@ -100,88 +43,6 @@ consteval auto arg(const char (&a)[N]) {
   return arr;
 }
 
-/*!
- * Helper class of assigning value
- */
-struct Assigner {
-  template <int Index, typename Head, typename... Tails>
-  struct AssignImpl {};
-
-  template <int Index>
-  struct AssignImpl<Index, std::tuple<>> {
-    template <typename Lhs>
-    static auto eval(std::string_view key, [[maybe_unused]] std::string_view val) {
-      throw Argo::InvalidArgument(std::format("Invalid argument {}", key));
-    }
-  };
-
-  template <int Index, typename Head, typename... Tails>
-  struct AssignImpl<Index, std::tuple<Head, Tails...>> {
-    template <typename Lhs>
-    static auto eval(std::string_view key, std::string_view value) {
-      using current = std::remove_cvref_t<decltype(std::get<Index>(std::declval<Lhs>()))>;
-      if (std::string_view(std::begin(current::name), std::end(current::name)) == key) {
-        if constexpr (std::is_same_v<typename current::type, bool>) {
-          if ((value == "true") || (value == "True") || (value == "TRUE") || (value == "1")) {
-            current::value = true;
-          } else if ((value == "false") || (value == "False") || (value == "FALSE") ||
-                     (value == "0")) {
-            current::value = false;
-          } else {
-            throw ParserInternalError("Invalid Argument expect bool");
-          }
-        } else if constexpr (std::is_integral_v<typename current::type>) {
-          std::from_chars(std::begin(value), std::end(value), current::value);
-        } else if constexpr (std::is_floating_point_v<typename current::type>) {
-          current::value = static_cast<current::type>(std::stod(std::string(value)));
-        } else if constexpr (std::is_same_v<typename current::type, const char*>) {
-          current::value = value.data();
-        } else {
-          current::value = static_cast<current::type>(value);
-        }
-        return;
-      }
-      AssignImpl<1 + Index, std::tuple<Tails...>>::template eval<Lhs>(key, value);
-    }
-  };
-
-  template <typename Lhs>
-  static auto assign(std::string_view key, std::string_view val) {
-    AssignImpl<0, Lhs>::template eval<Lhs>(key, val);
-  };
-};
-
-template <class CheckType>
-struct TypeChecker {
-  template <int Index, typename Head, typename... Tails>
-  struct TypeCheckerImpl {};
-
-  template <int Index>
-  struct TypeCheckerImpl<Index, std::tuple<>> {
-    template <typename Lhs>
-    [[noreturn]] static auto eval(std::string_view key) -> bool {
-      throw Argo::InvalidArgument(std::format("Invalid argument {}", key));
-    }
-  };
-
-  template <int Index, typename Head, typename... Tails>
-  struct TypeCheckerImpl<Index, std::tuple<Head, Tails...>> {
-    template <typename Lhs>
-    static auto eval(std::string_view key) -> bool {
-      using current = std::remove_cvref_t<decltype(std::get<Index>(std::declval<Lhs>()))>;
-      if (std::string_view(std::begin(current::name), std::end(current::name)) == key) {
-        return std::is_same_v<typename current::type, CheckType>;
-      }
-      return TypeCheckerImpl<1 + Index, std::tuple<Tails...>>::template eval<Lhs>(key);
-    }
-  };
-
-  template <typename Lhs>
-  static auto check(std::string_view key) -> bool {
-    return TypeCheckerImpl<0, Lhs>::template eval<Lhs>(key);
-  };
-};
-
 export template <class Args = std::tuple<>>
 class Parser {
  private:
@@ -191,12 +52,22 @@ class Parser {
   using Arguments = Args;
   Args value;
 
-  template <class Type, auto Name>
+  template <class Type, auto Name, char ShortName = NULLCHAR>
   auto addArg(Type default_value = {}) {
-    Arg<Name, Type>::value = default_value;
-    return Parser<decltype(std::tuple_cat(           //
-        std::declval<Arguments>(),                   //
-        std::declval<std::tuple<Arg<Name, Type>>>()  //
+    Arg<Type, Name, ShortName>::value = default_value;
+    return Parser<decltype(std::tuple_cat(                      //
+        std::declval<Arguments>(),                              //
+        std::declval<std::tuple<Arg<Type, Name, ShortName>>>()  //
+        ))>();
+  }
+
+  template <auto Name, char ShortName = NULLCHAR>
+  auto addFlag() {
+    Arg<bool, Name, ShortName>::value = false;
+    Arg<bool, Name, ShortName>::flagArg = true;
+    return Parser<decltype(std::tuple_cat(                      //
+        std::declval<Arguments>(),                              //
+        std::declval<std::tuple<Arg<bool, Name, ShortName>>>()  //
         ))>();
   }
 
