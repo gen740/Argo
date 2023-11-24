@@ -6,6 +6,8 @@ import std_module;
 export import :Exception;
 
 import :TypeTraits;
+import :MetaAssigner;
+import :MetaChecker;
 
 namespace Argo {
 
@@ -20,15 +22,7 @@ struct Arg {
   using type = Type;
   inline static type value = {};
   inline static std::string_view description;
-};
-
-template <auto Name, char ShortName>
-struct Arg<bool, Name, ShortName> {
-  static constexpr auto name = Name;
-  using type = bool;
-  inline static bool value = {};
-  inline static std::string_view description;
-  inline static bool flagArg{};
+  inline static bool flagArg = {};
 };
 
 /*!
@@ -96,7 +90,6 @@ class Parser {
   enum class ArgumentParseState {
     ExpectValue,
     ExpectArg,
-    ParsedBoolFlag,
   };
 
   /*!
@@ -108,13 +101,6 @@ class Parser {
     for (int i = 1; i < argc; i++) {
       auto argValue = std::string_view(argv[i]);
       switch (parseState) {
-        case ArgumentParseState::ParsedBoolFlag:
-          if (argValue.contains("--")) {
-            parseState = ArgumentParseState::ExpectArg;
-            this->setArg(argBuffer, "true");
-          } else {
-            goto caseExpectValue;
-          }
         case ArgumentParseState::ExpectArg:
           if (argValue.contains("--") && argValue.find("--") == 0) {
             if (argValue.contains("=")) {
@@ -124,17 +110,16 @@ class Parser {
             }
             argBuffer = argValue.substr(2);
 
-            if (TypeChecker<bool>::check<Arguments>(argBuffer)) {
-              parseState = ArgumentParseState::ParsedBoolFlag;
+            auto check = TypeChecker<bool>::check<Arguments>(argBuffer);
+            if (check.isBool && check.isFlag) {
+              this->setArg(argBuffer, "true");
               break;
             }
-
           } else {
             throw Argo::InvalidArgument("Expect flag");
           }
           parseState = ArgumentParseState::ExpectValue;
           break;
-        caseExpectValue:
         case ArgumentParseState::ExpectValue:
           this->setArg(argBuffer, argValue);
           parseState = ArgumentParseState::ExpectArg;
