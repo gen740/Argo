@@ -169,8 +169,17 @@ class Parser {
         case ArgumentParseState::ExpectArg: {
           auto argValue = std::string(argv[i]);
           if (argValue.find("--") == 0) {
-            argBuffer = argValue.substr(2, argValue.size()).c_str();
+            if (argValue.contains("=")) {
+              auto find_pos = argValue.find('=');
+              this->setArg(argValue.substr(2, find_pos - 2).c_str(),
+                           argValue.substr(find_pos + 1).c_str());
+              continue;
+            }
+            argBuffer = argValue.substr(2).c_str();
+          } else {
+            throw Argo::InvalidArgument("Expect flag");
           }
+          // argValue.find("=")
           parseState = ArgumentParseState::ExpectValue;
         } break;
         case ArgumentParseState::ExpectValue:

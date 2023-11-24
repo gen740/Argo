@@ -17,6 +17,6 @@ tasks:
       - cmake --build build
   execute:
     cmds:
-      # - ./build/main --foo 42 --foo2 23.4 --bar "Hello,World"
+      # - ./build/main --arg1=42 --arg2="Hello,World"
       - ./build/argo_test
     silent: true
