@@ -23,7 +23,7 @@ auto main(int argc, char* argv[]) -> int {
   std::println("{}", parser.getArg<Argo::arg("arg3")>()); // Hello,World
   // std::println("{}", parser.getArg<Argo::arg("arg4")>()); // error
 
-  // Static Type
+  // Static Typing
   static_assert(
       std::is_same_v<decltype(parser.getArg<Argo::arg("arg1")>()), int>);
   static_assert(
