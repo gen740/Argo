@@ -65,3 +65,10 @@ FetchContent_MakeAvailable(Argo)
 
 target_link_libraries(YOUR_TARGET PRIVATE Argo)
 ```
+
+## Roadmap
+- [ ] Support for shorten option
+- [ ] Boolean Flag support
+- [ ] Description and help auto generation
+- [ ] "narg" argument
+- [ ] Positional argument
