@@ -173,3 +173,22 @@ TEST(ArgoTest, CombiningFlagsWithOptionalArg) {
   EXPECT_EQ(parser.getArg<Argo::arg("arg3")>(), "Hello,World");
   EXPECT_TRUE(parser.getArg<Argo::arg("arg4")>());
 }
+
+TEST(ArgoTest, Validation) {
+  const int argc = 3;
+  char* argv[argc] = {
+      "./main", "--arg", "42"  //
+  };
+
+  auto argo = Argo::Parser();
+
+  auto parser = argo.addArg<int, Argo::arg("arg")>(new Argo::Validation::MinMax<int>(0, 100));
+
+  parser.parse(argc, argv);
+
+  char* argv2[argc] = {
+      "./main", "--arg", "121"  //
+  };
+
+  EXPECT_THROW(parser.parse(argc, argv2), Argo::ValidationError);
+}

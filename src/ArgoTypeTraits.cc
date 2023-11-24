@@ -39,4 +39,7 @@ struct SearchIndex<std::tuple<Head, Tails...>, T, Index> {
                                    : SearchIndex<std::tuple<Tails...>, T, Index + 1>::value;
 };
 
+template <class T>
+concept Arithmetic = requires { std::is_arithmetic_v<T>; };
+
 };  // namespace Argo

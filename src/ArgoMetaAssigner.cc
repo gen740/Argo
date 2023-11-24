@@ -3,6 +3,7 @@ module;
 import std_module;
 export module Argo:MetaAssigner;
 import :Exceptions;
+import :Validation;
 
 export namespace Argo {
 
@@ -44,6 +45,10 @@ struct Assigner {
           current::value = value.data();
         } else {
           current::value = static_cast<current::type>(value);
+        }
+        if (current::validator) {
+          (*current::validator)(
+              std::string_view(std::begin(current::name), std::end(current::name)), current::value);
         }
         return;
       }

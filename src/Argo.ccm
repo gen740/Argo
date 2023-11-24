@@ -4,29 +4,15 @@ export module Argo;
 import std_module;
 
 export import :Exceptions;
+export import :Validation;
 
 import :TypeTraits;
 import :MetaAssigner;
 import :MetaChecker;
 import :MetaLookup;
+import :Initializer;
 
 namespace Argo {
-
-constexpr char NULLCHAR = '\0';
-
-/*!
- * Arg type this holds argument value
- */
-template <class Type, auto Name, char ShortName = NULLCHAR>
-struct Arg {
-  static constexpr auto name = Name;
-  static constexpr char shortName = ShortName;
-  using type = Type;
-  inline static type value = {};
-  inline static std::string_view description;
-  inline static bool flagArg = {};
-
-};
 
 /*!
  * convert const char[] to std::array<char, N>
@@ -49,19 +35,20 @@ class Parser {
   using Arguments = Args;
   Args value;
 
-  template <class Type, auto Name, char ShortName = NULLCHAR>
-  auto addArg(Type default_value = {}) {
-    Arg<Type, Name, ShortName>::value = default_value;
+  template <class Type, auto Name, char ShortName = NULLCHAR, class... T>
+  auto addArg(T... args) {
+    Initializer<Type, Name, ShortName>::init(std::forward<T>(args)...);
     return Parser<decltype(std::tuple_cat(                      //
         std::declval<Arguments>(),                              //
         std::declval<std::tuple<Arg<Type, Name, ShortName>>>()  //
         ))>();
   }
 
-  template <auto Name, char ShortName = NULLCHAR>
-  auto addFlag() {
+  template <auto Name, char ShortName = NULLCHAR, class... T>
+  auto addFlag(T... args) {
     Arg<bool, Name, ShortName>::value = false;
     Arg<bool, Name, ShortName>::flagArg = true;
+    Initializer<bool, Name, ShortName>::init(std::forward<T>(args)...);
     return Parser<decltype(std::tuple_cat(                      //
         std::declval<Arguments>(),                              //
         std::declval<std::tuple<Arg<bool, Name, ShortName>>>()  //

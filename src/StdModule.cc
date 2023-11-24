@@ -6,6 +6,7 @@ module;
 #include <cstring>
 #include <exception>
 #include <format>
+#include <memory>
 #include <print>
 #include <stdexcept>
 #include <string>
@@ -25,6 +26,7 @@ using ::std::get;
 using ::std::operator==;
 using ::std::begin;
 using ::std::end;
+using ::std::forward;
 
 // cstdint
 using ::std::size_t;
@@ -63,16 +65,26 @@ using ::std::tuple_cat;
 
 // type_traits
 using ::std::declval;
+using ::std::is_arithmetic_v;
 using ::std::is_floating_point_v;
 using ::std::is_integral_v;
 using ::std::is_same_v;
 using ::std::remove_cvref;
 using ::std::remove_cvref_t;
+using ::std::remove_pointer;
+using ::std::remove_pointer_t;
 using ::std::void_t;
+
+// concept
+using ::std::derived_from;
+
 
 // exception/stdexcept
 using ::std::exception;
 using ::std::invalid_argument;
 using ::std::runtime_error;
+
+// memory
+using ::std::unique_ptr;
 
 }  // namespace std

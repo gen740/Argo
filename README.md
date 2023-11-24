@@ -70,7 +70,8 @@ target_link_libraries(YOUR_TARGET PRIVATE Argo)
 - [x] Boolean Flag support
 - [x] Support for short option
 - [x] Combining Boolean Flag
-- [ ] Validation
+- [x] Validation
+- [ ] Support for multiple parser
 - [ ] Custom class casting
 - [ ] Argument duplication validation
 - [ ] Optional argument
