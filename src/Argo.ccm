@@ -36,6 +36,9 @@ class Parser {
   Args value;
 
   template <class Type, auto Name, char ShortName = NULLCHAR, class... T>
+    requires(Argo::SearchIndex<Arguments, Name>::value == -1 and
+             (ShortName == NULLCHAR or
+              Argo::SearchIndexFromShortName<Arguments, ShortName>::value == -1))
   auto addArg(T... args) {
     Initializer<Type, Name, ShortName, ID>::init(std::forward<T>(args)...);
     return Parser<ID, decltype(std::tuple_cat(                                        //
@@ -45,6 +48,9 @@ class Parser {
   }
 
   template <auto Name, char ShortName = NULLCHAR, class... T>
+    requires(Argo::SearchIndex<Arguments, Name>::value == -1 and
+             (ShortName == NULLCHAR or
+              Argo::SearchIndexFromShortName<Arguments, ShortName>::value == -1))
   auto addFlag(T... args) {
     Arg<bool, Name, ShortName, ID>::value = false;
     Arg<bool, Name, ShortName, ID>::flagArg = true;

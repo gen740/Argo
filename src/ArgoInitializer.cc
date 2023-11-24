@@ -23,7 +23,7 @@ struct withDescription {
 
 /*!
  * (default)?  : If value specified use it else use default
- *          int: Exactly n value                    -> array
+ *          int: Exactly n value                    -> vector
  *          *  : Any number of argument             -> vector
  *          +  : Any number of argument except zero -> vector
  */
@@ -62,7 +62,6 @@ struct FlagArg {
   using type = bool;
   inline static type value = false;
   inline static std::string_view description;
-  inline static Validation::ValidationBase<bool>* validator = nullptr;
 };
 
 template <class Type, auto Name, char ShortName, int ID>

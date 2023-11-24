@@ -1,6 +1,11 @@
 # Argo
 C++ mordern argument parser, using C++ module and metaprogramming.
 
+## Feature
+- Static type argument parse
+- Detect duplicate argument in compile time
+- Rich feature
+
 ## Requirement
 - **C++23 compiler** clang >= 17
 - **C++ Modules supported CMake** cmake >= 3.28
@@ -82,10 +87,10 @@ target_link_libraries(YOUR_TARGET PRIVATE Argo)
 - [x] Combining Boolean Flag
 - [x] Validation
 - [x] Support for multiple parser
+- [x] Argument duplication validation
 - [ ] Optional argument
 - [ ] "narg" argument
 - [ ] Custom class casting
-- [ ] Argument duplication validation
 - [ ] Description and help auto generation
 - [ ] Standard validations
 - [ ] Positional argument

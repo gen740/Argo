@@ -48,8 +48,8 @@ struct Assigner {
         } else {
           current::value = static_cast<current::type>(value);
         }
-        if (current::validator) {
-          if constexpr (!std::is_same_v<decltype(current::value), bool>) {
+        if constexpr (!std::is_same_v<decltype(current::value), bool>) {
+          if (current::validator) {
             (*current::validator)(
                 std::string_view(std::begin(current::name), std::end(current::name)),
                 current::value.value());
