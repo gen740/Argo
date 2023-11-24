@@ -26,7 +26,18 @@ file(GLOB LIBRARY_SOURCES ${CMAKE_CURRENT_LIST_DIR}/src/*.cc
 file(GLOB LIBRARY_MODULE_SOURCES ${CMAKE_CURRENT_LIST_DIR}/src/*.ccm
      ${CMAKE_CURRENT_LIST_DIR}/src/**/*.ccm)
 target_sources(Argo PUBLIC FILE_SET CXX_MODULES FILES ${LIBRARY_SOURCES}
-                              ${LIBRARY_MODULE_SOURCES})
+                           ${LIBRARY_MODULE_SOURCES})
+
+if(${ARGO_TEST_ENABLE})
+  find_package(GTest REQUIRED)
+  file(GLOB ARGO_TEST_SOURCES ${CMAKE_CURRENT_LIST_DIR}/tests/*.cc)
+  add_executable(argo_test ${ARGO_TEST_SOURCES})
+  target_link_libraries(argo_test GTest::GTest GTest::Main Argo)
+  set_target_properties(argo_test PROPERTIES CXX_STANDARD 23)
+  # set_target_fla
+  target_compile_options(argo_test PRIVATE -Wno-writable-strings)
+
+endif()
 
 add_executable(main main.cc)
 target_link_libraries(main Argo)

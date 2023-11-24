@@ -8,7 +8,7 @@ vars:
 tasks:
   cmake:
     cmds:
-      - cmake -B build -S . -GNinja
+      - cmake -B build -S . -GNinja -DARGO_TEST_ENABLE=true
     env:
       CC: /usr/local/opt/llvm/bin/clang
       CXX: /usr/local/opt/llvm/bin/clang++
@@ -17,5 +17,6 @@ tasks:
       - cmake --build build
   execute:
     cmds:
-      - ./build/main --foo 42 --foo2 23.4 --bar "Hello,World"
+      # - ./build/main --foo 42 --foo2 23.4 --bar "Hello,World"
+      - ./build/argo_test
     silent: true
