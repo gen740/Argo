@@ -24,7 +24,7 @@ struct with_description {
 /*!
  * Arg type this holds argument value
  */
-template <class Type, auto Name, char ShortName = NULLCHAR>
+template <class Type, auto Name, char ShortName, int ID>
 struct Arg {
   static constexpr auto name = Name;
   static constexpr char shortName = ShortName;
@@ -35,17 +35,17 @@ struct Arg {
   inline static Validation::ValidationBase<Type>* validator = nullptr;
 };
 
-template <class Type, auto Name, char ShortName>
+template <class Type, auto Name, char ShortName, int ID>
 struct Initializer {
   template <class Head, class... Tails>
   static auto init(Head head, Tails... tails) {
     if constexpr (std::is_same_v<Head, with_description>) {
-      Arg<Type, Name, ShortName>::description = head.getDescription();
+      Arg<Type, Name, ShortName, ID>::description = head.getDescription();
     } else if constexpr (std::derived_from<std::remove_cvref_t<std::remove_pointer_t<Head>>,
                                            Validation::ValidationTag>) {
-      Arg<Type, Name, ShortName>::validator = head;
+      Arg<Type, Name, ShortName, ID>::validator = head;
     } else {
-      Arg<Type, Name, ShortName>::value = static_cast<Type>(head);
+      Arg<Type, Name, ShortName, ID>::value = static_cast<Type>(head);
     }
     if constexpr (sizeof...(Tails) != 0) {
       init(tails...);

@@ -38,6 +38,16 @@ auto main(int argc, char* argv[]) -> int {
 }
 ```
 
+## How do I create multiple parser
+Since `Argo` creates types for each argument and stores variables in those types,
+the same ID in the parser might lead to conflicts with arguments.
+Sometimes, this may result in overwriting the variables of another parser.
+To avoid this, you can specify a unique ID.
+
+```cpp
+auto argo = Argo::Parser<42>();
+```
+
 ## Usage(CMake)
 
 ### Using submodule

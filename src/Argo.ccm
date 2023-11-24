@@ -26,7 +26,7 @@ consteval auto arg(const char (&a)[N]) {
   return arr;
 }
 
-export template <class Args = std::tuple<>>
+export template <int ID = 0, class Args = std::tuple<>>
 class Parser {
  private:
   bool parsed_ = false;
@@ -37,22 +37,22 @@ class Parser {
 
   template <class Type, auto Name, char ShortName = NULLCHAR, class... T>
   auto addArg(T... args) {
-    Initializer<Type, Name, ShortName>::init(std::forward<T>(args)...);
-    return Parser<decltype(std::tuple_cat(                      //
-        std::declval<Arguments>(),                              //
-        std::declval<std::tuple<Arg<Type, Name, ShortName>>>()  //
-        ))>();
+    Initializer<Type, Name, ShortName, ID>::init(std::forward<T>(args)...);
+    return Parser<ID, decltype(std::tuple_cat(                                        //
+                          std::declval<Arguments>(),                                  //
+                          std::declval<std::tuple<Arg<Type, Name, ShortName, ID>>>()  //
+                          ))>();
   }
 
   template <auto Name, char ShortName = NULLCHAR, class... T>
   auto addFlag(T... args) {
-    Arg<bool, Name, ShortName>::value = false;
-    Arg<bool, Name, ShortName>::flagArg = true;
-    Initializer<bool, Name, ShortName>::init(std::forward<T>(args)...);
-    return Parser<decltype(std::tuple_cat(                      //
-        std::declval<Arguments>(),                              //
-        std::declval<std::tuple<Arg<bool, Name, ShortName>>>()  //
-        ))>();
+    Arg<bool, Name, ShortName, ID>::value = false;
+    Arg<bool, Name, ShortName, ID>::flagArg = true;
+    Initializer<bool, Name, ShortName, ID>::init(std::forward<T>(args)...);
+    return Parser<ID, decltype(std::tuple_cat(                                        //
+                          std::declval<Arguments>(),                                  //
+                          std::declval<std::tuple<Arg<bool, Name, ShortName, ID>>>()  //
+                          ))>();
   }
 
   template <auto Name>
