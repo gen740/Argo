@@ -6,15 +6,22 @@ import std_module;
 export import :Exceptions;
 export import :Validation;
 export import :Initializer;
-export import :NArgs;
 
 import :TypeTraits;
 import :MetaAssigner;
 import :MetaChecker;
 import :MetaLookup;
 import :Arg;
+import :NArgs;
 
 namespace Argo {
+
+struct Unspecified {};
+
+template <auto Value>
+struct IdentityHolder {
+  static constexpr auto value = Value;
+};
 
 /*!
  * convert const char[] to std::array<char, N>
@@ -28,6 +35,28 @@ consteval auto arg(const char (&a)[N]) {
   return arr;
 }
 
+/*!
+ * Helper function to create nargs
+ */
+export {
+  consteval auto nargs(char narg) {
+    return NArgs(narg);
+  }
+
+  consteval auto nargs(int narg) {
+    return NArgs(narg);
+  }
+}
+
+template <char Name>
+struct ShortName {
+  static constexpr char value = Name;
+};
+
+// consteval auto short(char a)  {
+//   return ShortName<a>();
+// }
+
 export template <int ID = 0, class Args = std::tuple<>>
 class Parser {
  private:
@@ -37,15 +66,41 @@ class Parser {
   using Arguments = Args;
   Args value;
 
-  template <class Type, auto Name, char ShortName = NULLCHAR, class... T>
-    requires(Argo::SearchIndex<Arguments, Name>::value == -1 and
-             (ShortName == NULLCHAR or
-              Argo::SearchIndexFromShortName<Arguments, ShortName>::value == -1))
+  /*!
+   * Type: type of argument
+   * Name: name of argument
+   * arg1: ShortName or NArgs or unspecified
+   * arg2: NArgs or unspecified
+   */
+  template <class Type, auto Name, auto arg1 = Unspecified(), auto arg2 = Unspecified(), class... T>
   auto addArg(T... args) {
-    Initializer<Type, Name, ShortName, ID>::init(std::forward<T>(args)...);
-    return Parser<ID, decltype(std::tuple_cat(                                        //
-                          std::declval<Arguments>(),                                  //
-                          std::declval<std::tuple<Arg<Type, Name, ShortName, ID>>>()  //
+    static constexpr char ShortName = std::conditional_t<        //
+        std::is_same_v<std::remove_cv_t<decltype(arg1)>, char>,  //
+        IdentityHolder<arg1>,                                    //
+        IdentityHolder<NULLCHAR>                                 //
+        >::value;
+
+    static constexpr auto defaultNargs = NArgs('?');
+
+    [[maybe_unused]] static constexpr auto nargs = std::conditional_t<      //
+        std::derived_from<std::remove_cvref_t<decltype(arg1)>, NArgs>,      //
+        IdentityHolder<arg1>,                                               //
+        std::conditional_t<                                                 //
+            std::derived_from<std::remove_cvref_t<decltype(arg2)>, NArgs>,  //
+            IdentityHolder<arg2>,                                           //
+            IdentityHolder<defaultNargs>>>::value;
+
+    static_assert(
+        (ShortName == NULLCHAR) || (SearchIndexFromShortName<Arguments, ShortName>::value == -1),
+        "Duplicated short name");
+    static_assert(                                        //
+        Argo::SearchIndex<Arguments, Name>::value == -1,  //
+        "Duplicated name");
+
+    ArgInitializer<Type, Name, ShortName, nargs, ID>::init(std::forward<T>(args)...);
+    return Parser<ID, decltype(std::tuple_cat(                                               //
+                          std::declval<Arguments>(),                                         //
+                          std::declval<std::tuple<Arg<Type, Name, ShortName, nargs, ID>>>()  //
                           ))>();
   }
 
@@ -54,9 +109,7 @@ class Parser {
              (ShortName == NULLCHAR or
               Argo::SearchIndexFromShortName<Arguments, ShortName>::value == -1))
   auto addFlag(T... args) {
-    Arg<bool, Name, ShortName, ID>::value = false;
-    Arg<bool, Name, ShortName, ID>::flagArg = true;
-    Initializer<bool, Name, ShortName, ID>::init(std::forward<T>(args)...);
+    FlagArgInitializer<Name, ShortName, ID>::init(std::forward<T>(args)...);
     return Parser<ID, decltype(std::tuple_cat(                                      //
                           std::declval<Arguments>(),                                //
                           std::declval<std::tuple<FlagArg<Name, ShortName, ID>>>()  //
@@ -106,7 +159,7 @@ class Parser {
   auto parse([[maybe_unused]] int argc, [[maybe_unused]] char* argv[]) -> void {
     auto parseState = ArgumentParseState::ExpectArg;
     std::string_view argBuffer;
-    NArgs nargs('?');
+    // NArgs nargs('?');
     for (int i = 1; i < argc; i++) {
       auto argValue = std::string_view(argv[i]);
       switch (parseState) {
@@ -119,7 +172,7 @@ class Parser {
             }
             argBuffer = argValue.substr(2);
             auto check = Checker::check<Arguments>(argBuffer);
-            nargs = check.nargs;
+            // nargs = check.nargs;
 
             if (check.isBool && check.isFlag) {
               this->setArg(argBuffer, "true");
@@ -131,7 +184,7 @@ class Parser {
             for (char i : shortArg) {
               auto optionName = GetNameFromShortName<Arguments>::eval(i);
               auto check = Checker::check<Arguments>(optionName);
-              nargs = check.nargs;
+              // nargs = check.nargs;
 
               if (check.isBool && check.isFlag) {
                 this->setArg(optionName, "true");

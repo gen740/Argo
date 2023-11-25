@@ -193,7 +193,9 @@ TEST(ArgoTest, Validation) {
 
   auto argo = Argo::Parser<8>();
 
-  auto parser = argo.addArg<int, Argo::arg("arg")>(new Argo::Validation::MinMax<int>(0, 100));
+  auto parser = argo  //
+                    .addArg<int, Argo::arg("arg")>(new Argo::Validation::MinMax<int>(0, 100))
+                    .addFlag<Argo::arg("arg2")>();
 
   parser.parse(argc, argv);
 
@@ -213,7 +215,7 @@ TEST(ArgoTest, Validation) {
 //   auto argo = Argo::Parser<8>();
 //
 //   auto parser = argo  //
-//                     .addArg<int, Argo::arg("arg1")>(12, Argo::NArgs('?'))
+//                     .addArg<int, Argo::arg("arg1"), Argo::nargs('?')>()
 //                     .addArg<std::string, Argo::arg("arg2")>()
 //                     .addArg<int, Argo::arg("arg3")>()
 //                     .addArg<int, Argo::arg("arg4")>()

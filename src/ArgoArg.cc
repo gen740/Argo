@@ -7,12 +7,10 @@ import :Validation;
 
 export namespace Argo {
 
-struct NArgs;
-
 /*!
  * Arg type this holds argument value
  */
-template <class Type, auto Name, char ShortName, int ID>
+template <class Type, auto Name, char ShortName, NArgs TNArgs, int ID>
 struct Arg {
   static constexpr auto name = Name;
   static constexpr char shortName = ShortName;
@@ -20,8 +18,7 @@ struct Arg {
   inline static std::optional<type> value = {};
   inline static std::optional<type> defaultValue = {};
   inline static std::string_view description;
-  inline static bool flagArg = {};
-  inline static NArgs nargs = NArgs('?');
+  inline static constexpr NArgs nargs = TNArgs;
   inline static Validation::ValidationBase<Type>* validator = nullptr;
   inline static std::function<Type(std::string_view)> caster = nullptr;
 };

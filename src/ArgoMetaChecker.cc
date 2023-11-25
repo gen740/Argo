@@ -12,7 +12,7 @@ export namespace Argo {
 struct CheckOptions {
   bool isBool = false;
   bool isFlag = false;
-  NArgs nargs = NArgs('?');
+  // NArgs nargs = NArgs('?');
 };
 
 struct Checker {
@@ -36,12 +36,12 @@ struct Checker {
         auto ret = CheckOptions();
         ret.isBool = std::is_same_v<typename current::type, bool>;
         if (std::is_same_v<decltype(current::value), bool>) {
-          ret.nargs.nargs = 0;
-          ret.nargs.nargs_char = NULLCHAR;
+          // ret.nargs.nargs = 0;
+          // ret.nargs.nargs_char = NULLCHAR;
           ret.isFlag = true;
         }
         if constexpr (!std::is_same_v<decltype(current::value), bool>) {
-          ret.nargs = current::nargs;
+          // ret.nargs = current::nargs;
         }
         return ret;
       }
