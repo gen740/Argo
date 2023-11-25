@@ -87,15 +87,13 @@ class Parser {
         IdentityHolder<NULLCHAR>                                 //
         >::value;
 
-    static constexpr auto defaultNargs = NArgs('?');
-
-    [[maybe_unused]] static constexpr auto nargs = std::conditional_t<      //
+    static constexpr auto nargs = std::conditional_t<                       //
         std::derived_from<std::remove_cvref_t<decltype(arg1)>, NArgs>,      //
         IdentityHolder<arg1>,                                               //
         std::conditional_t<                                                 //
             std::derived_from<std::remove_cvref_t<decltype(arg2)>, NArgs>,  //
             IdentityHolder<arg2>,                                           //
-            IdentityHolder<defaultNargs>>>::value;
+            IdentityHolder<NArgs('?')>>>::value;
 
     static_assert(
         (ShortName == NULLCHAR) || (SearchIndexFromShortName<Arguments, ShortName>::value == -1),
@@ -112,10 +110,14 @@ class Parser {
   }
 
   template <auto Name, char ShortName = NULLCHAR, class... T>
-    requires(Argo::SearchIndex<Arguments, Name>::value == -1 and
-             (ShortName == NULLCHAR or
-              Argo::SearchIndexFromShortName<Arguments, ShortName>::value == -1))
   auto addFlag(T... args) {
+    static_assert(
+        (ShortName == NULLCHAR) || (SearchIndexFromShortName<Arguments, ShortName>::value == -1),
+        "Duplicated short name");
+    static_assert(                                        //
+        Argo::SearchIndex<Arguments, Name>::value == -1,  //
+        "Duplicated name");
+
     FlagArgInitializer<Name, ShortName, ID>::init(std::forward<T>(args)...);
     return Parser<ID, decltype(std::tuple_cat(                                      //
                           std::declval<Arguments>(),                                //
