@@ -5,12 +5,14 @@ import std_module;
 
 export import :Exceptions;
 export import :Validation;
+export import :Initializer;
+export import :NArgs;
 
 import :TypeTraits;
 import :MetaAssigner;
 import :MetaChecker;
 import :MetaLookup;
-import :Initializer;
+import :Arg;
 
 namespace Argo {
 
@@ -92,7 +94,10 @@ class Parser {
   enum class ArgumentParseState {
     ExpectValue,
     ExpectArg,
-    // ExpectValueOrFlag,
+    // ExpectOneValueOrFlag,
+    // ExpectNValue,
+    // Expect,
+    // Expect,
   };
 
   /*!
@@ -101,6 +106,7 @@ class Parser {
   auto parse([[maybe_unused]] int argc, [[maybe_unused]] char* argv[]) -> void {
     auto parseState = ArgumentParseState::ExpectArg;
     std::string_view argBuffer;
+    NArgs nargs('?');
     for (int i = 1; i < argc; i++) {
       auto argValue = std::string_view(argv[i]);
       switch (parseState) {
@@ -112,7 +118,8 @@ class Parser {
               break;
             }
             argBuffer = argValue.substr(2);
-            auto check = TypeChecker<bool>::check<Arguments>(argBuffer);
+            auto check = Checker::check<Arguments>(argBuffer);
+            nargs = check.nargs;
 
             if (check.isBool && check.isFlag) {
               this->setArg(argBuffer, "true");
@@ -120,30 +127,23 @@ class Parser {
             }
           } else if (argValue.starts_with('-')) {
             auto shortArg = argValue.substr(1);
-            if (shortArg.size() == 1) {
-              argBuffer = GetNameFromShortName<Arguments>::eval(shortArg.at(0));
-              auto check = TypeChecker<bool>::check<Arguments>(argBuffer);
+            argBuffer = "";
+            for (char i : shortArg) {
+              auto optionName = GetNameFromShortName<Arguments>::eval(i);
+              auto check = Checker::check<Arguments>(optionName);
+              nargs = check.nargs;
+
               if (check.isBool && check.isFlag) {
-                this->setArg(argBuffer, "true");
-                break;
-              }
-            } else {
-              argBuffer = "";
-              for (char i : shortArg) {
-                auto optionName = GetNameFromShortName<Arguments>::eval(i);
-                auto check = TypeChecker<bool>::check<Arguments>(optionName);
-                if (check.isBool && check.isFlag) {
-                  this->setArg(optionName, "true");
-                } else {
-                  if (!argBuffer.empty()) {
-                    throw Argo::InvalidArgument("Combining two more optional argument");
-                  }
-                  argBuffer = std::string(optionName);  // copy
+                this->setArg(optionName, "true");
+              } else {
+                if (!argBuffer.empty()) {
+                  throw Argo::InvalidArgument("Combining two more optional argument");
                 }
+                argBuffer = std::string(optionName);  // copy
               }
-              if (argBuffer.empty()) {
-                break;
-              }
+            }
+            if (argBuffer.empty()) {
+              break;
             }
           } else {
             throw Argo::InvalidArgument("Expect flag");

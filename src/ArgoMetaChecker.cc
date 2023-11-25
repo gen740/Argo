@@ -5,6 +5,7 @@ import std_module;
 export module Argo:MetaChecker;
 import :Exceptions;
 import :Initializer;
+import :NArgs;
 
 export namespace Argo {
 
@@ -14,8 +15,7 @@ struct CheckOptions {
   NArgs nargs = NArgs('?');
 };
 
-template <class CheckType>
-struct TypeChecker {
+struct Checker {
   template <int Index, typename Head, typename... Tails>
   struct TypeCheckerImpl {};
 
@@ -34,8 +34,12 @@ struct TypeChecker {
       using current = std::remove_cvref_t<decltype(std::get<Index>(std::declval<Lhs>()))>;
       if (std::string_view(std::begin(current::name), std::end(current::name)) == key) {
         auto ret = CheckOptions();
-        ret.isBool = std::is_same_v<typename current::type, CheckType>;
-        ret.isFlag = std::is_same_v<decltype(current::value), bool>;
+        ret.isBool = std::is_same_v<typename current::type, bool>;
+        if (std::is_same_v<decltype(current::value), bool>) {
+          ret.nargs.nargs = 0;
+          ret.nargs.nargs_char = NULLCHAR;
+          ret.isFlag = true;
+        }
         if constexpr (!std::is_same_v<decltype(current::value), bool>) {
           ret.nargs = current::nargs;
         }
