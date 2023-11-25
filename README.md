@@ -90,7 +90,8 @@ target_link_libraries(YOUR_TARGET PRIVATE Argo)
 - [x] Argument duplication validation
 - [x] Optional argument
 - [x] "narg" argument
-- [ ] Custom class casting
+- [ ] Positional argument
 - [ ] Description and help auto generation
 - [ ] Standard validations
-- [ ] Positional argument
+- [ ] Custom class casting
+- [ ] sub command

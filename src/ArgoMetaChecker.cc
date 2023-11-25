@@ -32,15 +32,14 @@ struct Checker {
   struct TypeCheckerImpl<Index, std::tuple<Head, Tails...>> {
     template <typename Lhs>
     static auto eval(std::string_view key) -> CheckOptions {
-      using current = std::remove_cvref_t<decltype(std::get<Index>(std::declval<Lhs>()))>;
-      if (std::string_view(std::begin(current::name), std::end(current::name)) == key) {
+      if (std::string_view(std::begin(Head::name), std::end(Head::name)) == key) {
         auto ret = CheckOptions();
-        if constexpr (std::derived_from<current, FlagArgTag>) {
+        if constexpr (std::derived_from<Head, FlagArgTag>) {
           ret.nargs.nargs = 0;
           ret.nargs.nargs_char = NULLCHAR;
           ret.isFlag = true;
         } else {
-          ret.nargs = current::nargs;
+          ret.nargs = Head::nargs;
         }
         return ret;
       }

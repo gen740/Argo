@@ -15,6 +15,7 @@ import :MetaChecker;
 import :MetaLookup;
 import :Arg;
 import :NArgs;
+import :HelpGenerator;
 
 namespace Argo {
 
@@ -63,8 +64,12 @@ export template <int ID = 0, class Args = std::tuple<>>
 class Parser {
  private:
   bool parsed_ = false;
+  std::string_view programName_;
 
  public:
+  constexpr explicit Parser() = default;
+  constexpr explicit Parser(std::string_view programName) : programName_(programName){};
+
   using Arguments = Args;
   Args value;
 
@@ -162,6 +167,33 @@ class Parser {
     ExpectNValues,
     // Expect,
   };
+
+  std::vector<ArgInfo> getArgInfo() {
+    return HelpGenerator::generate<Arguments>();
+  }
+
+  std::string formatHelp() {
+    std::string help;
+    auto helpInfo = this->getArgInfo();
+    std::size_t maxFlagLength = 0;
+    for (const auto& i : helpInfo) {
+      if (maxFlagLength < i.name.size()) {
+        maxFlagLength = i.name.size();
+      }
+    }
+    help.append("Options:");
+    for (const auto& i : helpInfo) {
+      help.push_back('\n');
+      help.append(std::format(                                                   //
+          "  {} --{} {} {}",                                                     //
+          (i.shortName == NULLCHAR) ? "   " : std::format("-{},", i.shortName),  //
+          i.name,                                                                //
+          std::string(maxFlagLength - i.name.size(), ' '),                       //
+          i.description                                                          //
+          ));
+    }
+    return help;
+  }
 
   /*!
    * Parse function

@@ -3,6 +3,7 @@ import Argo;
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
 
+#include <print>
 #include <string>
 #include <type_traits>
 
@@ -263,5 +264,40 @@ TEST(ArgoTest, NargException) {
                       .addArg<int, Argo::arg("arg2")>();
 
     EXPECT_THROW(parser.parse(argc, argv), Argo::InvalidArgument);
+  }
+}
+
+TEST(ArgoTest, Help) {
+  {
+    auto argo = Argo::Parser<12>("Sample Program");
+    auto parser = argo  //
+                      .addArg<int, Argo::arg("arg1"), 'a', Argo::nargs('+')>()
+                      .addArg<int, Argo::arg("arg2"), Argo::nargs('+')>(
+                          Argo::withDescription("This is arg2"));
+
+    auto ArgInfo = parser.getArgInfo();
+
+    EXPECT_EQ(ArgInfo[0].name, "arg1");
+    EXPECT_EQ(ArgInfo[0].shortName, 'a');
+    EXPECT_EQ(ArgInfo[0].description, "");
+
+    EXPECT_EQ(ArgInfo[1].name, "arg2");
+    EXPECT_EQ(ArgInfo[1].shortName, '\0');
+    EXPECT_EQ(ArgInfo[1].description, "This is arg2");
+
+    // EXPECT_THROW(parser.parse(argc, argv), Argo::InvalidArgument);
+  }
+  {
+    auto argo = Argo::Parser<13>("program");
+    auto parser = argo  //
+                      .addArg<int, Argo::arg("arg1"), 'a', Argo::nargs('+')>()
+                      .addArg<int, Argo::arg("arg2"), Argo::nargs('+')>(
+                          Argo::withDescription("This is arg2"));
+
+    auto ArgInfo = parser.getArgInfo();
+
+    std::println(stderr, "{}", parser.formatHelp());
+
+    // EXPECT_THROW(parser.parse(argc, argv), Argo::InvalidArgument);
   }
 }

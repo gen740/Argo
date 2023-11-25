@@ -27,34 +27,32 @@ struct Assigner {
   struct AssignImpl<Index, std::tuple<Head, Tails...>> {
     template <typename Lhs>
     static auto eval(std::string_view key, std::string_view value) {
-      using current = std::remove_cvref_t<decltype(std::get<Index>(std::declval<Lhs>()))>;
-      if constexpr (!current::isVariadic) {
-        if (std::string_view(std::begin(current::name), std::end(current::name)) == key) {
-          if constexpr (std::is_same_v<typename current::type, bool>) {
+      if constexpr (!Head::isVariadic) {
+        if (std::string_view(std::begin(Head::name), std::end(Head::name)) == key) {
+          if constexpr (std::is_same_v<typename Head::type, bool>) {
             if ((value == "true") || (value == "True") || (value == "TRUE") || (value == "1")) {
-              current::value = true;
+              Head::value = true;
             } else if ((value == "false") || (value == "False") || (value == "FALSE") ||
                        (value == "0")) {
-              current::value = false;
+              Head::value = false;
             } else {
               throw ParserInternalError("Invalid Argument expect bool");
             }
-          } else if constexpr (std::is_integral_v<typename current::type>) {
-            typename current::type tmpValue;
+          } else if constexpr (std::is_integral_v<typename Head::type>) {
+            typename Head::type tmpValue;
             std::from_chars(std::begin(value), std::end(value), tmpValue);
-            current::value = tmpValue;
-          } else if constexpr (std::is_floating_point_v<typename current::type>) {
-            current::value = static_cast<current::type>(std::stod(std::string(value)));
-          } else if constexpr (std::is_same_v<typename current::type, const char*>) {
-            current::value = value.data();
+            Head::value = tmpValue;
+          } else if constexpr (std::is_floating_point_v<typename Head::type>) {
+            Head::value = static_cast<Head::type>(std::stod(std::string(value)));
+          } else if constexpr (std::is_same_v<typename Head::type, const char*>) {
+            Head::value = value.data();
           } else {
-            current::value = static_cast<current::type>(value);
+            Head::value = static_cast<Head::type>(value);
           }
-          if constexpr (!std::is_same_v<decltype(current::value), bool>) {
-            if (current::validator) {
-              (*current::validator)(
-                  std::string_view(std::begin(current::name), std::end(current::name)),
-                  current::value.value());
+          if constexpr (!std::is_same_v<decltype(Head::value), bool>) {
+            if (Head::validator) {
+              (*Head::validator)(std::string_view(std::begin(Head::name), std::end(Head::name)),
+                                 Head::value.value());
             }
           }
           return;
@@ -90,37 +88,33 @@ struct VariadicAssigner {
   struct VariadicAssignImpl<Index, std::tuple<Head, Tails...>> {
     template <typename Lhs>
     static auto eval(std::string_view key, const std::vector<std::string_view>& values) {
-      using current = std::remove_cvref_t<decltype(std::get<Index>(std::declval<Lhs>()))>;
-
-      if constexpr (current::isVariadic) {
-        if (std::string_view(std::begin(current::name), std::end(current::name)) == key) {
-          current::value = std::vector<typename current::baseType>();
+      if constexpr (Head::isVariadic) {
+        if (std::string_view(std::begin(Head::name), std::end(Head::name)) == key) {
+          Head::value = std::vector<typename Head::baseType>();
           for (auto value : values) {
-            if constexpr (std::is_same_v<typename current::baseType, bool>) {
+            if constexpr (std::is_same_v<typename Head::baseType, bool>) {
               if ((value == "true") || (value == "True") || (value == "TRUE") || (value == "1")) {
-                current::value->push_back(true);
+                Head::value->push_back(true);
               } else if ((value == "false") || (value == "False") || (value == "FALSE") ||
                          (value == "0")) {
-                current::value->push_back(false);
+                Head::value->push_back(false);
               } else {
                 throw ParserInternalError("Invalid Argument expect bool");
               }
-            } else if constexpr (std::is_integral_v<typename current::baseType>) {
-              typename current::baseType tmpValue;
+            } else if constexpr (std::is_integral_v<typename Head::baseType>) {
+              typename Head::baseType tmpValue;
               std::from_chars(std::begin(value), std::end(value), tmpValue);
-              current::value->push_back(tmpValue);
-            } else if constexpr (std::is_floating_point_v<typename current::baseType>) {
-              current::value->push_back(
-                  static_cast<current::baseType>(std::stod(std::string(value))));
-            } else if constexpr (std::is_same_v<typename current::baseType, const char*>) {
-              current::value->push_back(value.data());
+              Head::value->push_back(tmpValue);
+            } else if constexpr (std::is_floating_point_v<typename Head::baseType>) {
+              Head::value->push_back(static_cast<Head::baseType>(std::stod(std::string(value))));
+            } else if constexpr (std::is_same_v<typename Head::baseType, const char*>) {
+              Head::value->push_back(value.data());
             } else {
-              current::value->push_back(static_cast<current::baseType>(value));
+              Head::value->push_back(static_cast<Head::baseType>(value));
             }
-            if (current::validator) {
-              (*current::validator)(
-                  std::string_view(std::begin(current::name), std::end(current::name)),
-                  current::value.value());
+            if (Head::validator) {
+              (*Head::validator)(std::string_view(std::begin(Head::name), std::end(Head::name)),
+                                 Head::value.value());
             }
           }
           return;
@@ -153,11 +147,9 @@ struct DefaultAssigner {
   struct DefaultAssignerImpl<Index, std::tuple<Head, Tails...>> {
     template <typename Lhs>
     static auto eval(std::string_view key) {
-      using current = std::remove_cvref_t<decltype(std::get<Index>(std::declval<Lhs>()))>;
-
-      if constexpr (!std::derived_from<current, FlagArgTag>) {
-        if (std::string_view(std::begin(current::name), std::end(current::name)) == key) {
-          current::value = current::defaultValue;
+      if constexpr (!std::derived_from<Head, FlagArgTag>) {
+        if (std::string_view(std::begin(Head::name), std::end(Head::name)) == key) {
+          Head::value = Head::defaultValue;
           return;
         }
       }
