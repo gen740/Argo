@@ -4,12 +4,14 @@ import std_module;
 
 export module Argo:MetaChecker;
 import :Exceptions;
+import :Initializer;
 
 export namespace Argo {
 
 struct CheckOptions {
   bool isBool = false;
   bool isFlag = false;
+  NArgs nargs = NArgs('?');
 };
 
 template <class CheckType>
@@ -34,6 +36,9 @@ struct TypeChecker {
         auto ret = CheckOptions();
         ret.isBool = std::is_same_v<typename current::type, CheckType>;
         ret.isFlag = std::is_same_v<decltype(current::value), bool>;
+        if constexpr (!std::is_same_v<decltype(current::value), bool>) {
+          ret.nargs = current::nargs;
+        }
         return ret;
       }
       return TypeCheckerImpl<1 + Index, std::tuple<Tails...>>::template eval<Lhs>(key);

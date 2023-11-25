@@ -92,6 +92,7 @@ class Parser {
   enum class ArgumentParseState {
     ExpectValue,
     ExpectArg,
+    // ExpectValueOrFlag,
   };
 
   /*!
@@ -104,20 +105,20 @@ class Parser {
       auto argValue = std::string_view(argv[i]);
       switch (parseState) {
         case ArgumentParseState::ExpectArg:
-          if (argValue.contains("--") && argValue.find("--") == 0) {
-            if (argValue.contains("=")) {
+          if (argValue.starts_with("--")) {
+            if (argValue.contains("=")) {  // equal assign
               auto find_pos = argValue.find('=');
               this->setArg(argValue.substr(2, find_pos - 2), argValue.substr(find_pos + 1));
               break;
             }
             argBuffer = argValue.substr(2);
-
             auto check = TypeChecker<bool>::check<Arguments>(argBuffer);
+
             if (check.isBool && check.isFlag) {
               this->setArg(argBuffer, "true");
               break;
             }
-          } else if (argValue.contains('-') && argValue.find('-') == 0) {
+          } else if (argValue.starts_with('-')) {
             auto shortArg = argValue.substr(1);
             if (shortArg.size() == 1) {
               argBuffer = GetNameFromShortName<Arguments>::eval(shortArg.at(0));
@@ -150,6 +151,9 @@ class Parser {
           parseState = ArgumentParseState::ExpectValue;
           break;
         case ArgumentParseState::ExpectValue:
+          if (argValue.starts_with('-')) {
+            throw Argo::InvalidArgument("Expect value");
+          }
           this->setArg(argBuffer, argValue);
           argBuffer = "";
           parseState = ArgumentParseState::ExpectArg;

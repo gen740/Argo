@@ -88,7 +88,7 @@ target_link_libraries(YOUR_TARGET PRIVATE Argo)
 - [x] Validation
 - [x] Support for multiple parser
 - [x] Argument duplication validation
-- [ ] Optional argument
+- [x] Optional argument
 - [ ] "narg" argument
 - [ ] Custom class casting
 - [ ] Description and help auto generation

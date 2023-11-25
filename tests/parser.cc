@@ -203,3 +203,22 @@ TEST(ArgoTest, Validation) {
 
   EXPECT_THROW(parser.parse(argc, argv2), Argo::ValidationError);
 }
+
+TEST(ArgoTest, Narg) {
+  const int argc = 5;
+  char* argv[argc] = {
+      "./main", "--arg1", "--arg2", "Hello,World"  //
+  };
+
+  auto argo = Argo::Parser<8>();
+
+  auto parser = argo  //
+                    .addArg<int, Argo::arg("arg1")>(12)
+                    .addArg<std::string, Argo::arg("arg2")>()
+                    .addArg<int, Argo::arg("arg3")>()
+                    .addArg<int, Argo::arg("arg4")>()
+                    .addArg<int, Argo::arg("arg5")>()
+                    .addArg<int, Argo::arg("arg6")>();
+
+  parser.parse(argc, argv);
+}

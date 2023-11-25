@@ -28,15 +28,32 @@ struct withDescription {
  *          +  : Any number of argument except zero -> vector
  */
 struct NArgs {
- private:
-  int nargs_ = 1;
+  int nargs = -1;
+  char nargs_char = '?';
 
- public:
-  explicit NArgs(int narg) : nargs_(narg) {}
+  template <int T>
+    requires(T > 0)
+  constexpr explicit NArgs() : nargs(T) {}
 
-  [[nodiscard]] auto getNargs() const -> int {
-    return this->nargs_;
+  template <char T>
+    requires(T == '?' or T == '+' or T == '*')
+  constexpr explicit NArgs() : nargs(T) {}
+
+  constexpr explicit NArgs(int narg) : nargs(narg) {
+    if (narg < 0) {
+      throw std::invalid_argument(std::format("Nargs should be larger than 0, got {}", narg));
+    }
   }
+
+  constexpr explicit NArgs(char narg) : nargs_char(narg) {
+    if (narg != '?' && narg != '*' && narg != '+') {
+      throw std::invalid_argument(std::format("Nargs should be '?', '*' or '+', got {}", narg));
+    }
+  }
+
+ private:
+  template <class Type, auto Name, char ShortName, int ID>
+  friend struct Arg;
 };
 
 /*!
@@ -51,6 +68,7 @@ struct Arg {
   inline static std::optional<type> defaultValue = {};
   inline static std::string_view description;
   inline static bool flagArg = {};
+  inline static NArgs nargs = NArgs('?');
   inline static Validation::ValidationBase<Type>* validator = nullptr;
   inline static std::function<Type(std::string_view)> caster = nullptr;
 };
