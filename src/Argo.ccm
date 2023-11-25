@@ -1,5 +1,7 @@
 module;
 
+#include <cassert>
+
 export module Argo;
 import std_module;
 
@@ -140,16 +142,24 @@ class Parser {
     Assigner::assign<Arguments>(key, val);
   }
 
+  auto setArg(std::string_view key, const std::vector<std::string_view>& val) {
+    VariadicAssigner::assign<Arguments>(key, val);
+  }
+
+  auto setDefault(std::string_view key) {
+    DefaultAssigner::assign<Arguments>(key);
+  }
+
  public:
   /*!
    * Parse State
    */
   enum class ArgumentParseState {
     ExpectValue,
-    ExpectArg,
-    // ExpectOneValueOrFlag,
-    // ExpectNValue,
-    // Expect,
+    ExpectFlag,
+    ExpectNValuesOrFlag,
+    ExpectOneValuesOrFlag,
+    ExpectNValues,
     // Expect,
   };
 
@@ -157,13 +167,56 @@ class Parser {
    * Parse function
    */
   auto parse([[maybe_unused]] int argc, [[maybe_unused]] char* argv[]) -> void {
-    auto parseState = ArgumentParseState::ExpectArg;
+    auto parseState = ArgumentParseState::ExpectFlag;
     std::string_view argBuffer;
-    // NArgs nargs('?');
+    int expectN = 0;
+    [[maybe_unused]] bool atLeastOne = false;
+    auto variadicValueBuffer = std::vector<std::string_view>();
     for (int i = 1; i < argc; i++) {
       auto argValue = std::string_view(argv[i]);
       switch (parseState) {
-        case ArgumentParseState::ExpectArg:
+        case ArgumentParseState::ExpectNValues:
+          variadicValueBuffer.push_back(argValue);
+          expectN--;
+          if (expectN == 0) {
+            this->setArg(argBuffer, variadicValueBuffer);
+            variadicValueBuffer.clear();
+            parseState = ArgumentParseState::ExpectFlag;
+            break;
+          }
+          break;
+        case ArgumentParseState::ExpectOneValuesOrFlag:
+          if (argValue.starts_with("-")) {
+            parseState = ArgumentParseState::ExpectFlag;
+            this->setDefault(argBuffer);
+            goto ParseFlag;
+          }
+          this->setArg(argBuffer, argValue);
+          parseState = ArgumentParseState::ExpectFlag;
+          break;
+        case ArgumentParseState::ExpectNValuesOrFlag:
+          if (argValue.starts_with("-")) {
+            if (variadicValueBuffer.empty()) {
+              if (atLeastOne) {
+                throw InvalidArgument(
+                    std::format("Argument {} need at least one value", argBuffer));
+              }
+              parseState = ArgumentParseState::ExpectFlag;
+              this->setDefault(argBuffer);
+              goto ParseFlag;
+            }
+            parseState = ArgumentParseState::ExpectFlag;
+            this->setArg(argBuffer, variadicValueBuffer);
+            goto ParseFlag;
+          }
+          variadicValueBuffer.push_back(argValue);
+          if (i == (argc - 1)) {
+            this->setArg(argBuffer, variadicValueBuffer);
+            break;
+          }
+          break;
+        ParseFlag:
+        case ArgumentParseState::ExpectFlag:
           if (argValue.starts_with("--")) {
             if (argValue.contains("=")) {  // equal assign
               auto find_pos = argValue.find('=');
@@ -172,21 +225,50 @@ class Parser {
             }
             argBuffer = argValue.substr(2);
             auto check = Checker::check<Arguments>(argBuffer);
-            // nargs = check.nargs;
 
-            if (check.isBool && check.isFlag) {
+            if (check.isFlag) {
               this->setArg(argBuffer, "true");
               break;
             }
+            if (check.nargs.nargs_char == '?') {
+              parseState = ArgumentParseState::ExpectOneValuesOrFlag;
+              if (i == argc - 1) {
+                this->setDefault(argBuffer);
+              }
+              break;
+            }
+            if (check.nargs.nargs_char == '*') {
+              atLeastOne = false;
+              parseState = ArgumentParseState::ExpectNValuesOrFlag;
+              if (i == argc - 1) {
+                this->setDefault(argBuffer);
+              }
+              break;
+            }
+            if (check.nargs.nargs_char == '+') {
+              atLeastOne = true;
+              parseState = ArgumentParseState::ExpectNValuesOrFlag;
+              if (i == argc - 1) {
+                throw InvalidArgument(
+                    std::format("Argument {} need at least one value", argBuffer));
+              }
+              break;
+            }
+            if (check.nargs.nargs > 0) {
+              expectN = check.nargs.nargs;
+              parseState = ArgumentParseState::ExpectNValues;
+              break;
+            }
+            parseState = ArgumentParseState::ExpectValue;
+            break;
           } else if (argValue.starts_with('-')) {
             auto shortArg = argValue.substr(1);
             argBuffer = "";
             for (char i : shortArg) {
               auto optionName = GetNameFromShortName<Arguments>::eval(i);
               auto check = Checker::check<Arguments>(optionName);
-              // nargs = check.nargs;
 
-              if (check.isBool && check.isFlag) {
+              if (check.isFlag) {
                 this->setArg(optionName, "true");
               } else {
                 if (!argBuffer.empty()) {
@@ -198,18 +280,19 @@ class Parser {
             if (argBuffer.empty()) {
               break;
             }
+            parseState = ArgumentParseState::ExpectValue;
+            break;
           } else {
             throw Argo::InvalidArgument("Expect flag");
           }
-          parseState = ArgumentParseState::ExpectValue;
-          break;
+          assert(false);  // connot reach
         case ArgumentParseState::ExpectValue:
           if (argValue.starts_with('-')) {
             throw Argo::InvalidArgument("Expect value");
           }
           this->setArg(argBuffer, argValue);
           argBuffer = "";
-          parseState = ArgumentParseState::ExpectArg;
+          parseState = ArgumentParseState::ExpectFlag;
           break;
       }
     }

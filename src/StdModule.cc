@@ -5,16 +5,17 @@ module;
 #include <charconv>
 #include <cstring>
 #include <exception>
-#include <optional>
 #include <format>
 #include <functional>
 #include <memory>
+#include <optional>
 #include <print>
 #include <stdexcept>
 #include <string>
 #include <string_view>
 #include <tuple>
 #include <utility>
+#include <vector>
 
 export module std_module;
 
@@ -59,6 +60,7 @@ using ::std::println;
 
 // array
 using ::std::array;
+using ::std::vector;
 
 // tuple
 using ::std::make_tuple;
@@ -66,23 +68,22 @@ using ::std::tuple;
 using ::std::tuple_cat;
 
 // type_traits
+using ::std::conditional;
+using ::std::conditional_t;
 using ::std::declval;
 using ::std::is_arithmetic_v;
 using ::std::is_floating_point_v;
 using ::std::is_integral_v;
 using ::std::is_same_v;
-using ::std::remove_cvref;
-using ::std::conditional;
-using ::std::conditional_t;
-using ::std::remove_cvref_t;
 using ::std::remove_cv_t;
+using ::std::remove_cvref;
+using ::std::remove_cvref_t;
 using ::std::remove_pointer;
 using ::std::remove_pointer_t;
 using ::std::void_t;
 
 // concept
 using ::std::derived_from;
-
 
 // exception/stdexcept
 using ::std::exception;
@@ -96,8 +97,8 @@ using ::std::unique_ptr;
 using ::std::function;
 
 // optional
-using ::std::optional;
 using ::std::nullopt;
 using ::std::nullopt_t;
+using ::std::optional;
 
 }  // namespace std
