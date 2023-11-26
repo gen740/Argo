@@ -23,10 +23,7 @@ endif()
 
 add_library(Argo)
 
-file(GLOB LIBRARY_SOURCES ${CMAKE_CURRENT_LIST_DIR}/src/*.cc
-     ${CMAKE_CURRENT_LIST_DIR}/src/**/*.cc)
-file(GLOB LIBRARY_MODULE_SOURCES ${CMAKE_CURRENT_LIST_DIR}/src/*.ccm
-     ${CMAKE_CURRENT_LIST_DIR}/src/**/*.ccm)
+file(GLOB LIBRARY_SOURCES ${CMAKE_CURRENT_LIST_DIR}/src/*.cc)
 target_sources(Argo PUBLIC FILE_SET CXX_MODULES FILES ${LIBRARY_SOURCES}
                            ${LIBRARY_MODULE_SOURCES})
 
