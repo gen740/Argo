@@ -1,13 +1,12 @@
 module;
 
-import std_module;
-
 export module Argo:MetaChecker;
 
 import :Exceptions;
 import :Initializer;
 import :NArgs;
 import :Arg;
+import :std_module;
 
 export namespace Argo {
 

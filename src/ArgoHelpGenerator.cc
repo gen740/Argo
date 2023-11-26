@@ -1,9 +1,9 @@
 module;
 
-import std_module;
 
 export module Argo:HelpGenerator;
 import :MetaLookup;
+import :std_module;
 
 export namespace Argo {
 

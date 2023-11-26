@@ -1,5 +1,6 @@
 module;
 
+// TODO(gen740): need to replace std
 // Declare all stds in this file
 #include <array>
 #include <charconv>
@@ -17,7 +18,7 @@ module;
 #include <utility>
 #include <vector>
 
-export module std_module;
+export module Argo:std_module;
 
 export {
   using ::__stderrp;

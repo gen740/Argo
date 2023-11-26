@@ -3,7 +3,6 @@ module;
 #include <cassert>
 
 export module Argo;
-import std_module;
 
 export import :Exceptions;
 export import :Validation;
@@ -16,6 +15,7 @@ import :MetaLookup;
 import :Arg;
 import :NArgs;
 import :HelpGenerator;
+import :std_module;
 
 namespace Argo {
 

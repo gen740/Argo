@@ -2,9 +2,9 @@ module;
 
 export module Argo:Validation;
 
-import std_module;
 import :Exceptions;
 import :TypeTraits;
+import :std_module;
 
 export namespace Argo::Validation {
 
@@ -33,8 +33,8 @@ struct MinMax final : public ValidationBase<Type> {
 
   auto operator()(std::string_view optionName, const Type& value) -> void {
     if (!this->isValid(value)) {
-      throw ValidationError(std::format("Option {}: Value must in range ({}, {}) got {}", optionName,
-                                        this->min_, this->max_, value));
+      throw ValidationError(std::format("Option {}: Value must in range ({}, {}) got {}",
+                                        optionName, this->min_, this->max_, value));
     }
   }
 

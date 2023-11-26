@@ -1,9 +1,9 @@
 module;
 
-import std_module;
-
 export module Argo:MetaLookup;
+
 import :Exceptions;
+import :std_module;
 
 export namespace Argo {
 

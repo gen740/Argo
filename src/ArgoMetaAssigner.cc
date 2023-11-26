@@ -1,10 +1,11 @@
 module;
 
-import std_module;
 export module Argo:MetaAssigner;
+
 import :Exceptions;
 import :Validation;
 import :Arg;
+import :std_module;
 
 export namespace Argo {
 

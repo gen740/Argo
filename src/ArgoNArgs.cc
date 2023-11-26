@@ -1,8 +1,8 @@
 module;
 
-import std_module;
-
 export module Argo:NArgs;
+
+import :std_module;
 
 export namespace Argo {
 

@@ -1,7 +1,8 @@
 module;
 
-import std_module;
 export module Argo:Exceptions;
+
+import :std_module;
 
 export namespace Argo {
 

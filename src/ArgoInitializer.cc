@@ -1,11 +1,11 @@
 module;
 
-import std_module;
 export module Argo:Initializer;
 
 import :Validation;
 import :NArgs;
 import :Arg;
+import :std_module;
 
 export namespace Argo {
 
