@@ -2,7 +2,6 @@ cmake_minimum_required(VERSION 3.28)
 
 project(Argo CXX)
 
-set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 set(CMAKE_CXX_STANDARD 23)
 
 # Setting Build Type
@@ -10,14 +9,17 @@ if(NOT CMAKE_BUILD_TYPE)
   set(CMAKE_BUILD_TYPE "Debug")
 endif()
 
-# set release flag
-set(CMAKE_CXX_FLAGS_RELEASE "-O3 -ffast-math")
-set(CMAKE_CXX_FLAGS_DEBUG "-g -O0")
+if(${CMAKE_SOURCE_DIR} STREQUAL ${CMAKE_CURRENT_LIST_DIR})
+  # set release flag
+  set(CMAKE_CXX_FLAGS_RELEASE "-O3 -ffast-math")
+  set(CMAKE_CXX_FLAGS_DEBUG "-g -O0")
+  set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
-message(STATUS "Build Type: ${CMAKE_BUILD_TYPE}")
+  message(STATUS "Build Type: ${CMAKE_BUILD_TYPE}")
 
-set(CMAKE_CXX_FLAGS
-    "-Wall -Wextra -Werror -Wnon-virtual-dtor -Wfloat-equal -Winline")
+  set(CMAKE_CXX_FLAGS
+      "-Wall -Wextra -Werror -Wnon-virtual-dtor -Wfloat-equal -Winline")
+endif()
 
 add_library(Argo)
 
