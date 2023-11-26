@@ -73,7 +73,7 @@ include(FetchContent)
 FetchContent_Declare(
   Argo
   GIT_REPOSITORY https://github.com/gen740/Argo.git
-  GIT_TAG        master  # or use a specific commit/tag
+  GIT_TAG        main  # or use a specific commit/tag
 )
 
 FetchContent_MakeAvailable(Argo)
