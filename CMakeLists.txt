@@ -23,9 +23,10 @@ endif()
 
 add_library(Argo)
 
-file(GLOB LIBRARY_SOURCES ${CMAKE_CURRENT_LIST_DIR}/src/*.cc)
-target_sources(Argo PUBLIC FILE_SET CXX_MODULES FILES ${LIBRARY_SOURCES}
+file(GLOB ARGO_LIBRARY_SOURCES ${CMAKE_CURRENT_LIST_DIR}/src/*.cc)
+target_sources(Argo PUBLIC FILE_SET CXX_MODULES FILES ${ARGO_LIBRARY_SOURCES}
                            ${LIBRARY_MODULE_SOURCES})
+unset(ARGO_LIBRARY_SOURCES)
 
 if(${ARGO_TEST_ENABLE})
   find_package(GTest REQUIRED)
