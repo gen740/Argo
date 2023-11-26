@@ -46,7 +46,7 @@ TEST(ArgoTest, AllTypes) {
       "--arg5", "Hello,World!const char*",  // const char*
   };
 
-  auto argo = Argo::Parser<1>();
+  auto argo = Argo::Parser<10>();
   auto parser = argo.addArg<int, Argo::arg("arg1")>()
                     .addArg<float, Argo::arg("arg2")>()
                     .addArg<double, Argo::arg("arg3")>()
@@ -82,7 +82,7 @@ TEST(ArgoTest, ExceptionThow) {
   const int argc = 3;
   char* argv[argc] = {"./main", "arg1=42", "--arg2=23.4"};
 
-  auto argo = Argo::Parser<2>();
+  auto argo = Argo::Parser<20>();
   auto parser = argo.addArg<int, Argo::arg("arg1")>()  //
                     .addArg<float, Argo::arg("arg2")>();
 
@@ -94,7 +94,7 @@ TEST(ArgoTest, EqualAssign) {
   const int argc = 3;
   char* argv[argc] = {"./main", "--arg1=42", "--arg2=Hello,World"};
 
-  auto argo = Argo::Parser<3>();
+  auto argo = Argo::Parser<30>();
   auto parser = argo.addArg<int, Argo::arg("arg1")>().addArg<std::string, Argo::arg("arg2")>();
 
   parser.parse(argc, argv);
@@ -108,7 +108,7 @@ TEST(ArgoTest, FlagArgument) {
   char* argv[argc] = {"./main", "--arg1", "--arg2=true", "--arg3=1",
                       "--arg4", "true",   "--arg5",      "1"};
 
-  auto argo = Argo::Parser<4>();
+  auto argo = Argo::Parser<40>();
   auto parser = argo.addFlag<Argo::arg("arg1")>()
                     .addArg<bool, Argo::arg("arg2")>()
                     .addArg<bool, Argo::arg("arg3")>()
@@ -133,7 +133,7 @@ TEST(ArgoTest, ShortArgument) {
       "-c",     "3.1415"        //
   };
 
-  auto argo = Argo::Parser<5>();
+  auto argo = Argo::Parser<50>();
   auto parser = argo.addArg<std::string, Argo::arg("arg1"), 'a'>()
                     .addArg<int, Argo::arg("arg2"), 'b'>()
                     .addArg<float, Argo::arg("arg3"), 'c'>();
@@ -151,7 +151,7 @@ TEST(ArgoTest, CombiningFlags) {
       "./main", "-abd", "-e"  //
   };
 
-  auto argo = Argo::Parser<6>();
+  auto argo = Argo::Parser<60>();
   auto parser = argo.addFlag<Argo::arg("arg1"), 'a'>()
                     .addFlag<Argo::arg("arg2"), 'b'>()
                     .addFlag<Argo::arg("arg3"), 'c'>()
@@ -173,7 +173,7 @@ TEST(ArgoTest, CombiningFlagsWithOptionalArg) {
       "./main", "-abcd", "Hello,World"  //
   };
 
-  auto argo = Argo::Parser<7>();
+  auto argo = Argo::Parser<70>();
   auto parser = argo.addFlag<Argo::arg("arg1"), 'a'>()
                     .addFlag<Argo::arg("arg2"), 'b'>()
                     .addArg<std::string, Argo::arg("arg3"), 'c'>()
@@ -193,7 +193,7 @@ TEST(ArgoTest, Validation) {
       "./main", "--arg", "42"  //
   };
 
-  auto argo = Argo::Parser<8>();
+  auto argo = Argo::Parser<80>();
 
   auto parser = argo  //
                     .addArg<int, Argo::arg("arg")>(new Argo::Validation::MinMax<int>(0, 100))
@@ -209,29 +209,49 @@ TEST(ArgoTest, Validation) {
 }
 
 TEST(ArgoTest, Narg) {
-  const int argc = 16;
-  char* argv[argc] = {
-      //
-      "./main",                              //
-      "--arg1", "1",   "2",   "3",           //
-      "--arg2",                              //
-      "--arg3", "6.0", "7.2", "8.4", "9.6",  //
-      "--arg4", "11",  "12",  "8",   "9"     //
-  };
+  {
+    const int argc = 16;
+    char* argv[argc] = {
+        //
+        "./main",                              //
+        "--arg1", "1",   "2",   "3",           //
+        "--arg2",                              //
+        "--arg3", "6.0", "7.2", "8.4", "9.6",  //
+        "--arg4", "11",  "12",  "8",   "9"     //
+    };
 
-  auto argo = Argo::Parser<9>();
+    auto argo = Argo::Parser<90>();
 
-  auto parser = argo  //
-                    .addArg<int, Argo::arg("arg1"), Argo::nargs(3)>()
-                    .addArg<std::string, Argo::arg("arg2")>("Bar")
-                    .addArg<float, Argo::arg("arg3"), Argo::nargs('*')>()
-                    .addArg<float, Argo::arg("arg4"), Argo::nargs('+')>();
+    auto parser = argo  //
+                      .addArg<int, Argo::arg("arg1"), Argo::nargs(3)>()
+                      .addArg<std::string, Argo::arg("arg2")>("Bar")
+                      .addArg<float, Argo::arg("arg3"), Argo::nargs('*')>()
+                      .addArg<float, Argo::arg("arg4"), Argo::nargs('+')>();
 
-  parser.parse(argc, argv);
+    parser.parse(argc, argv);
 
-  EXPECT_THAT(parser.getArg<Argo::arg("arg1")>().value(), testing::ElementsAre(1, 2, 3));
-  EXPECT_EQ(parser.getArg<Argo::arg("arg2")>().value(), "Bar");
-  EXPECT_THAT(parser.getArg<Argo::arg("arg3")>().value(), testing::ElementsAre(6.0, 7.2, 8.4, 9.6));
+    EXPECT_THAT(parser.getArg<Argo::arg("arg1")>().value(), testing::ElementsAre(1, 2, 3));
+    EXPECT_EQ(parser.getArg<Argo::arg("arg2")>().value(), "Bar");
+    EXPECT_THAT(parser.getArg<Argo::arg("arg3")>().value(),
+                testing::ElementsAre(6.0, 7.2, 8.4, 9.6));
+  }
+  {
+    const int argc = 3;
+    char* argv[argc] = {
+        //
+        "./main",      //
+        "--arg1", "1"  //
+    };
+
+    auto argo = Argo::Parser<91>();
+
+    auto parser = argo  //
+                      .addArg<int, Argo::arg("arg1"), Argo::nargs(1)>();
+
+    parser.parse(argc, argv);
+
+    // EXPECT_THAT(parser.getArg<Argo::arg("arg1")>().value(), testing::ElementsAre(1, 2, 3));
+  }
 }
 
 TEST(ArgoTest, NargException) {
@@ -242,7 +262,7 @@ TEST(ArgoTest, NargException) {
         "--arg1",  //
     };
 
-    auto argo = Argo::Parser<10>();
+    auto argo = Argo::Parser<100>();
 
     auto parser = argo  //
                       .addArg<int, Argo::arg("arg1"), Argo::nargs('+')>();
@@ -257,7 +277,7 @@ TEST(ArgoTest, NargException) {
         "--arg1", "--arg2",  //
     };
 
-    auto argo = Argo::Parser<11>();
+    auto argo = Argo::Parser<101>();
 
     auto parser = argo  //
                       .addArg<int, Argo::arg("arg1"), Argo::nargs('+')>()
@@ -269,7 +289,7 @@ TEST(ArgoTest, NargException) {
 
 TEST(ArgoTest, Help) {
   {
-    auto argo = Argo::Parser<12>("Sample Program");
+    auto argo = Argo::Parser<110>("Sample Program");
     auto parser = argo  //
                       .addArg<int, Argo::arg("arg1"), 'a', Argo::nargs('+')>()
                       .addArg<int, Argo::arg("arg2"), Argo::nargs('+')>(
@@ -288,7 +308,7 @@ TEST(ArgoTest, Help) {
     // EXPECT_THROW(parser.parse(argc, argv), Argo::InvalidArgument);
   }
   {
-    auto argo = Argo::Parser<13>("program");
+    auto argo = Argo::Parser<111>("program");
     auto parser = argo  //
                       .addArg<int, Argo::arg("arg1"), 'a', Argo::nargs('+')>()
                       .addArg<int, Argo::arg("arg2"), Argo::nargs('+')>(

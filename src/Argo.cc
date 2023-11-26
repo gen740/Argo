@@ -167,6 +167,7 @@ class Parser {
     ExpectNValuesOrFlag,
     ExpectOneValuesOrFlag,
     ExpectNValues,
+    ExpectOneValue,
     // Expect,
   };
 
@@ -218,6 +219,10 @@ class Parser {
             parseState = ArgumentParseState::ExpectFlag;
             break;
           }
+          break;
+        case ArgumentParseState::ExpectOneValue:
+          this->setArg(argBuffer, argBuffer);
+          parseState = ArgumentParseState::ExpectFlag;
           break;
         case ArgumentParseState::ExpectOneValuesOrFlag:
           if (argValue.starts_with("-")) {
@@ -288,7 +293,9 @@ class Parser {
               }
               break;
             }
-            if (check.nargs.nargs > 0) {
+            if (check.nargs.nargs == 1) {
+              parseState = ArgumentParseState::ExpectOneValue;
+            } else if (check.nargs.nargs > 1) {
               expectN = check.nargs.nargs;
               parseState = ArgumentParseState::ExpectNValues;
               break;
