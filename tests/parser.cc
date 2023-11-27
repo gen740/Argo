@@ -21,7 +21,7 @@ TEST(ArgoTest, ExampleCode) {
   parser.parse(argc, argv);
 
   EXPECT_EQ(parser.getArg<Argo::arg("arg1")>(), 42);
-  // EXPECT_FALSE(parser.getArg<Argo::arg("arg2")>().has_value());
+  // EXPECT_FALSE(parser.getArg<Argo::arg("arg2")>());
   EXPECT_EQ(parser.getArg<Argo::arg("arg3")>(), "Hello,World");
 
   EXPECT_TRUE((  //

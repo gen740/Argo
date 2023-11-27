@@ -59,10 +59,6 @@ struct ShortName {
   static constexpr char value = Name;
 };
 
-// consteval auto short(char a)  {
-//   return ShortName<a>();
-// }
-
 export template <int ID = 0, class Args = std::tuple<>>
 class Parser {
  private:
@@ -79,24 +75,47 @@ class Parser {
   /*!
    * Type: type of argument
    * Name: name of argument
-   * arg1: ShortName or NArgs or unspecified
-   * arg2: NArgs or unspecified
+   * arg1: ShortName or NArgs or Unspecified
+   * arg2: NArgs or Unspecified
    */
-  template <class Type, auto Name, auto arg1 = Unspecified(), auto arg2 = Unspecified(), class... T>
+  template <class Type, auto Name, auto arg1 = Unspecified(), auto arg2 = Unspecified(),
+            auto arg3 = Unspecified(), class... T>
   auto addArg(T... args) {
-    static constexpr char ShortName = std::conditional_t<        //
-        std::is_same_v<std::remove_cv_t<decltype(arg1)>, char>,  //
-        IdentityHolder<arg1>,                                    //
-        IdentityHolder<NULLCHAR>                                 //
-        >::value;
+    static constexpr char ShortName = []() {
+      if constexpr (std::is_same_v<std::remove_cvref_t<decltype(arg1)>, char>) {
+        return arg1;
+      } else if constexpr (std::is_same_v<std::remove_cvref_t<decltype(arg2)>, char>) {
+        return arg2;
+      } else if constexpr (std::is_same_v<std::remove_cvref_t<decltype(arg3)>, char>) {
+        return arg3;
+      } else {
+        return NULLCHAR;
+      }
+    }();
 
-    static constexpr auto nargs = std::conditional_t<                       //
-        std::derived_from<std::remove_cvref_t<decltype(arg1)>, NArgs>,      //
-        IdentityHolder<arg1>,                                               //
-        std::conditional_t<                                                 //
-            std::derived_from<std::remove_cvref_t<decltype(arg2)>, NArgs>,  //
-            IdentityHolder<arg2>,                                           //
-            IdentityHolder<NArgs('?')>>>::value;
+    static constexpr auto nargs = []() {
+      if constexpr (std::is_same_v<std::remove_cvref_t<decltype(arg1)>, NArgs>) {
+        return arg1;
+      } else if constexpr (std::is_same_v<std::remove_cvref_t<decltype(arg2)>, NArgs>) {
+        return arg2;
+      } else if constexpr (std::is_same_v<std::remove_cvref_t<decltype(arg3)>, NArgs>) {
+        return arg3;
+      } else {
+        return NArgs('?');
+      }
+    }();
+
+    static constexpr auto required = []() {
+      if constexpr (std::is_same_v<std::remove_cvref_t<decltype(arg1)>, bool>) {
+        return arg1;
+      } else if constexpr (std::is_same_v<std::remove_cvref_t<decltype(arg2)>, bool>) {
+        return arg2;
+      } else if constexpr (std::is_same_v<std::remove_cvref_t<decltype(arg3)>, bool>) {
+        return arg3;
+      } else {
+        return false;
+      }
+    }();
 
     static_assert(
         (ShortName == NULLCHAR) || (SearchIndexFromShortName<Arguments, ShortName>::value == -1),
@@ -111,11 +130,12 @@ class Parser {
          || nargs.nargs_char == '*'),  //
         "nargs must be '?', '+', '*' or int");
 
-    ArgInitializer<Type, Name, ShortName, nargs, ID>::init(std::forward<T>(args)...);
-    return Parser<ID, decltype(std::tuple_cat(                                               //
-                          std::declval<Arguments>(),                                         //
-                          std::declval<std::tuple<Arg<Type, Name, ShortName, nargs, ID>>>()  //
-                          ))>();
+    ArgInitializer<Type, Name, ShortName, nargs, required, ID>::init(std::forward<T>(args)...);
+    return Parser<
+        ID, decltype(std::tuple_cat(                                                         //
+                std::declval<Arguments>(),                                                   //
+                std::declval<std::tuple<Arg<Type, Name, ShortName, nargs, required, ID>>>()  //
+                ))>();
   }
 
   template <auto Name, char ShortName = NULLCHAR, class... T>
