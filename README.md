@@ -20,24 +20,24 @@ auto main(int argc, char* argv[]) -> int {
   auto argo = Argo::Parser();
 
   auto parser = argo
-                    .addArg<int, Argo::arg("arg1")>()
-                    .addArg<float, Argo::arg("arg2")>(53.4)
-                    .addArg<std::string, Argo::arg("arg3")>();
+                    .addArg<int, Argo::key("arg1")>()
+                    .addArg<float, Argo::key("arg2")>(53.4)
+                    .addArg<std::string, Argo::key("arg3")>();
 
   parser.parse(argc, argv);
 
-  std::println("{}", parser.getArg<Argo::arg("arg1")>()); // 42
-  std::println("{}", parser.getArg<Argo::arg("arg2")>()); // 53.4 (default value)
-  std::println("{}", parser.getArg<Argo::arg("arg3")>()); // Hello,World
-  // std::println("{}", parser.getArg<Argo::arg("arg4")>()); // error
+  std::println("{}", parser.getArg<Argo::key("arg1")>()); // 42
+  std::println("{}", parser.getArg<Argo::key("arg2")>()); // 53.4 (default value)
+  std::println("{}", parser.getArg<Argo::key("arg3")>()); // Hello,World
+  // std::println("{}", parser.getArg<Argo::key("arg4")>()); // error
 
   // Static Typing
   static_assert(
-      std::is_same_v<decltype(parser.getArg<Argo::arg("arg1")>()), int>);
+      std::is_same_v<decltype(parser.getArg<Argo::key("arg1")>()), int>);
   static_assert(
-      std::is_same_v<decltype(parser.getArg<Argo::arg("arg2")>()), float>);
+      std::is_same_v<decltype(parser.getArg<Argo::key("arg2")>()), float>);
   static_assert(
-      std::is_same_v<decltype(parser.getArg<Argo::arg("arg3")>()), std::string>);
+      std::is_same_v<decltype(parser.getArg<Argo::key("arg3")>()), std::string>);
 
   return 0;
 }
