@@ -21,6 +21,14 @@ struct NArgs {
   constexpr explicit NArgs(char arg) : nargs_char(arg) {}
 
   constexpr explicit NArgs(int arg) : nargs(arg) {}
+
+  [[nodiscard]] constexpr int getNargs() const {
+    return nargs;
+  }
+
+  [[nodiscard]] constexpr char getNargsChar() const {
+    return nargs_char;
+  }
 };
 
 };  // namespace Argo

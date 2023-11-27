@@ -73,6 +73,8 @@ using ::std::conditional;
 using ::std::conditional_t;
 using ::std::declval;
 using ::std::is_arithmetic_v;
+using ::std::is_array;
+using ::std::is_array_v;
 using ::std::is_floating_point_v;
 using ::std::is_integral_v;
 using ::std::is_same_v;

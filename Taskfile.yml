@@ -8,6 +8,7 @@ vars:
 tasks:
   cmake:
     cmds:
+      # - cmake -B build -S . -GNinja -DARGO_BENCHMARKS_ENABLE=true
       - cmake -B build -S . -GNinja -DARGO_TESTS_ENABLE=true -DARGO_BENCHMARKS_ENABLE=true
     env:
       CC: /usr/local/opt/llvm/bin/clang
@@ -18,6 +19,6 @@ tasks:
   execute:
     cmds:
       # - ./build/main --arg1=42 --arg2="Hello,World"
-      # - ./build/test-parser-release --gtest_filter=ArgoTest.CombiningFlagsWithOptionalArg
+      # - ./build/test-parser-release
       - ./build/bench-parser-release
     silent: true

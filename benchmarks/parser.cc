@@ -3,22 +3,25 @@ import Argo;
 #include <benchmark/benchmark.h>
 
 #if CLI11_FOUND
-
 #include <CLI/CLI.hpp>
 #endif
 
-const int argc = 17;
+#if argparse_FOUND
+#include <argparse/argparse.hpp>
+#endif
+
+const int argc = 18;
 char* argv[argc] = {
     "./main",                                                                       //
-    "--arg1", "1",     "2",      "3",      "4",           "5",    "6",   "7", "8",  // 10
-    "--arg2", "42.23", "--arg3", "--arg4", "Hello,World", "-bcd", "3.14"            // 17
+    "--arg1", "1",     "2",      "3",      "4",           "5",   "6",  "7",   "8",  // 10
+    "--arg2", "42.23", "--arg3", "--arg4", "Hello,World", "-bc", "-d", "3.14"       // 17
 };
 
 using Argo::arg;
 using Argo::nargs;
 using Argo::Parser;
 
-static void ArgoParser1(benchmark::State& state) {
+static void ArgoParser(benchmark::State& state) {
   for (auto _ : state) {
     auto argo = Parser<1>();
     auto parser = argo  //
@@ -33,9 +36,10 @@ static void ArgoParser1(benchmark::State& state) {
   }
 }
 
-BENCHMARK(ArgoParser1);
+BENCHMARK(ArgoParser);
 
-static void Cli11(benchmark::State& state) {
+#if CLI11_FOUND
+static void CLI11Parser(benchmark::State& state) {
   for (auto _ : state) {
     CLI::App app{"App description"};
 
@@ -57,20 +61,35 @@ static void Cli11(benchmark::State& state) {
       CLI11_PARSE(app, argc, argv);
       return 0;
     }();
-
-    // auto argo = Parser<1>();
-    // auto parser = argo  //
-    //                   .addArg<int, arg("arg1"), nargs(8)>()
-    //                   .addArg<float, arg("arg2")>()
-    //                   .addFlag<arg("arg3")>()
-    //                   .addArg<std::string, arg("arg4"), nargs(1)>()
-    //                   .addFlag<arg("arg5"), 'b'>()
-    //                   .addArg<float, arg("arg6"), 'c'>()
-    //                   .addFlag<arg("arg7"), 'd'>();
-    // parser.parse(argc, argv);
   }
 }
 
-BENCHMARK(Cli11);
+BENCHMARK(CLI11Parser);
+#endif
+
+#if argparse_FOUND
+static void argparseParser(benchmark::State& state) {
+  for (auto _ : state) {
+    argparse::ArgumentParser program("program_name");
+
+    program.add_argument("--arg1").nargs(8).scan<'d', int>();
+    program.add_argument("--arg2").scan<'g', double>();
+    program.add_argument("--arg3").default_value(false);
+    program.add_argument("--arg4").nargs(1);
+    program.add_argument("-b", "--arg5").default_value(false);
+    program.add_argument("-c", "--arg6").default_value(false);
+    program.add_argument("-d", "--arg7");
+
+    program.parse_args(argc, argv);
+
+    program.get<std::vector<int>>("--arg1");
+    program.get<double>("--arg2");
+    program.get<bool>("--arg3");
+  }
+}
+
+BENCHMARK(argparseParser);
+
+#endif
 
 BENCHMARK_MAIN();
