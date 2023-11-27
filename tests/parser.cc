@@ -20,19 +20,16 @@ TEST(ArgoTest, ExampleCode) {
 
   parser.parse(argc, argv);
 
-  EXPECT_EQ(parser.getArg<Argo::arg("arg1")>().value(), 42);
-  EXPECT_FALSE(parser.getArg<Argo::arg("arg2")>().has_value());
-  // EXPECT_EQ(parser.getArg<Argo::arg("arg3")>().value(), "Hello,World");
+  EXPECT_EQ(parser.getArg<Argo::arg("arg1")>(), 42);
+  // EXPECT_FALSE(parser.getArg<Argo::arg("arg2")>().has_value());
+  EXPECT_EQ(parser.getArg<Argo::arg("arg3")>(), "Hello,World");
 
-  EXPECT_TRUE((                                                     //
-      std::is_same_v<decltype(parser.getArg<Argo::arg("arg1")>()),  //
-                     std::optional<int>>));
-  EXPECT_TRUE((                                                     //
-      std::is_same_v<decltype(parser.getArg<Argo::arg("arg2")>()),  //
-                     std::optional<float>>));
-  EXPECT_TRUE((                                                     //
-      std::is_same_v<decltype(parser.getArg<Argo::arg("arg3")>()),  //
-                     std::optional<std::string>>));
+  EXPECT_TRUE((  //
+      std::is_same_v<decltype(parser.getArg<Argo::arg("arg1")>()), int>));
+  EXPECT_TRUE((  //
+      std::is_same_v<decltype(parser.getArg<Argo::arg("arg2")>()), float>));
+  EXPECT_TRUE((  //
+      std::is_same_v<decltype(parser.getArg<Argo::arg("arg3")>()), std::string>));
 }
 
 TEST(ArgoTest, AllTypes) {
@@ -55,27 +52,22 @@ TEST(ArgoTest, AllTypes) {
 
   parser.parse(argc, argv);
 
-  EXPECT_EQ(parser.getArg<Argo::arg("arg1")>().value(), 42);
-  EXPECT_FLOAT_EQ(parser.getArg<Argo::arg("arg2")>().value(), 42.1234567890f);
-  EXPECT_DOUBLE_EQ(parser.getArg<Argo::arg("arg3")>().value(), 42.12345678901234567890);
-  EXPECT_EQ(parser.getArg<Argo::arg("arg4")>().value(), "Hello,World!");
-  EXPECT_EQ(parser.getArg<Argo::arg("arg5")>().value(), "Hello,World!const char*");
+  EXPECT_EQ(parser.getArg<Argo::arg("arg1")>(), 42);
+  EXPECT_FLOAT_EQ(parser.getArg<Argo::arg("arg2")>(), 42.1234567890f);
+  EXPECT_DOUBLE_EQ(parser.getArg<Argo::arg("arg3")>(), 42.12345678901234567890);
+  EXPECT_EQ(parser.getArg<Argo::arg("arg4")>(), "Hello,World!");
+  EXPECT_EQ(parser.getArg<Argo::arg("arg5")>(), "Hello,World!const char*");
 
-  EXPECT_TRUE((                                                     //
-      std::is_same_v<decltype(parser.getArg<Argo::arg("arg1")>()),  //
-                     std::optional<int>>));
-  EXPECT_TRUE((                                                     //
-      std::is_same_v<decltype(parser.getArg<Argo::arg("arg2")>()),  //
-                     std::optional<float>>));
-  EXPECT_TRUE((                                                     //
-      std::is_same_v<decltype(parser.getArg<Argo::arg("arg3")>()),  //
-                     std::optional<double>>));
-  EXPECT_TRUE((                                                     //
-      std::is_same_v<decltype(parser.getArg<Argo::arg("arg4")>()),  //
-                     std::optional<std::string>>));
-  EXPECT_TRUE((                                                     //
-      std::is_same_v<decltype(parser.getArg<Argo::arg("arg5")>()),  //
-                     std::optional<const char*>>));
+  EXPECT_TRUE((  //
+      std::is_same_v<decltype(parser.getArg<Argo::arg("arg1")>()), int>));
+  EXPECT_TRUE((  //
+      std::is_same_v<decltype(parser.getArg<Argo::arg("arg2")>()), float>));
+  EXPECT_TRUE((  //
+      std::is_same_v<decltype(parser.getArg<Argo::arg("arg3")>()), double>));
+  EXPECT_TRUE((  //
+      std::is_same_v<decltype(parser.getArg<Argo::arg("arg4")>()), std::string>));
+  EXPECT_TRUE((  //
+      std::is_same_v<decltype(parser.getArg<Argo::arg("arg5")>()), const char*>));
 }
 
 TEST(ArgoTest, ExceptionThow) {
@@ -86,7 +78,7 @@ TEST(ArgoTest, ExceptionThow) {
   auto parser = argo.addArg<int, Argo::arg("arg1")>()  //
                     .addArg<float, Argo::arg("arg2")>();
 
-  EXPECT_THROW(parser.getArg<Argo::arg("arg1")>().value(), Argo::ParseError);
+  EXPECT_THROW(parser.getArg<Argo::arg("arg1")>(), Argo::ParseError);
   EXPECT_THROW(parser.parse(argc, argv), Argo::InvalidArgument);
 }
 
@@ -99,8 +91,8 @@ TEST(ArgoTest, EqualAssign) {
 
   parser.parse(argc, argv);
 
-  EXPECT_EQ(parser.getArg<Argo::arg("arg1")>().value(), 42);
-  EXPECT_EQ(parser.getArg<Argo::arg("arg2")>().value(), "Hello,World");
+  EXPECT_EQ(parser.getArg<Argo::arg("arg1")>(), 42);
+  EXPECT_EQ(parser.getArg<Argo::arg("arg2")>(), "Hello,World");
 }
 
 TEST(ArgoTest, FlagArgument) {
@@ -118,10 +110,10 @@ TEST(ArgoTest, FlagArgument) {
   parser.parse(argc, argv);
 
   EXPECT_EQ(parser.getArg<Argo::arg("arg1")>(), true);
-  EXPECT_EQ(parser.getArg<Argo::arg("arg2")>().value(), true);
-  EXPECT_EQ(parser.getArg<Argo::arg("arg3")>().value(), true);
-  EXPECT_EQ(parser.getArg<Argo::arg("arg4")>().value(), true);
-  EXPECT_EQ(parser.getArg<Argo::arg("arg5")>().value(), true);
+  EXPECT_EQ(parser.getArg<Argo::arg("arg2")>(), true);
+  EXPECT_EQ(parser.getArg<Argo::arg("arg3")>(), true);
+  EXPECT_EQ(parser.getArg<Argo::arg("arg4")>(), true);
+  EXPECT_EQ(parser.getArg<Argo::arg("arg5")>(), true);
 }
 
 TEST(ArgoTest, ShortArgument) {
@@ -140,9 +132,9 @@ TEST(ArgoTest, ShortArgument) {
 
   parser.parse(argc, argv);
 
-  EXPECT_EQ(parser.getArg<Argo::arg("arg1")>().value(), "Hello,World");
-  EXPECT_EQ(parser.getArg<Argo::arg("arg2")>().value(), 42);
-  EXPECT_FLOAT_EQ(parser.getArg<Argo::arg("arg3")>().value(), 3.1415);
+  EXPECT_EQ(parser.getArg<Argo::arg("arg1")>(), "Hello,World");
+  EXPECT_EQ(parser.getArg<Argo::arg("arg2")>(), 42);
+  EXPECT_FLOAT_EQ(parser.getArg<Argo::arg("arg3")>(), 3.1415);
 }
 
 TEST(ArgoTest, CombiningFlags) {
@@ -183,7 +175,7 @@ TEST(ArgoTest, CombiningFlagsWithOptionalArg) {
 
   EXPECT_TRUE(parser.getArg<Argo::arg("arg1")>());
   EXPECT_TRUE(parser.getArg<Argo::arg("arg2")>());
-  EXPECT_EQ(parser.getArg<Argo::arg("arg3")>().value(), "Hello,World");
+  EXPECT_EQ(parser.getArg<Argo::arg("arg3")>(), "Hello,World");
   EXPECT_TRUE(parser.getArg<Argo::arg("arg4")>());
 }
 
@@ -230,10 +222,9 @@ TEST(ArgoTest, Narg) {
 
     parser.parse(argc, argv);
 
-    EXPECT_THAT(parser.getArg<Argo::arg("arg1")>().value(), testing::ElementsAre(1, 2, 3));
-    EXPECT_EQ(parser.getArg<Argo::arg("arg2")>().value(), "Bar");
-    EXPECT_THAT(parser.getArg<Argo::arg("arg3")>().value(),
-                testing::ElementsAre(6.0, 7.2, 8.4, 9.6));
+    EXPECT_THAT(parser.getArg<Argo::arg("arg1")>(), testing::ElementsAre(1, 2, 3));
+    EXPECT_EQ(parser.getArg<Argo::arg("arg2")>(), "Bar");
+    EXPECT_THAT(parser.getArg<Argo::arg("arg3")>(), testing::ElementsAre(6.0, 7.2, 8.4, 9.6));
   }
   {
     const int argc = 3;
@@ -250,7 +241,7 @@ TEST(ArgoTest, Narg) {
 
     parser.parse(argc, argv);
 
-    // EXPECT_THAT(parser.getArg<Argo::arg("arg1")>().value(), testing::ElementsAre(1, 2, 3));
+    // EXPECT_THAT(parser.getArg<Argo::arg("arg1")>(), testing::ElementsAre(1, 2, 3));
   }
 }
 

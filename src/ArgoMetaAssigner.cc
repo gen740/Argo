@@ -71,7 +71,7 @@ struct Assigner {
             if (values.size() == 1) {
               Head::value = caster<typename Head::baseType>(values[0]);
               if (Head::validator) {
-                (*Head::validator)(key, Head::value.value());
+                (*Head::validator)(key, Head::value);
               }
               return;
             }
@@ -84,10 +84,10 @@ struct Assigner {
             }
             Head::value = typename Head::type();
             for (const auto& value : values) {
-              Head::value->push_back(caster<typename Head::baseType>(value));
+              Head::value.push_back(caster<typename Head::baseType>(value));
             }
             if (Head::validator) {
-              (*Head::validator)(key, Head::value.value());
+              (*Head::validator)(key, Head::value);
             }
             return;
           } else if constexpr (Head::nargs.getNargsChar() == '+') {
@@ -97,10 +97,10 @@ struct Assigner {
             }
             Head::value = typename Head::type();
             for (const auto& value : values) {
-              Head::value->push_back(caster<typename Head::baseType>(value));
+              Head::value.push_back(caster<typename Head::baseType>(value));
             }
             if (Head::validator) {
-              (*Head::validator)(key, Head::value.value());
+              (*Head::validator)(key, Head::value);
             }
             return;
           } else if constexpr (Head::nargs.getNargs() == 1) {
@@ -114,7 +114,7 @@ struct Assigner {
             }
             Head::value = caster<typename Head::baseType>(values[0]);
             if (Head::validator) {
-              (*Head::validator)(key, Head::value.value());
+              (*Head::validator)(key, Head::value);
             }
             return;
           } else {
@@ -125,10 +125,10 @@ struct Assigner {
             }
             Head::value = typename Head::type();
             for (const auto& j : values) {
-              Head::value->push_back(caster<typename Head::baseType>(j));
+              Head::value.push_back(caster<typename Head::baseType>(j));
             }
             if (Head::validator) {
-              (*Head::validator)(key, Head::value.value());
+              (*Head::validator)(key, Head::value);
             }
             return;
           }

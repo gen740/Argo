@@ -43,8 +43,8 @@ struct Arg : ArgTag, ArgBase<Type, Name, ShortName, ID> {
       isVariadic,                   //
       std::vector<Type>,            //
       Type>;
-  inline static std::optional<type> value = {};
-  inline static std::optional<type> defaultValue = {};
+  inline static type value = {};
+  inline static type defaultValue = {};
   inline static constexpr NArgs nargs = TNArgs;
   inline static Validation::ValidationBase<type>* validator = nullptr;
   inline static std::function<Type(std::string_view)> caster = nullptr;
