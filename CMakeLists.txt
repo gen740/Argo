@@ -26,11 +26,69 @@ file(GLOB ARGO_LIBRARY_SOURCES ${CMAKE_CURRENT_LIST_DIR}/src/*.cc)
 target_sources(Argo PUBLIC FILE_SET CXX_MODULES FILES ${ARGO_LIBRARY_SOURCES})
 unset(ARGO_LIBRARY_SOURCES)
 
-if(${ARGO_TEST_ENABLE})
+if(${ARGO_TESTS_ENABLE})
+  set(CMAKE_CXX_FLAGS_RELEASE "")
+  set(CMAKE_CXX_FLAGS_DEBUG "")
+
   find_package(GTest REQUIRED)
   file(GLOB ARGO_TEST_SOURCES ${CMAKE_CURRENT_LIST_DIR}/tests/*.cc)
-  add_executable(argo_test ${ARGO_TEST_SOURCES})
-  target_link_libraries(argo_test GTest::GTest GTest::Main GTest::gmock Argo)
-  set_target_properties(argo_test PROPERTIES CXX_STANDARD 23)
-  target_compile_options(argo_test PRIVATE -Wno-writable-strings)
+  foreach(target ${ARGO_TEST_SOURCES})
+    get_filename_component(target_name ${target} NAME_WE)
+
+    # Debug Target
+    set(debug_target_name "test-${target_name}-debug")
+    add_executable(${debug_target_name} ${target})
+    target_link_libraries(${debug_target_name} GTest::GTest GTest::Main
+                          GTest::gmock Argo)
+    set_target_properties(${debug_target_name} PROPERTIES CXX_STANDARD 23)
+    target_compile_options(${debug_target_name} PRIVATE -Wno-writable-strings
+                                                        -DDEBUG_BUILD -O0)
+
+    # Release Target
+    set(release_target_name "test-${target_name}-release")
+    add_executable(${release_target_name} ${target})
+    target_link_libraries(${release_target_name} GTest::GTest GTest::Main
+                          GTest::gmock Argo)
+    set_target_properties(${release_target_name} PROPERTIES CXX_STANDARD 23)
+    target_compile_options(${release_target_name} PRIVATE -Wno-writable-strings
+                                                          -O3)
+  endforeach()
+endif()
+
+if(${ARGO_BENCHMARKS_ENABLE})
+  set(CMAKE_CXX_FLAGS_RELEASE "")
+  set(CMAKE_CXX_FLAGS_DEBUG "")
+
+  find_package(benchmark REQUIRED)
+  file(GLOB ARGO_BENCHMARK_SOURCES ${CMAKE_CURRENT_LIST_DIR}/benchmarks/*.cc)
+
+  find_package(CLI11 QUIET)
+  if(${CLI11_FOUND})
+    set(CLI11_LIBRARY CLI11::CLI11)
+    add_compile_definitions(CLI11_FOUND=1)
+  else()
+    set(CLI11_LIBRARY "")
+  endif()
+
+  foreach(target ${ARGO_BENCHMARK_SOURCES})
+    get_filename_component(target_name ${target} NAME_WE)
+
+    # Debug Target
+    set(debug_target_name "bench-${target_name}-debug")
+    add_executable(${debug_target_name} ${target})
+    target_link_libraries(${debug_target_name} benchmark::benchmark Argo
+                          ${CLI11_LIBRARY})
+    set_target_properties(${debug_target_name} PROPERTIES CXX_STANDARD 23)
+    target_compile_options(${debug_target_name} PRIVATE -Wno-writable-strings
+                                                        -DDEBUG_BUILD)
+
+    # Release Target
+    set(release_target_name "bench-${target_name}-release")
+    add_executable(${release_target_name} ${target})
+    target_link_libraries(${release_target_name} benchmark::benchmark Argo
+                          ${CLI11_LIBRARY})
+    set_target_properties(${release_target_name} PROPERTIES CXX_STANDARD 23)
+    target_compile_options(${release_target_name} PRIVATE -Wno-writable-strings
+                                                          -O3)
+  endforeach()
 endif()

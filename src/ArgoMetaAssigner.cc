@@ -20,7 +20,7 @@ struct Assigner {
   struct AssignImpl<Index, std::tuple<>> {
     template <typename Lhs>
     static auto eval(std::string_view key, [[maybe_unused]] std::string_view val) {
-      throw Argo::InvalidArgument(std::format("Invalid argument {}", key));
+      throw Argo::InvalidArgument(std::format("Assigner: Invalid argument {}", key));
     }
   };
 
@@ -81,7 +81,7 @@ struct VariadicAssigner {
     template <typename Lhs>
     static auto eval(std::string_view key,
                      [[maybe_unused]] const std::vector<std::string_view>& values) {
-      throw Argo::InvalidArgument(std::format("Invalid argument {}", key));
+      throw Argo::InvalidArgument(std::format("Variadic: Invalid argument {}", key));
     }
   };
 
@@ -140,7 +140,7 @@ struct DefaultAssigner {
   struct DefaultAssignerImpl<Index, std::tuple<>> {
     template <typename Lhs>
     static auto eval(std::string_view key) {
-      throw Argo::InvalidArgument(std::format("Invalid argument {}", key));
+      throw Argo::InvalidArgument(std::format("Default: Invalid argument {}", key));
     }
   };
 

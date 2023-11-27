@@ -8,7 +8,7 @@ import :std_module;
 export namespace Argo {
 
 template <std::size_t N>
-constexpr auto ArrayToString(std::array<char, N> from) -> std::string {
+constexpr auto ArrayToString(const std::array<char, N>& from) -> std::string {
   std::string ret;
   for (std::size_t i = 0; i < N; i++) {
     ret.push_back(from[i]);
