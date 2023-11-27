@@ -28,7 +28,7 @@ struct IdentityHolder {
  * convert const char[] to std::array<char, N>
  */
 export template <std::size_t N>
-consteval auto arg(const char (&a)[N]) {
+consteval auto key(const char (&a)[N]) {
   std::array<char, N - 1> arr{};
   for (std::size_t i = 0; i < N - 1; ++i) {
     arr[i] = a[i];
@@ -256,6 +256,10 @@ class Parser {
           }
         }
       }
+    }
+    auto required_keys = RequiredChecker<Arguments>::check();
+    if (!required_keys.empty()) {
+      throw InvalidArgument(std::format("Requried {}", required_keys));
     }
     this->parsed_ = true;
   }

@@ -17,7 +17,7 @@ char* argv[argc] = {
     "--arg2", "42.23", "--arg3", "--arg4", "Hello,World", "-bc", "-d", "3.14"       // 17
 };
 
-using Argo::arg;
+using Argo::key;
 using Argo::nargs;
 using Argo::Parser;
 
@@ -25,13 +25,13 @@ static void ArgoParser(benchmark::State& state) {
   for (auto _ : state) {
     auto argo = Parser<1>();
     auto parser = argo  //
-                      .addArg<int, arg("arg1"), nargs(8)>()
-                      .addArg<float, arg("arg2")>()
-                      .addFlag<arg("arg3")>()
-                      .addArg<std::string, arg("arg4"), nargs(1)>()
-                      .addFlag<arg("arg5"), 'b'>()
-                      .addFlag<arg("arg6"), 'c'>()
-                      .addArg<float, arg("arg7"), 'd'>();
+                      .addArg<int, key("arg1"), nargs(8)>()
+                      .addArg<float, key("arg2")>()
+                      .addFlag<key("arg3")>()
+                      .addArg<std::string, key("arg4"), nargs(1)>()
+                      .addFlag<key("arg5"), 'b'>()
+                      .addFlag<key("arg6"), 'c'>()
+                      .addArg<float, key("arg7"), 'd'>();
     parser.parse(argc, argv);
   }
 }

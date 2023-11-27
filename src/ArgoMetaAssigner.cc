@@ -61,15 +61,18 @@ struct Assigner {
             throw Argo::InvalidArgument(std::format("Flag {} can not take value", key));
           }
           Head::value = true;
+          Head::assigned = true;
           return;
         } else {
           if constexpr (Head::nargs.getNargsChar() == '?') {
             if (values.empty()) {
               Head::value = Head::defaultValue;
+              Head::assigned = true;
               return;
             }
             if (values.size() == 1) {
               Head::value = caster<typename Head::baseType>(values[0]);
+              Head::assigned = true;
               if (Head::validator) {
                 (*Head::validator)(key, Head::value);
               }
@@ -80,12 +83,13 @@ struct Assigner {
           } else if constexpr (Head::nargs.getNargsChar() == '*') {
             if (values.empty()) {
               Head::value = Head::defaultValue;
+              Head::assigned = true;
               return;
             }
-            Head::value = typename Head::type();
             for (const auto& value : values) {
               Head::value.push_back(caster<typename Head::baseType>(value));
             }
+            Head::assigned = true;
             if (Head::validator) {
               (*Head::validator)(key, Head::value);
             }
@@ -95,10 +99,10 @@ struct Assigner {
               throw Argo::InvalidArgument(
                   std::format("Argument {} should take more than one value", key));
             }
-            Head::value = typename Head::type();
             for (const auto& value : values) {
               Head::value.push_back(caster<typename Head::baseType>(value));
             }
+            Head::assigned = true;
             if (Head::validator) {
               (*Head::validator)(key, Head::value);
             }
@@ -113,6 +117,7 @@ struct Assigner {
                   "Argument {} should take exactly one value but {}", key, values.size()));
             }
             Head::value = caster<typename Head::baseType>(values[0]);
+            Head::assigned = true;
             if (Head::validator) {
               (*Head::validator)(key, Head::value);
             }
@@ -127,6 +132,7 @@ struct Assigner {
             for (const auto& j : values) {
               Head::value.push_back(caster<typename Head::baseType>(j));
             }
+            Head::assigned = true;
             if (Head::validator) {
               (*Head::validator)(key, Head::value);
             }

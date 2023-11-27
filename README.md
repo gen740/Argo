@@ -90,6 +90,7 @@ target_link_libraries(YOUR_TARGET PRIVATE Argo)
 - [x] Argument duplication validation
 - [x] Optional argument
 - [x] "narg" argument
+- [x] Required argument
 - [ ] Positional argument
 - [ ] Description and help auto generation
 - [ ] Standard validations
