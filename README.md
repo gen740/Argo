@@ -91,7 +91,7 @@ target_link_libraries(YOUR_TARGET PRIVATE Argo)
 - [x] Optional argument
 - [x] "narg" argument
 - [x] Required argument
-- [ ] Positional argument
+- [x] Positional argument
 - [ ] Description and help auto generation
 - [ ] Standard validations
 - [ ] Custom class casting

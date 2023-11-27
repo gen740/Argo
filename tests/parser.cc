@@ -331,6 +331,94 @@ TEST(ArgoTest, Required) {
                       .addArg<int, Argo::key("arg5"), 'c', Argo::nargs(1), true>();
 
     EXPECT_THROW(parser.parse(argc, argv), Argo::InvalidArgument);
+    // parser.parse(argc, argv);
+  }
+}
+
+TEST(ArgoTest, Positional) {
+  {
+    const int argc = 4;
+    char* argv[argc] = {
+        "./main",       //
+        "1", "2", "3",  //
+    };
+
+    auto argo = Argo::Parser<130>("Sample Program");
+    auto parser = argo  //
+                      .addPositionalArg<int, Argo::key("arg1"), 'a', Argo::nargs(3)>();
+
     parser.parse(argc, argv);
+    EXPECT_THAT(parser.getArg<Argo::key("arg1")>(), testing::ElementsAre(1, 2, 3));
+  }
+  {
+    const int argc = 6;
+    char* argv[argc] = {
+        "./main", "--arg2", "42.195",  //
+        "1",      "2",      "3",       //
+    };
+
+    auto argo = Argo::Parser<131>("Sample Program");
+    auto parser = argo  //
+                      .addPositionalArg<int, Argo::key("arg1"), 'a', Argo::nargs(3)>()
+                      .addArg<float, Argo::key("arg2")>();
+
+    parser.parse(argc, argv);
+
+    EXPECT_THAT(parser.getArg<Argo::key("arg1")>(), testing::ElementsAre(1, 2, 3));
+    EXPECT_FLOAT_EQ(parser.getArg<Argo::key("arg2")>(), 42.195);
+  }
+
+  {
+    const int argc = 6;
+    char* argv[argc] = {
+        "./main", "--arg2", "42.195",  //
+        "1",      "2",      "3",       //
+    };
+
+    auto argo = Argo::Parser<132>("Sample Program");
+    auto parser = argo  //
+                      .addPositionalArg<int, Argo::key("arg1"), 'a', Argo::nargs(3)>()
+                      .addArg<float, Argo::key("arg2"), Argo::nargs(1)>();
+
+    parser.parse(argc, argv);
+
+    EXPECT_THAT(parser.getArg<Argo::key("arg1")>(), testing::ElementsAre(1, 2, 3));
+    EXPECT_FLOAT_EQ(parser.getArg<Argo::key("arg2")>(), 42.195);
+  }
+
+  {
+    const int argc = 7;
+    char* argv[argc] = {
+        "./main", "--arg2", "42", "96",  //
+        "1",      "2",      "3"          //
+    };
+
+    auto argo = Argo::Parser<133>("Sample Program");
+    auto parser = argo  //
+                      .addPositionalArg<int, Argo::key("arg1"), 'a', Argo::nargs(3)>()
+                      .addArg<float, Argo::key("arg2"), Argo::nargs(2)>();
+
+    parser.parse(argc, argv);
+
+    EXPECT_THAT(parser.getArg<Argo::key("arg1")>(), testing::ElementsAre(1, 2, 3));
+    EXPECT_THAT(parser.getArg<Argo::key("arg2")>(), testing::ElementsAre(42, 96));
+  }
+
+  {
+    const int argc = 5;
+    char* argv[argc] = {
+        "./main", "--arg2",  //
+        "1", "2", "3"        //
+    };
+
+    auto argo = Argo::Parser<134>("Sample Program");
+    auto parser = argo  //
+                      .addPositionalArg<int, Argo::key("arg1"), 'a', Argo::nargs(3)>()
+                      .addFlag<Argo::key("arg2")>();
+
+    parser.parse(argc, argv);
+
+    EXPECT_THAT(parser.getArg<Argo::key("arg1")>(), testing::ElementsAre(1, 2, 3));
+    EXPECT_TRUE(parser.getArg<Argo::key("arg2")>());
   }
 }

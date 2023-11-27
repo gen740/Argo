@@ -52,7 +52,7 @@ struct Arg : ArgTag, ArgBase<Type, Name, ShortName, ID> {
   inline static Validation::ValidationBase<type>* validator = nullptr;
   inline static std::function<Type(std::string_view)> caster = nullptr;
 
-  inline static bool required = Required;
+  inline static constexpr bool required = Required;
 };
 
 struct FlagArgTag {};

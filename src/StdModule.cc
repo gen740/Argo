@@ -11,6 +11,7 @@ module;
 #include <memory>
 #include <optional>
 #include <print>
+#include <span>
 #include <stdexcept>
 #include <string>
 #include <string_view>
@@ -63,6 +64,9 @@ using ::std::println;
 using ::std::array;
 using ::std::vector;
 
+// span
+using ::std::span;
+
 // tuple
 using ::std::make_tuple;
 using ::std::tuple;
@@ -85,6 +89,8 @@ using ::std::remove_cvref;
 using ::std::remove_cvref_t;
 using ::std::remove_pointer;
 using ::std::remove_pointer_t;
+using ::std::type_identity;
+using ::std::type_identity_t;
 using ::std::void_t;
 
 // concept
@@ -105,5 +111,6 @@ using ::std::function;
 using ::std::nullopt;
 using ::std::nullopt_t;
 using ::std::optional;
+
 
 }  // namespace std

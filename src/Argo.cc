@@ -59,7 +59,7 @@ struct ShortName {
   static constexpr char value = Name;
 };
 
-export template <int ID = 0, class Args = std::tuple<>>
+export template <int ID = 0, class Args = std::tuple<>, class PositionalArg = void>
 class Parser {
  private:
   bool parsed_ = false;
@@ -70,17 +70,12 @@ class Parser {
   constexpr explicit Parser(std::string_view programName) : programName_(programName){};
 
   using Arguments = Args;
+  using PositionalArgument = PositionalArg;
   Args value;
 
-  /*!
-   * Type: type of argument
-   * Name: name of argument
-   * arg1: ShortName or NArgs or Unspecified
-   * arg2: NArgs or Unspecified
-   */
   template <class Type, auto Name, auto arg1 = Unspecified(), auto arg2 = Unspecified(),
             auto arg3 = Unspecified(), class... T>
-  auto addArg(T... args) {
+  auto createArg(T... args) {
     static constexpr char ShortName = []() {
       if constexpr (std::is_same_v<std::remove_cvref_t<decltype(arg1)>, char>) {
         return arg1;
@@ -117,6 +112,11 @@ class Parser {
       }
     }();
 
+    if constexpr (!std::is_same_v<PositionalArgument, void>) {
+      static_assert(!(std::string_view(Name) == std::string_view(PositionalArgument::name)),
+                    "Duplicated name");
+    }
+
     static_assert(
         (ShortName == NULLCHAR) || (SearchIndexFromShortName<Arguments, ShortName>::value == -1),
         "Duplicated short name");
@@ -131,15 +131,42 @@ class Parser {
         "nargs must be '?', '+', '*' or int");
 
     ArgInitializer<Type, Name, ShortName, nargs, required, ID>::init(std::forward<T>(args)...);
-    return Parser<
-        ID, decltype(std::tuple_cat(                                                         //
-                std::declval<Arguments>(),                                                   //
-                std::declval<std::tuple<Arg<Type, Name, ShortName, nargs, required, ID>>>()  //
-                ))>();
+    return std::type_identity<Arg<Type, Name, ShortName, nargs, required, ID>>();
+  }
+
+  /*!
+   * Type: type of argument
+   * Name: name of argument
+   * arg1: ShortName or NArgs or Unspecified
+   * arg2: NArgs or Unspecified
+   */
+  template <class Type, auto Name, auto arg1 = Unspecified(), auto arg2 = Unspecified(),
+            auto arg3 = Unspecified(), class... T>
+  auto addArg(T... args) {
+    auto arg = createArg<Type, Name, arg1, arg2, arg3>(std::forward<T>(args)...);
+    return Parser<ID,
+                  decltype(std::tuple_cat(                                      //
+                      std::declval<Arguments>(),                                //
+                      std::declval<std::tuple<typename decltype(arg)::type>>()  //
+                      )),
+                  PositionalArgument>();
+  }
+
+  template <class Type, auto Name, auto arg1 = Unspecified(), auto arg2 = Unspecified(),
+            auto arg3 = Unspecified(), class... T>
+  auto addPositionalArg(T... args) {
+    static_assert(std::is_same_v<PositionalArg, void>,
+                  "Positional argument cannot set more than one");
+    auto arg = createArg<Type, Name, arg1, arg2, arg3>(std::forward<T>(args)...);
+    return Parser<ID, Arguments, typename decltype(arg)::type>();
   }
 
   template <auto Name, char ShortName = NULLCHAR, class... T>
   auto addFlag(T... args) {
+    if constexpr (!std::is_same_v<PositionalArgument, void>) {
+      static_assert(!(std::string_view(Name) == std::string_view(PositionalArgument::name)),
+                    "Duplicated name");
+    }
     static_assert(
         (ShortName == NULLCHAR) || (SearchIndexFromShortName<Arguments, ShortName>::value == -1),
         "Duplicated short name");
@@ -148,10 +175,12 @@ class Parser {
         "Duplicated name");
 
     FlagArgInitializer<Name, ShortName, ID>::init(std::forward<T>(args)...);
-    return Parser<ID, decltype(std::tuple_cat(                                      //
-                          std::declval<Arguments>(),                                //
-                          std::declval<std::tuple<FlagArg<Name, ShortName, ID>>>()  //
-                          ))>();
+    return Parser<ID,
+                  decltype(std::tuple_cat(                                      //
+                      std::declval<Arguments>(),                                //
+                      std::declval<std::tuple<FlagArg<Name, ShortName, ID>>>()  //
+                      )),
+                  PositionalArgument>();
   }
 
   template <auto Name>
@@ -159,37 +188,26 @@ class Parser {
     if (!this->parsed_) {
       throw ParseError("Parser did not parse argument, call parse first");
     }
-    using V =
-        std::remove_cvref_t<decltype(std::get<SearchIndex<Arguments, Name>::value>(this->value))>;
-    return V::value;
-  }
-
-  template <auto Name>
-  auto getArgOr(std::remove_cvref_t<decltype(std::get<SearchIndex<Arguments, Name>::value>(
-                    std::declval<Arguments>))>::type val) {
-    return this->getArg<Name>.value_or(val);
-  }
-
-  template <auto Name>
-  auto getArgOrDefault() {
-    using V =
-        std::remove_cvref_t<decltype(std::get<SearchIndex<Arguments, Name>::value>(this->value))>;
-    return V::value || V::defaultValue;
-  }
-
-  template <auto Name>
-  auto getArgOrDefaultOr(std::remove_cvref_t<decltype(std::get<SearchIndex<Arguments, Name>::value>(
-                             std::declval<Arguments>))>::type val) {
-    return this->getArgOrDefault().value_or(val);
+    if constexpr (!std::is_same_v<PositionalArgument, void>) {
+      if constexpr (std::string_view(Name) == std::string_view(PositionalArgument::name)) {
+        return PositionalArgument::value;
+      } else {
+        return std::remove_cvref_t<decltype(std::get<SearchIndex<Arguments, Name>::value>(
+            this->value))>::value;
+      }
+    } else {
+      return std::remove_cvref_t<decltype(std::get<SearchIndex<Arguments, Name>::value>(
+          this->value))>::value;
+    }
   }
 
  private:
-  auto setArg(std::string_view key, const std::vector<std::string_view>& val) const {
-    Assigner::assign<Arguments>(key, val);
+  auto setArg(std::string_view key, std::span<std::string_view> val) const {
+    Assigner<Arguments, PositionalArgument>::assign(key, val);
   }
 
-  auto setArg(const std::vector<char>& key, const std::vector<std::string_view>& val) const {
-    Assigner::assign<Arguments>(key, val);
+  auto setArg(std::span<char> key, std::span<std::string_view> val) const {
+    Assigner<Arguments, PositionalArgument>::assign(key, val);
   }
 
  public:
@@ -215,7 +233,8 @@ class Parser {
           }
           if (arg.contains('=')) {
             auto equal_pos = arg.find('=');
-            this->setArg(arg.substr(2, equal_pos - 2), {arg.substr(equal_pos + 1)});
+            auto value = std::vector<std::string_view>{arg.substr(equal_pos + 1)};
+            this->setArg(arg.substr(2, equal_pos - 2), value);
             continue;
           }
           key = arg.substr(2);
@@ -244,15 +263,24 @@ class Parser {
           continue;
         }
       } else {
-        if (key.empty() && short_keys.empty()) {
-          throw InvalidArgument(std::format("No keys specified"));
+        if constexpr (std::is_same_v<PositionalArgument, void>) {
+          if (key.empty() && short_keys.empty()) {
+            throw InvalidArgument(std::format("No keys specified"));
+          }
         }
         values.push_back(arg);
+
         if (i == argc - 1) {
           if (!key.empty()) {
             this->setArg(key, values);
           } else if (!short_keys.empty()) {
             this->setArg(short_keys, values);
+          } else {
+            if constexpr (std::is_same_v<PositionalArgument, void>) {
+              throw InvalidArgument(std::format("No keys specified"));
+            } else {
+              this->setArg(key, values);
+            }
           }
         }
       }
