@@ -36,16 +36,20 @@ consteval auto arg(const char (&a)[N]) {
   return arr;
 }
 
+template <int N>
+struct A {};
+
+template <bool B>
+using EnableIf = std::enable_if_t<B, int>;
 /*!
  * Helper function to create nargs
  */
 export {
-  // TODO(gen740): validate
-  consteval auto nargs(char narg) {
+  consteval auto nargs(char narg) -> NArgs {
     return NArgs(narg);
   }
 
-  consteval auto nargs(int narg) {
+  consteval auto nargs(int narg) -> NArgs {
     return NArgs(narg);
   }
 }
@@ -100,6 +104,12 @@ class Parser {
     static_assert(                                        //
         Argo::SearchIndex<Arguments, Name>::value == -1,  //
         "Duplicated name");
+    static_assert(                     //
+        (nargs.nargs > 0               //
+         || nargs.nargs_char == '?'    //
+         || nargs.nargs_char == '+'    //
+         || nargs.nargs_char == '*'),  //
+        "nargs must be '?', '+', '*' or int");
 
     ArgInitializer<Type, Name, ShortName, nargs, ID>::init(std::forward<T>(args)...);
     return Parser<ID, decltype(std::tuple_cat(                                               //
@@ -163,8 +173,8 @@ class Parser {
   }
 
  public:
-  auto parse(int argc, [[maybe_unused]] char* argv[]) -> void {
-    [[maybe_unused]] std::string_view key{};
+  auto parse(int argc, char* argv[]) -> void {
+    std::string_view key{};
     std::vector<char> short_keys{};
     short_keys.reserve(10);
     std::vector<std::string_view> values{};
@@ -184,7 +194,7 @@ class Parser {
             values.clear();
           }
           if (arg.contains('=')) {
-            [[maybe_unused]] auto equal_pos = arg.find('=');
+            auto equal_pos = arg.find('=');
             this->setArg(arg.substr(2, equal_pos - 2), {arg.substr(equal_pos + 1)});
             continue;
           }
