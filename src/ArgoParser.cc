@@ -221,7 +221,7 @@ class Parser {
   auto setArg(std::string_view key, std::span<std::string_view> val) const {
     if constexpr (HelpEnabled) {
       if (key == "help") {
-        std::println(this->formatHelp());
+        std::println("{}", formatHelp());
         std::exit(0);
       }
     }
@@ -232,7 +232,7 @@ class Parser {
     if constexpr (HelpEnabled) {
       for (const auto& i : key) {
         if (i == 'h') {
-          std::println(this->formatHelp());
+          std::println("{}", formatHelp());
           std::exit(0);
         }
       }
