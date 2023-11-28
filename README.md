@@ -17,19 +17,19 @@ import std;
 
 // suppose ./main --arg1 42 --arg3 "Hello,World"
 auto main(int argc, char* argv[]) -> int {
-  auto argo = Argo::Parser();
 
-  auto parser = argo
-                    .addArg<int, Argo::key("arg1")>()
-                    .addArg<float, Argo::key("arg2")>(53.4)
-                    .addArg<std::string, Argo::key("arg3")>();
+  auto parser = Argo::Parser("Program name")  //
+                    .addArg<int, key("arg1")>()
+                    .addArg<float, key("arg2")>(Argo::explicitDefault(12.34))
+                    .addArg<std::string, key("arg3")>();
 
   parser.parse(argc, argv);
 
   std::println("{}", parser.getArg<Argo::key("arg1")>()); // 42
-  std::println("{}", parser.getArg<Argo::key("arg2")>()); // 53.4 (default value)
+  std::println("{}", parser.getArg<Argo::key("arg2")>()); // 12.34 (default value)
   std::println("{}", parser.getArg<Argo::key("arg3")>()); // Hello,World
-  // std::println("{}", parser.getArg<Argo::key("arg4")>()); // error
+
+  // std::println("{}", parser.getArg<Argo::key("arg4")>()); // compile error
 
   // Static Typing
   static_assert(
@@ -43,14 +43,130 @@ auto main(int argc, char* argv[]) -> int {
 }
 ```
 
-## How do I create multiple parser
-Since `Argo` creates types for each argument and stores variables in those types,
-the same ID in the parser might lead to conflicts with arguments.
-Sometimes, this may result in overwriting the variables of another parser.
-To avoid this, you can specify a unique ID.
+## Argument Options
+
+### Defining argument
+
+Defining a parser in Argo can be somewhat intricate. It is not accurate to define it as shown below:
 
 ```cpp
-auto argo = Argo::Parser<42>();
+auto parser = Argo::Parser();
+parser.addArg<int, key("arg1")>();
+parser.addArg<int, key("arg2")>();
+
+parser.parse(argc, argv);
+```
+
+In Argo, arguments are stored in the return types of the `addArg` method. Therefore, the correct declaration should be as follows:
+
+```cpp
+auto argo = Argo::Parser();
+auto pre_parser = argo.addArg<int, key("arg1")>();
+auto parser = argo.addArg<int, key("arg2")>();
+
+parser.parse(argc, argv);
+```
+
+This approach ensures that each argument is properly added and stored, enabling the parser to function as expected.
+
+### Template Options
+
+**ShortKey**
+Specifying a `char` character as a template parameter indicates the short
+version of the argument flag. In the above code, you can pass the flag `-a` to
+the parser.
+
+Example usage:
+```
+Argo::Parser("Program").addArg<Type, key("arg1"), 'a'>();
+```
+
+**Required**
+Specifying `true` as the addArg template parameter indicates that the argument
+will be `required`. The parser will throw an exception if that argument is not
+specified.
+
+Example usage:
+```
+Argo::Parser("Program").addArg<Type, key("arg1"), true>();
+```
+
+**nargs**
+
+By using `Argo::nargs` as a template parameter in `Argo::Parser`, you can
+define the `nargs` for a particular flag. Below is a table detailing the
+options for `nargs`.
+
+| narg | value number | description |
+|------|--------------|-------------|
+| int  | exactly n    | Stores exactly n values in the `std::vector<Type>`. |
+| '?'  | zero or one  | An implicit default value is used if zero values are provided; an explicit value is set when the flag is specified. |
+| '+'  | more than one| Stores n values in the `std::vector<Type>`. |
+| '*'  | zero or more | An implicit default value is used if zero values are provided; otherwise, behaves the same as '+'. |
+
+Example usage:
+```cpp
+Argo::Parser("Program").addArg<Type, key("arg1"), nargs('+')>();
+```
+This template parameter configuration specifies that the `arg1` flag accepts
+one or more arguments, which will be stored in a `std::vector<Type>`.
+
+---
+
+These values are interchangable you can specify these value in the same time.
+
+```cpp
+Argo::Parser("Program").addArg<Type, key("arg1"), true, 'a', nargs('+')>();
+Argo::Parser("Program").addArg<Type, key("arg1"), nargs('+'), 'a', true>();
+Argo::Parser("Program").addArg<Type, key("arg1"), nargs('+'), true, 'a'>();
+```
+
+These are all the same.
+
+
+### Other Options
+
+**Implicit/Explicit Default**
+You can specify the implicit or explicit default value as follows:
+
+- Implicit Default
+  ```cpp
+  Argo::Parser("Program").addArg<int, key("arg1")>(Argo::implicitDefault(12.34));
+  ```
+- Explicit Default
+  ```cpp
+  Argo::Parser("Program").addArg<int, key("arg1")>(Argo::explicitDefault(12.34));
+  ```
+
+**Description**
+Specify a description for the argument like this:
+  ```cpp
+  Argo::Parser("Program").addArg<int, key("arg1")>(Argo::withDescription("Description of arg1"));
+  ```
+
+**Validator**
+Define a validator for the argument, for example, a range validator:
+  ```cpp
+  Argo::Parser("Program").addArg<int, key("arg1")>(Argo::validator::MinMax(10, 20));
+  ```
+
+**Callback**
+Set a callback for the flag, which is triggered as soon as the option is parsed:
+  ```cpp
+  Argo::Parser("Program").addArg<int, key("arg1")>([](auto value, auto raw_value){
+      // Implement some callback using value and raw_value
+  });
+  ```
+
+## How to Create Multiple Parsers
+Because `Argo` generates types for each argument and stores variables within
+these types, using the same ID in multiple parsers might cause conflicts with
+the arguments. This conflict can sometimes lead to variables in one parser
+being overwritten by another. To prevent this, you should assign a unique ID.
+
+```cpp
+auto argo1 = Argo::Parser<42>();
+auto argo2 = Argo::Parser<Argo::key("unique ID")>();
 ```
 
 ## Usage(CMake)

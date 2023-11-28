@@ -21,11 +21,11 @@ concept ArgType = requires(T& x) {
   std::is_same_v<decltype(T::description), std::string_view>;
 };
 
-template <typename BaseType, auto Name, char ShortName, int ID>
+template <typename BaseType, auto Name, char ShortName, auto ID>
 struct ArgBase {
   static constexpr auto name = Name;
   static constexpr char shortName = ShortName;
-  static constexpr int id = ID;
+  static constexpr auto id = ID;
   inline static bool assigned = false;
   inline static std::string_view description;
   using baseType = BaseType;
@@ -36,7 +36,7 @@ struct ArgTag {};
 /*!
  * Arg type this holds argument value
  */
-template <class Type, auto Name, char ShortName, NArgs TNArgs, bool Required, int ID>
+template <class Type, auto Name, char ShortName, NArgs TNArgs, bool Required, auto ID>
 struct Arg : ArgTag, ArgBase<Type, Name, ShortName, ID> {
   static constexpr bool isVariadic =
       (TNArgs.nargs > 1) || (TNArgs.nargs_char == '+') || (TNArgs.nargs_char == '*');
@@ -51,14 +51,14 @@ struct Arg : ArgTag, ArgBase<Type, Name, ShortName, ID> {
   inline static constexpr NArgs nargs = TNArgs;
   inline static Validation::ValidationBase<type>* validator = nullptr;
   inline static std::function<Type(std::string_view)> caster = nullptr;
-  inline static std::function<void(std::string_view, type)> callback = nullptr;
+  inline static std::function<void(type, std::string_view)> callback = nullptr;
 
   inline static constexpr bool required = Required;
 };
 
 struct FlagArgTag {};
 
-template <auto Name, char ShortName, int ID>
+template <auto Name, char ShortName, auto ID>
 struct FlagArg : FlagArgTag, ArgBase<bool, Name, ShortName, ID> {
   static constexpr bool isVariadic = false;
   using type = bool;
@@ -67,7 +67,7 @@ struct FlagArg : FlagArgTag, ArgBase<bool, Name, ShortName, ID> {
   inline static type defaultValue = {};
 
   inline static constexpr NArgs nargs = NArgs(-1);
-  inline static std::function<void(std::string_view, type)> callback = nullptr;
+  inline static std::function<void(type, std::string_view)> callback = nullptr;
 };
 
 }  // namespace Argo

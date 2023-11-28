@@ -43,8 +43,7 @@ struct Assigner {
 
   template <int Index>
   struct AssignImpl<Index, std::tuple<>> {
-    __attribute__((always_inline)) static auto eval(std::string_view key,
-                                                    std::span<std::string_view>& /* unused */) {
+    static auto eval(std::string_view key, std::span<std::string_view>& /* unused */) {
       throw Argo::InvalidArgument(std::format("Invalid argument {}", key));
     }
   };
@@ -83,7 +82,7 @@ struct Assigner {
             (*Head::validator)(key, Head::value);
           }
           if (Head::callback) {
-            Head::callback(key, Head::value);
+            Head::callback(Head::value, key);
           }
           return true;
         }
@@ -114,7 +113,7 @@ struct Assigner {
           (*Head::validator)(key, Head::value);
         }
         if (Head::callback) {
-          Head::callback(key, Head::value);
+          Head::callback(Head::value, key);
         }
         return true;
       } else if constexpr (Head::nargs.getNargsChar() == '+') {
@@ -130,7 +129,7 @@ struct Assigner {
           (*Head::validator)(key, Head::value);
         }
         if (Head::callback) {
-          Head::callback(key, Head::value);
+          Head::callback(Head::value, key);
         }
         return true;
       } else if constexpr (Head::nargs.getNargs() == 1) {
@@ -159,7 +158,7 @@ struct Assigner {
           (*Head::validator)(key, Head::value);
         }
         if (Head::callback) {
-          Head::callback(key, Head::value);
+          Head::callback(Head::value, key);
         }
         return true;
       } else {
@@ -173,7 +172,7 @@ struct Assigner {
             (*Head::validator)(key, Head::value);
           }
           if (Head::callback) {
-            Head::callback(key, Head::value);
+            Head::callback(Head::value, key);
           }
           return true;
         }
@@ -202,8 +201,7 @@ struct Assigner {
 
   template <int Index, ArgType Head, typename... Tails>
   struct AssignImpl<Index, std::tuple<Head, Tails...>> {
-    __attribute__((always_inline)) static auto eval(std::string_view key,
-                                                    std::span<std::string_view> values) {
+    static auto eval(std::string_view key, std::span<std::string_view> values) {
       if (std::string_view(Head::name) == key) {
         if (assignOneArg<Head>(key, std::span<std::string_view>(values.begin(), values.end()))) {
           return;

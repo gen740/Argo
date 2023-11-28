@@ -33,27 +33,21 @@ if(${ARGO_TESTS_ENABLE})
 
   find_package(GTest REQUIRED)
   file(GLOB ARGO_TEST_SOURCES ${CMAKE_CURRENT_LIST_DIR}/tests/*.cc)
-  foreach(target ${ARGO_TEST_SOURCES})
-    get_filename_component(target_name ${target} NAME_WE)
 
-    # Debug Target
-    set(debug_target_name "test-${target_name}-debug")
-    add_executable(${debug_target_name} ${target})
-    target_link_libraries(${debug_target_name} GTest::GTest GTest::Main
-                          GTest::gmock Argo)
-    set_target_properties(${debug_target_name} PROPERTIES CXX_STANDARD 23)
-    target_compile_options(${debug_target_name} PRIVATE -Wno-writable-strings
-                                                        -DDEBUG_BUILD -O0)
+  # Debug Target
+  add_executable(test-argo-debug ${ARGO_TEST_SOURCES})
+  target_link_libraries(test-argo-debug GTest::GTest GTest::Main GTest::gmock
+                        Argo)
+  set_target_properties(test-argo-debug PROPERTIES CXX_STANDARD 23)
+  target_compile_options(test-argo-debug PRIVATE -Wno-writable-strings
+                                                 -DDEBUG_BUILD -O0)
 
-    # Release Target
-    set(release_target_name "test-${target_name}-release")
-    add_executable(${release_target_name} ${target})
-    target_link_libraries(${release_target_name} GTest::GTest GTest::Main
-                          GTest::gmock Argo)
-    set_target_properties(${release_target_name} PROPERTIES CXX_STANDARD 23)
-    target_compile_options(${release_target_name} PRIVATE -Wno-writable-strings
-                                                          -O3)
-  endforeach()
+  # Release Target
+  add_executable(test-argo-release ${ARGO_TEST_SOURCES})
+  target_link_libraries(test-argo-release GTest::GTest GTest::Main GTest::gmock
+                        Argo)
+  set_target_properties(test-argo-release PROPERTIES CXX_STANDARD 23)
+  target_compile_options(test-argo-release PRIVATE -Wno-writable-strings -O3)
 endif()
 
 if(${ARGO_BENCHMARKS_ENABLE})

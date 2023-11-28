@@ -48,7 +48,7 @@ struct ShortName {
   static constexpr char value = Name;
 };
 
-export template <int ID = 0, class Args = std::tuple<>, class PositionalArg = void,
+export template <auto ID = 0, class Args = std::tuple<>, class PositionalArg = void,
                  bool HelpEnabled = false>
 class Parser {
  private:
@@ -354,6 +354,9 @@ class Parser {
           std::string(maxFlagLength - i.name.size(), ' '),                       //
           i.description                                                          //
           ));
+      // erase trailing spaces
+      auto pos = help.find_last_not_of(' ');
+      help = help.substr(0, pos + 1);
     }
     return help;
   }
