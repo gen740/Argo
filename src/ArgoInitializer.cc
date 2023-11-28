@@ -7,6 +7,17 @@ import :NArgs;
 import :Arg;
 import :std_module;
 
+namespace Argo {
+
+struct DefaultValueTag {};
+
+template <class T>
+struct DefaultValue : DefaultValueTag {
+  T default_value;
+};
+
+}  // namespace Argo
+
 export namespace Argo {
 
 struct withDescription {
@@ -21,17 +32,32 @@ struct withDescription {
   }
 };
 
+template <class T>
+auto defaultValue(T value) -> DefaultValue<T> {
+  return {.default_value = value};
+}
+
 template <class Type, auto Name, char ShortName, NArgs nargs, bool Required, int ID>
 struct ArgInitializer {
   template <class Head, class... Tails>
   static auto init(Head head, Tails... tails) {
+    using Arg = Arg<Type, Name, ShortName, nargs, Required, ID>;
     if constexpr (std::is_same_v<Head, withDescription>) {
-      Arg<Type, Name, ShortName, nargs, Required, ID>::description = head.getDescription();
+      Arg::description = head.getDescription();
     } else if constexpr (std::derived_from<std::remove_cvref_t<std::remove_pointer_t<Head>>,
                                            Validation::ValidationTag>) {
-      Arg<Type, Name, ShortName, nargs, Required, ID>::validator = head;
+      Arg::validator = head;
+    } else if constexpr (std::derived_from<std::remove_cvref_t<std::remove_pointer_t<Head>>,
+                                           DefaultValueTag>) {
+      Arg::defaultValue = static_cast<Type>(head.default_value);
+      // } else if constexpr (std::is_invocable_v<Head, typename Head::type>) {
+      //   Head::callback = [head](std::string_view, Head::type value) { head(value); };
+    } else if constexpr (std::is_invocable_v<Head, std::string_view, typename Arg::type>) {
+      Arg::callback = [head](std::string_view key, Arg::type value) { head(key, value); };
+      // } else if constexpr (std::is_invocable_v<Head, std::string_view>) {
+      //   Head::callback = [head](std::string_view key, Head::type) { head(key); };
     } else {
-      Arg<Type, Name, ShortName, nargs, Required, ID>::defaultValue = static_cast<Type>(head);
+      static_assert(false, "Invalid argument");
     }
     if constexpr (sizeof...(Tails) != 0) {
       init(tails...);

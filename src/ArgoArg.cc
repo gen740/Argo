@@ -51,6 +51,7 @@ struct Arg : ArgTag, ArgBase<Type, Name, ShortName, ID> {
   inline static constexpr NArgs nargs = TNArgs;
   inline static Validation::ValidationBase<type>* validator = nullptr;
   inline static std::function<Type(std::string_view)> caster = nullptr;
+  inline static std::function<void(std::string_view, type)> callback = nullptr;
 
   inline static constexpr bool required = Required;
 };
@@ -66,6 +67,7 @@ struct FlagArg : FlagArgTag, ArgBase<bool, Name, ShortName, ID> {
   inline static type defaultValue = {};
 
   inline static constexpr NArgs nargs = NArgs(-1);
+  inline static std::function<void(std::string_view, type)> callback = nullptr;
 };
 
 }  // namespace Argo

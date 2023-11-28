@@ -82,6 +82,9 @@ struct Assigner {
           if (Head::validator) {
             (*Head::validator)(key, Head::value);
           }
+          if (Head::callback) {
+            Head::callback(key, Head::value);
+          }
           return true;
         }
         if constexpr (std::is_same_v<PositionalArgument, void>) {
@@ -110,6 +113,9 @@ struct Assigner {
         if (Head::validator) {
           (*Head::validator)(key, Head::value);
         }
+        if (Head::callback) {
+          Head::callback(key, Head::value);
+        }
         return true;
       } else if constexpr (Head::nargs.getNargsChar() == '+') {
         if (values.empty()) {
@@ -122,6 +128,9 @@ struct Assigner {
         Head::assigned = true;
         if (Head::validator) {
           (*Head::validator)(key, Head::value);
+        }
+        if (Head::callback) {
+          Head::callback(key, Head::value);
         }
         return true;
       } else if constexpr (Head::nargs.getNargs() == 1) {
@@ -149,6 +158,9 @@ struct Assigner {
         if (Head::validator) {
           (*Head::validator)(key, Head::value);
         }
+        if (Head::callback) {
+          Head::callback(key, Head::value);
+        }
         return true;
       } else {
         if (values.size() == Head::nargs.getNargs()) {
@@ -159,6 +171,9 @@ struct Assigner {
           Head::assigned = true;
           if (Head::validator) {
             (*Head::validator)(key, Head::value);
+          }
+          if (Head::callback) {
+            Head::callback(key, Head::value);
           }
           return true;
         }

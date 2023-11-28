@@ -48,7 +48,8 @@ struct ShortName {
   static constexpr char value = Name;
 };
 
-export template <int ID = 0, class Args = std::tuple<>, class PositionalArg = void>
+export template <int ID = 0, class Args = std::tuple<>, class PositionalArg = void,
+                 bool HelpEnabled = false>
 class Parser {
  private:
   bool parsed_ = false;
@@ -138,7 +139,7 @@ class Parser {
                       std::declval<Arguments>(),                                //
                       std::declval<std::tuple<typename decltype(arg)::type>>()  //
                       )),
-                  PositionalArgument>();
+                  PositionalArgument, HelpEnabled>();
   }
 
   template <class Type, auto Name, auto arg1 = Unspecified(), auto arg2 = Unspecified(),
@@ -149,7 +150,7 @@ class Parser {
     auto arg = createArg<Type, Name, arg1, arg2, arg3>(std::forward<T>(args)...);
     static_assert(decltype(arg)::type::shortName == NULLCHAR,
                   "Positonal argument could not have short name");
-    return Parser<ID, Arguments, typename decltype(arg)::type>();
+    return Parser<ID, Arguments, typename decltype(arg)::type, HelpEnabled>();
   }
 
   template <auto Name, char ShortName = NULLCHAR, class... T>
@@ -171,7 +172,13 @@ class Parser {
                       std::declval<Arguments>(),                                //
                       std::declval<std::tuple<FlagArg<Name, ShortName, ID>>>()  //
                       )),
-                  PositionalArgument>();
+                  PositionalArgument, HelpEnabled>();
+  }
+
+  auto addHelp() {
+    static_assert((SearchIndexFromShortName<Arguments, 'h'>::value == -1), "Duplicated short name");
+    static_assert(Argo::SearchIndex<Arguments, key("help")>::value == -1, "Duplicated name");
+    return Parser<ID, Arguments, PositionalArgument, true>();
   }
 
   template <auto Name>
@@ -212,10 +219,24 @@ class Parser {
 
  private:
   auto setArg(std::string_view key, std::span<std::string_view> val) const {
+    if constexpr (HelpEnabled) {
+      if (key == "help") {
+        std::println(this->formatHelp());
+        std::exit(0);
+      }
+    }
     Assigner<Arguments, PositionalArgument>::assign(key, val);
   }
 
   auto setArg(std::span<char> key, std::span<std::string_view> val) const {
+    if constexpr (HelpEnabled) {
+      for (const auto& i : key) {
+        if (i == 'h') {
+          std::println(this->formatHelp());
+          std::exit(0);
+        }
+      }
+    }
     Assigner<Arguments, PositionalArgument>::assign(key, val);
   }
 

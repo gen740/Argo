@@ -27,6 +27,8 @@ export {
 }
 
 export namespace std {
+using ::std::exit;
+
 // utility
 using ::std::get;         // NOLINT(misc-unused-using-decls)
 using ::std::operator==;  // NOLINT(misc-unused-using-decls)
@@ -84,6 +86,8 @@ using ::std::is_array;             // NOLINT(misc-unused-using-decls)
 using ::std::is_array_v;           // NOLINT(misc-unused-using-decls)
 using ::std::is_floating_point_v;  // NOLINT(misc-unused-using-decls)
 using ::std::is_integral_v;        // NOLINT(misc-unused-using-decls)
+using ::std::is_invocable;         // NOLINT(misc-unused-using-decls)
+using ::std::is_invocable_v;       // NOLINT(misc-unused-using-decls)
 using ::std::is_same_v;            // NOLINT(misc-unused-using-decls)
 using ::std::remove_cv_t;          // NOLINT(misc-unused-using-decls)
 using ::std::remove_cvref;         // NOLINT(misc-unused-using-decls)

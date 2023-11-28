@@ -91,7 +91,9 @@ TEST(ArgoTest, EqualAssign) {
   auto [argc, argv] = createArgcArgv("./main", "--arg1=42", "--arg2=Hello,World");
 
   auto argo = Argo::Parser<30>();
-  auto parser = argo.addArg<int, Argo::key("arg1")>().addArg<std::string, Argo::key("arg2")>();
+  auto parser = argo                                   //
+                    .addArg<int, Argo::key("arg1")>()  //
+                    .addArg<std::string, Argo::key("arg2")>();
 
   parser.parse(argc, argv);
 
@@ -224,7 +226,7 @@ TEST(ArgoTest, Narg) {
 
     auto parser = argo  //
                       .addArg<int, Argo::key("arg1"), Argo::nargs(3)>()
-                      .addArg<std::string, Argo::key("arg2")>("Bar")
+                      .addArg<std::string, Argo::key("arg2")>(Argo::defaultValue("Bar"))
                       .addArg<float, Argo::key("arg3"), Argo::nargs('*')>()
                       .addArg<float, Argo::key("arg4"), Argo::nargs('+')>();
 
@@ -472,3 +474,23 @@ TEST(ArgoTest, Positional) {
 //     EXPECT_THAT(parser.getArg<Argo::key("arg1")>(), testing::ElementsAre(1, 2, 3));
 //   }
 // }
+
+TEST(ArgoTest, CallBack) {
+  {
+    const int argc = 4;
+    char* argv[argc] = {
+        "./main",       //
+        "1", "2", "3",  //
+    };
+
+    auto argo = Argo::Parser<150>("Sample Program");
+    auto parser =
+        argo.addPositionalArg<int, Argo::key("arg1"), Argo::nargs(3)>([](auto key, auto value) {
+          EXPECT_EQ(key, "arg1");
+          EXPECT_THAT(value, testing::ElementsAre(1, 2, 3));
+        });
+
+    parser.parse(argc, argv);
+    EXPECT_THAT(parser.getArg<Argo::key("arg1")>(), testing::ElementsAre(1, 2, 3));
+  }
+}
