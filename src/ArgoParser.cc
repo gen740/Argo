@@ -331,11 +331,11 @@ class Parser {
     this->parsed_ = true;
   }
 
-  std::vector<ArgInfo> getArgInfo() {
+  std::vector<ArgInfo> getArgInfo() const {
     return HelpGenerator::generate<Arguments>();
   }
 
-  std::string formatHelp() {
+  std::string formatHelp() const {
     std::string help;
     auto helpInfo = this->getArgInfo();
     std::size_t maxFlagLength = 0;
