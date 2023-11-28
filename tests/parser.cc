@@ -7,12 +7,19 @@ import Argo;
 #include <string>
 #include <type_traits>
 
+template <typename... Args>
+std::tuple<size_t, char**> createArgcArgv(Args... args) {
+  const size_t N = sizeof...(Args);
+  char** array = new char*[N];
+  size_t i = 0;
+  (..., (array[i++] = strdup(args)));
+  return std::make_tuple(N, array);
+}
+
 using Argo::InvalidArgument;
 
 TEST(ArgoTest, ExampleCode) {
-  const int argc = 5;
-  char* argv[argc] = {"./main", "--arg1", "42", "--arg3", "Hello,World"};
-
+  auto [argc, argv] = createArgcArgv("./main", "--arg1", "42", "--arg3", "Hello,World");
   auto argo = Argo::Parser();
   auto parser = argo.addArg<int, Argo::key("arg1")>()
                     .addArg<float, Argo::key("arg2")>()
@@ -33,15 +40,14 @@ TEST(ArgoTest, ExampleCode) {
 }
 
 TEST(ArgoTest, AllTypes) {
-  const int argc = 11;
-  char* argv[argc] = {
+  auto [argc, argv] = createArgcArgv(       //
       "./main",                             //
       "--arg1", "42",                       // int
       "--arg2", "42.1234567890",            // float
       "--arg3", "42.12345678901234567890",  // double
       "--arg4", "Hello,World!",             // string
-      "--arg5", "Hello,World!const char*",  // const char*
-  };
+      "--arg5", "Hello,World!const char*"   // const char*
+  );
 
   auto argo = Argo::Parser<10>();
   auto parser = argo.addArg<int, Argo::key("arg1")>()
@@ -56,7 +62,7 @@ TEST(ArgoTest, AllTypes) {
   EXPECT_FLOAT_EQ(parser.getArg<Argo::key("arg2")>(), 42.1234567890f);
   EXPECT_DOUBLE_EQ(parser.getArg<Argo::key("arg3")>(), 42.12345678901234567890);
   EXPECT_EQ(parser.getArg<Argo::key("arg4")>(), "Hello,World!");
-  EXPECT_EQ(parser.getArg<Argo::key("arg5")>(), "Hello,World!const char*");
+  EXPECT_TRUE(std::strcmp(parser.getArg<Argo::key("arg5")>(), "Hello,World!const char*") == 0);
 
   EXPECT_TRUE((  //
       std::is_same_v<decltype(parser.getArg<Argo::key("arg1")>()), int>));
@@ -71,8 +77,7 @@ TEST(ArgoTest, AllTypes) {
 }
 
 TEST(ArgoTest, ExceptionThow) {
-  const int argc = 3;
-  char* argv[argc] = {"./main", "arg1=42", "--arg2=23.4"};
+  auto [argc, argv] = createArgcArgv("./main", "arg1=42", "--arg2=23.4");
 
   auto argo = Argo::Parser<20>();
   auto parser = argo.addArg<int, Argo::key("arg1")>()  //
@@ -83,8 +88,7 @@ TEST(ArgoTest, ExceptionThow) {
 }
 
 TEST(ArgoTest, EqualAssign) {
-  const int argc = 3;
-  char* argv[argc] = {"./main", "--arg1=42", "--arg2=Hello,World"};
+  auto [argc, argv] = createArgcArgv("./main", "--arg1=42", "--arg2=Hello,World");
 
   auto argo = Argo::Parser<30>();
   auto parser = argo.addArg<int, Argo::key("arg1")>().addArg<std::string, Argo::key("arg2")>();
@@ -96,9 +100,11 @@ TEST(ArgoTest, EqualAssign) {
 }
 
 TEST(ArgoTest, FlagArgument) {
-  const int argc = 8;
-  char* argv[argc] = {"./main", "--arg1", "--arg2=true", "--arg3=1",
-                      "--arg4", "true",   "--arg5",      "1"};
+  auto [argc, argv] = createArgcArgv(       //
+      "./main",                             //
+      "--arg1", "--arg2=true", "--arg3=1",  //
+      "--arg4", "true", "--arg5", "1"       //
+  );
 
   auto argo = Argo::Parser<40>();
   auto parser = argo.addFlag<Argo::key("arg1")>()
@@ -117,13 +123,12 @@ TEST(ArgoTest, FlagArgument) {
 }
 
 TEST(ArgoTest, ShortArgument) {
-  const int argc = 7;
-  char* argv[argc] = {
-      "./main",                 //
-      "-a",     "Hello,World",  //
-      "-b",     "42",           //
-      "-c",     "3.1415"        //
-  };
+  auto [argc, argv] = createArgcArgv(  //
+      "./main",                        //
+      "-a", "Hello,World",             //
+      "-b", "42",                      //
+      "-c", "3.1415"                   //
+  );
 
   auto argo = Argo::Parser<50>();
   auto parser = argo.addArg<std::string, Argo::key("arg1"), 'a'>()
@@ -138,10 +143,9 @@ TEST(ArgoTest, ShortArgument) {
 }
 
 TEST(ArgoTest, CombiningFlags) {
-  const int argc = 3;
-  char* argv[argc] = {
-      "./main", "-abd", "-e"  //
-  };
+  auto [argc, argv] = createArgcArgv(  //
+      "./main", "-abd", "-e"           //
+  );
 
   auto argo = Argo::Parser<60>();
   auto parser = argo.addFlag<Argo::key("arg1"), 'a'>()
@@ -160,10 +164,9 @@ TEST(ArgoTest, CombiningFlags) {
 }
 
 TEST(ArgoTest, CombiningFlagsWithOptionalArg) {
-  const int argc = 3;
-  char* argv[argc] = {
+  auto [argc, argv] = createArgcArgv(   //
       "./main", "-abdc", "Hello,World"  //
-  };
+  );
 
   auto argo = Argo::Parser<70>();
   auto parser = argo.addFlag<Argo::key("arg1"), 'a'>()
@@ -180,37 +183,42 @@ TEST(ArgoTest, CombiningFlagsWithOptionalArg) {
 }
 
 TEST(ArgoTest, Validation) {
-  const int argc = 3;
-  char* argv[argc] = {
-      "./main", "--arg", "42"  //
-  };
+  {
+    auto [argc, argv] = createArgcArgv(  //
+        "./main", "--arg", "42"          //
+    );
 
-  auto argo = Argo::Parser<80>();
+    auto argo = Argo::Parser<80>();
 
-  auto parser = argo  //
-                    .addArg<int, Argo::key("arg")>(new Argo::Validation::MinMax<int>(0, 100))
-                    .addFlag<Argo::key("arg2")>();
+    auto parser = argo  //
+                      .addArg<int, Argo::key("arg")>(new Argo::Validation::MinMax<int>(0, 100))
+                      .addFlag<Argo::key("arg2")>();
 
-  parser.parse(argc, argv);
+    parser.parse(argc, argv);
+  }
+  {
+    auto [argc, argv] = createArgcArgv(  //
+        "./main", "--arg", "121"         //
+    );
 
-  char* argv2[argc] = {
-      "./main", "--arg", "121"  //
-  };
+    auto argo = Argo::Parser<81>();
+    auto parser = argo  //
+                      .addArg<int, Argo::key("arg")>(new Argo::Validation::MinMax<int>(0, 100))
+                      .addFlag<Argo::key("arg2")>();
 
-  EXPECT_THROW(parser.parse(argc, argv2), Argo::ValidationError);
+    EXPECT_THROW(parser.parse(argc, argv), Argo::ValidationError);
+  }
 }
 
 TEST(ArgoTest, Narg) {
   {
-    const int argc = 16;
-    char* argv[argc] = {
-        //
+    auto [argc, argv] = createArgcArgv(        //
         "./main",                              //
-        "--arg1", "1",   "2",   "3",           //
+        "--arg1", "1", "2", "3",               //
         "--arg2",                              //
         "--arg3", "6.0", "7.2", "8.4", "9.6",  //
-        "--arg4", "11",  "12",  "8",   "9"     //
-    };
+        "--arg4", "11", "12", "8", "9"         //
+    );
 
     auto argo = Argo::Parser<90>();
 
@@ -227,13 +235,10 @@ TEST(ArgoTest, Narg) {
     EXPECT_THAT(parser.getArg<Argo::key("arg3")>(), testing::ElementsAre(6.0, 7.2, 8.4, 9.6));
   }
   {
-    const int argc = 3;
-    char* argv[argc] = {
-        //
-        "./main",      //
-        "--arg1", "1"  //
-    };
-
+    auto [argc, argv] = createArgcArgv(  //
+        "./main",                        //
+        "--arg1", "1"                    //
+    );
     auto argo = Argo::Parser<91>();
 
     auto parser = argo  //
@@ -247,11 +252,10 @@ TEST(ArgoTest, Narg) {
 
 TEST(ArgoTest, NargException) {
   {
-    const int argc = 2;
-    char* argv[argc] = {
-        "./main",  //
-        "--arg1",  //
-    };
+    auto [argc, argv] = createArgcArgv(  //
+        "./main",                        //
+        "--arg1"                         //
+    );
 
     auto argo = Argo::Parser<100>();
 
@@ -262,11 +266,10 @@ TEST(ArgoTest, NargException) {
   }
 
   {
-    const int argc = 3;
-    char* argv[argc] = {
-        "./main",            //
-        "--arg1", "--arg2",  //
-    };
+    auto [argc, argv] = createArgcArgv(  //
+        "./main",                        //
+        "--arg1", "--arg2"               //
+    );
 
     auto argo = Argo::Parser<101>();
 
@@ -316,11 +319,10 @@ TEST(ArgoTest, Help) {  // TODO(gen740): more help
 
 TEST(ArgoTest, Required) {
   {
-    const int argc = 5;
-    char* argv[argc] = {
-        "./main",                      //
-        "--arg1", "1", "--arg2", "2",  //
-    };
+    auto [argc, argv] = createArgcArgv(  //
+        "./main",                        //
+        "--arg1", "1", "--arg2", "2"     //
+    );
 
     auto argo = Argo::Parser<120>("Sample Program");
     auto parser = argo  //
@@ -337,29 +339,27 @@ TEST(ArgoTest, Required) {
 
 TEST(ArgoTest, Positional) {
   {
-    const int argc = 4;
-    char* argv[argc] = {
-        "./main",       //
-        "1", "2", "3",  //
-    };
+    auto [argc, argv] = createArgcArgv(  //
+        "./main",                        //
+        "1", "2", "3"                    //
+    );
 
     auto argo = Argo::Parser<130>("Sample Program");
     auto parser = argo  //
-                      .addPositionalArg<int, Argo::key("arg1"), 'a', Argo::nargs(3)>();
+                      .addPositionalArg<int, Argo::key("arg1"), Argo::nargs(3)>();
 
     parser.parse(argc, argv);
     EXPECT_THAT(parser.getArg<Argo::key("arg1")>(), testing::ElementsAre(1, 2, 3));
   }
   {
-    const int argc = 6;
-    char* argv[argc] = {
-        "./main", "--arg2", "42.195",  //
-        "1",      "2",      "3",       //
-    };
+    auto [argc, argv] = createArgcArgv(  //
+        "./main", "1", "2", "3",         //
+        "--arg2", "42.195"               //
+    );
 
     auto argo = Argo::Parser<131>("Sample Program");
     auto parser = argo  //
-                      .addPositionalArg<int, Argo::key("arg1"), 'a', Argo::nargs(3)>()
+                      .addPositionalArg<int, Argo::key("arg1"), Argo::nargs(3)>()
                       .addArg<float, Argo::key("arg2")>();
 
     parser.parse(argc, argv);
@@ -369,15 +369,14 @@ TEST(ArgoTest, Positional) {
   }
 
   {
-    const int argc = 6;
-    char* argv[argc] = {
-        "./main", "--arg2", "42.195",  //
-        "1",      "2",      "3",       //
-    };
+    auto [argc, argv] = createArgcArgv(  //
+        "./main", "--arg2", "42.195",    //
+        "1", "2", "3"                    //
+    );
 
     auto argo = Argo::Parser<132>("Sample Program");
     auto parser = argo  //
-                      .addPositionalArg<int, Argo::key("arg1"), 'a', Argo::nargs(3)>()
+                      .addPositionalArg<int, Argo::key("arg1"), Argo::nargs(3)>()
                       .addArg<float, Argo::key("arg2"), Argo::nargs(1)>();
 
     parser.parse(argc, argv);
@@ -387,15 +386,14 @@ TEST(ArgoTest, Positional) {
   }
 
   {
-    const int argc = 7;
-    char* argv[argc] = {
+    auto [argc, argv] = createArgcArgv(  //
         "./main", "--arg2", "42", "96",  //
-        "1",      "2",      "3"          //
-    };
+        "1", "2", "3"                    //
+    );
 
     auto argo = Argo::Parser<133>("Sample Program");
     auto parser = argo  //
-                      .addPositionalArg<int, Argo::key("arg1"), 'a', Argo::nargs(3)>()
+                      .addPositionalArg<int, Argo::key("arg1"), Argo::nargs(3)>()
                       .addArg<float, Argo::key("arg2"), Argo::nargs(2)>();
 
     parser.parse(argc, argv);
@@ -405,15 +403,14 @@ TEST(ArgoTest, Positional) {
   }
 
   {
-    const int argc = 5;
-    char* argv[argc] = {
-        "./main", "--arg2",  //
-        "1", "2", "3"        //
-    };
+    auto [argc, argv] = createArgcArgv(  //
+        "./main", "--arg2",              //
+        "1", "2", "3"                    //
+    );
 
     auto argo = Argo::Parser<134>("Sample Program");
     auto parser = argo  //
-                      .addPositionalArg<int, Argo::key("arg1"), 'a', Argo::nargs(3)>()
+                      .addPositionalArg<int, Argo::key("arg1"), Argo::nargs(3)>()
                       .addFlag<Argo::key("arg2")>();
 
     parser.parse(argc, argv);
@@ -421,4 +418,57 @@ TEST(ArgoTest, Positional) {
     EXPECT_THAT(parser.getArg<Argo::key("arg1")>(), testing::ElementsAre(1, 2, 3));
     EXPECT_TRUE(parser.getArg<Argo::key("arg2")>());
   }
+
+  {
+    auto [argc, argv] = createArgcArgv(  //
+        "./main",                        //
+        "1", "2", "3", "-b"              //
+    );
+
+    auto argo = Argo::Parser<135>("Sample Program");
+    auto parser = argo  //
+                      .addPositionalArg<int, Argo::key("arg1"), Argo::nargs(3)>()
+                      .addFlag<Argo::key("arg2"), 'b'>();
+
+    parser.parse(argc, argv);
+
+    EXPECT_THAT(parser.getArg<Argo::key("arg1")>(), testing::ElementsAre(1, 2, 3));
+    EXPECT_TRUE(parser.getArg<Argo::key("arg2")>());
+  }
+
+  // { // error
+  //   auto [argc, argv] = createArgcArgv(  //
+  //       "./main",                        //
+  //       "1", "2", "3", "-bc", "234.86"   //
+  //   );
+  //
+  //   auto argo = Argo::Parser<136>("Sample Program");
+  //   auto parser = argo  //
+  //                     .addPositionalArg<int, Argo::key("arg1"), Argo::nargs(3)>()
+  //                     .addFlag<Argo::key("arg2"), 'b'>()
+  //                     .addArg<float, Argo::key("arg3"), 'c'>();
+  //
+  //   parser.parse(argc, argv);
+  //
+  //   EXPECT_THAT(parser.getArg<Argo::key("arg1")>(), testing::ElementsAre(1, 2, 3));
+  //   EXPECT_TRUE(parser.getArg<Argo::key("arg2")>());
+  //   EXPECT_FLOAT_EQ(parser.getArg<Argo::key("arg3")>(), 234.86);
+  // }
 }
+
+// TEST(ArgoTest, IsAssigned) {
+//   {
+//     const int argc = 4;
+//     char* argv[argc] = {
+//         "./main",       //
+//         "1", "2", "3",  //
+//     };
+//
+//     auto argo = Argo::Parser<130>("Sample Program");
+//     auto parser = argo  //
+//                       .addPositionalArg<int, Argo::key("arg1"), 'a', Argo::nargs(3)>();
+//
+//     parser.parse(argc, argv);
+//     EXPECT_THAT(parser.getArg<Argo::key("arg1")>(), testing::ElementsAre(1, 2, 3));
+//   }
+// }

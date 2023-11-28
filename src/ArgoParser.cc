@@ -18,11 +18,6 @@ namespace Argo {
 
 struct Unspecified {};
 
-template <auto Value>
-struct IdentityHolder {
-  static constexpr auto value = Value;
-};
-
 /*!
  * convert const char[] to std::array<char, N>
  */
@@ -35,11 +30,6 @@ consteval auto key(const char (&a)[N]) {
   return arr;
 }
 
-template <int N>
-struct A {};
-
-template <bool B>
-using EnableIf = std::enable_if_t<B, int>;
 /*!
  * Helper function to create nargs
  */
@@ -157,6 +147,8 @@ class Parser {
     static_assert(std::is_same_v<PositionalArg, void>,
                   "Positional argument cannot set more than one");
     auto arg = createArg<Type, Name, arg1, arg2, arg3>(std::forward<T>(args)...);
+    static_assert(decltype(arg)::type::shortName == NULLCHAR,
+                  "Positonal argument could not have short name");
     return Parser<ID, Arguments, typename decltype(arg)::type>();
   }
 
@@ -200,6 +192,24 @@ class Parser {
     }
   }
 
+  template <auto Name>
+  auto isAssigend() {
+    if (!this->parsed_) {
+      throw ParseError("Parser did not parse argument, call parse first");
+    }
+    if constexpr (!std::is_same_v<PositionalArgument, void>) {
+      if constexpr (std::string_view(Name) == std::string_view(PositionalArgument::name)) {
+        return PositionalArgument::assigend;
+      } else {
+        return std::remove_cvref_t<decltype(std::get<SearchIndex<Arguments, Name>::value>(
+            this->value))>::assigend;
+      }
+    } else {
+      return std::remove_cvref_t<decltype(std::get<SearchIndex<Arguments, Name>::value>(
+          this->value))>::assigend;
+    }
+  }
+
  private:
   auto setArg(std::string_view key, std::span<std::string_view> val) const {
     Assigner<Arguments, PositionalArgument>::assign(key, val);
@@ -229,6 +239,11 @@ class Parser {
             this->setArg(short_keys, values);
             short_keys.clear();
             values.clear();
+          } else if (!values.empty()) {
+            if constexpr (!std::is_same_v<PositionalArgument, void>) {
+              this->setArg(key, values);
+              values.clear();
+            }
           }
           if (arg.contains('=')) {
             auto equal_pos = arg.find('=');
@@ -242,15 +257,19 @@ class Parser {
           }
           continue;
         }
-        if (not key.empty()) {
+        if (!key.empty()) {
           this->setArg(key, values);
           key = "";
           values.clear();
-        }
-        if (not short_keys.empty()) {
+        } else if (!short_keys.empty()) {
           this->setArg(short_keys, values);
           short_keys.clear();
           values.clear();
+        } else if (!values.empty()) {
+          if constexpr (!std::is_same_v<PositionalArgument, void>) {
+            this->setArg(key, values);
+            values.clear();
+          }
         }
         if (key.empty() && short_keys.empty()) {
           for (const auto& j : arg.substr(1)) {
