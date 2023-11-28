@@ -11,6 +11,6 @@ tasks:
   execute:
     cmds:
       # - ./build/main --arg1=42 --arg2="Hello,World"
-      - ./build/test-parser-release
-      # - ./build/bench-parser-release
+      # - ./build/test-parser-release
+      - ./build/bench-parser-release
     silent: true
