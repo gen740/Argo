@@ -1,7 +1,7 @@
 # Argo
 C++ mordern argument parser, using C++ module and metaprogramming.
 
-## Feature
+## Features
 - Static type argument parse
 - Detect duplicate argument in compile time
 - Rich feature
@@ -43,9 +43,7 @@ auto main(int argc, char* argv[]) -> int {
 }
 ```
 
-## Argument Options
-
-### Defining argument
+## Defining argument
 
 Defining a parser in Argo can be somewhat intricate. It is not accurate to define it as shown below:
 
@@ -69,9 +67,9 @@ parser.parse(argc, argv);
 
 This approach ensures that each argument is properly added and stored, enabling the parser to function as expected.
 
-### Template Options
+## Template Options
 
-**ShortKey**
+### ShortKey
 Specifying a `char` character as a template parameter indicates the short
 version of the argument flag. In the above code, you can pass the flag `-a` to
 the parser.
@@ -81,7 +79,7 @@ Example usage:
 Argo::Parser("Program").addArg<Type, key("arg1"), 'a'>();
 ```
 
-**Required**
+### Required
 Specifying `true` as the addArg template parameter indicates that the argument
 will be `required`. The parser will throw an exception if that argument is not
 specified.
@@ -91,7 +89,7 @@ Example usage:
 Argo::Parser("Program").addArg<Type, key("arg1"), true>();
 ```
 
-**nargs**
+### nargs
 
 By using `Argo::nargs` as a template parameter in `Argo::Parser`, you can
 define the `nargs` for a particular flag. Below is a table detailing the
@@ -124,9 +122,9 @@ Argo::Parser("Program").addArg<Type, key("arg1"), nargs('+'), true, 'a'>();
 These are all the same.
 
 
-### Other Options
+## Other Options
 
-**Implicit/Explicit Default**
+### Implicit/Explicit Default
 You can specify the implicit or explicit default value as follows:
 
 - Implicit Default
@@ -138,19 +136,19 @@ You can specify the implicit or explicit default value as follows:
   Argo::Parser("Program").addArg<int, key("arg1")>(Argo::explicitDefault(12.34));
   ```
 
-**Description**
+### Description
 Specify a description for the argument like this:
   ```cpp
   Argo::Parser("Program").addArg<int, key("arg1")>(Argo::withDescription("Description of arg1"));
   ```
 
-**Validator**
+### Validator
 Define a validator for the argument, for example, a range validator:
   ```cpp
   Argo::Parser("Program").addArg<int, key("arg1")>(Argo::validator::MinMax(10, 20));
   ```
 
-**Callback**
+### Callback
 Set a callback for the flag, which is triggered as soon as the option is parsed:
   ```cpp
   Argo::Parser("Program").addArg<int, key("arg1")>([](auto value, auto raw_value){
