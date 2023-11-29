@@ -27,7 +27,7 @@ export {
 }
 
 export namespace std {
-using ::std::exit;
+using ::std::exit;  // NOLINT(misc-unused-using-decls)
 
 // utility
 using ::std::get;         // NOLINT(misc-unused-using-decls)

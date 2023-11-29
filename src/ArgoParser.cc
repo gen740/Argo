@@ -48,6 +48,17 @@ struct ShortName {
   static constexpr char value = Name;
 };
 
+auto split(std::string_view str, char delimeter) -> std::vector<std::string_view> {
+  std::vector<std::string_view> ret;
+  while (str.contains(delimeter)) {
+    auto pos = str.find(delimeter);
+    ret.push_back(str.substr(0, pos));
+    str = str.substr(pos + 1);
+  }
+  ret.push_back(str);
+  return ret;
+}
+
 export template <auto ID = 0, class Args = std::tuple<>, class PositionalArg = void,
                  bool HelpEnabled = false>
 class Parser {
@@ -332,7 +343,7 @@ class Parser {
   }
 
   std::vector<ArgInfo> getArgInfo() const {
-    return HelpGenerator::generate<Arguments>();
+    return HelpGenerator<Arguments>::generate();
   }
 
   std::string formatHelp() const {
@@ -347,13 +358,23 @@ class Parser {
     help.append("Options:");
     for (const auto& i : helpInfo) {
       help.push_back('\n');
+      auto description = split(i.description, '\n');
+
       help.append(std::format(                                                   //
           "  {} --{} {} {}",                                                     //
           (i.shortName == NULLCHAR) ? "   " : std::format("-{},", i.shortName),  //
           i.name,                                                                //
           std::string(maxFlagLength - i.name.size(), ' '),                       //
-          i.description                                                          //
+          description[0]                                                         //
           ));
+      for (std::size_t j = 1; j < description.size(); j++) {
+        help.append(std::format(              //
+            "        {}    {}",               //
+            std::string(maxFlagLength, ' '),  //
+            description[0]                    //
+            ));
+      }
+
       // erase trailing spaces
       auto pos = help.find_last_not_of(' ');
       help = help.substr(0, pos + 1);

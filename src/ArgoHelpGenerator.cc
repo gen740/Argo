@@ -1,43 +1,31 @@
 module;
 
-
 export module Argo:HelpGenerator;
-import :MetaLookup;
 import :std_module;
 
 export namespace Argo {
 
 struct ArgInfo {
-  std::string name;
+  std::string_view name;
   char shortName;
   std::string_view description;
 };
 
-struct HelpGenerator {
-  template <int Index, typename Head, typename... Tails>
-  struct TypeCheckerImpl {};
+template <class Args>
+struct HelpGenerator {};
 
-  template <int Index>
-  struct TypeCheckerImpl<Index, std::tuple<>> {
-    template <typename Lhs>
-    static auto eval(std::vector<ArgInfo>& /* unused */) {}
-  };
-
-  template <int Index, typename Head, typename... Tails>
-  struct TypeCheckerImpl<Index, std::tuple<Head, Tails...>> {
-    template <typename Lhs>
-    static auto eval(std::vector<ArgInfo>& ret) {
-      ret.emplace_back(ArrayToString(Head::name), Head::shortName, Head::description);
-      TypeCheckerImpl<1 + Index, std::tuple<Tails...>>::template eval<Lhs>(ret);
-    }
-  };
-
-  template <typename Lhs>
-  static auto generate() {
-    auto ret = std::vector<ArgInfo>();
-    TypeCheckerImpl<0, Lhs>::template eval<Lhs>(ret);
+template <class... Args>
+struct HelpGenerator<std::tuple<Args...>> {
+  static auto generate() -> std::vector<ArgInfo> {
+    std::vector<ArgInfo> ret;
+    (
+        [&]<class T>() {
+          ret.emplace_back(std::string_view(Args::name), Args::shortName, Args::description);
+        }.template operator()<Args>(),
+        ...  //
+    );
     return ret;
-  };
+  }
 };
 
 }  // namespace Argo

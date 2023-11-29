@@ -95,12 +95,12 @@ By using `Argo::nargs` as a template parameter in `Argo::Parser`, you can
 define the `nargs` for a particular flag. Below is a table detailing the
 options for `nargs`.
 
-| narg | value number | description |
-|------|--------------|-------------|
-| int  | exactly n    | Stores exactly n values in the `std::vector<Type>`. |
-| '?'  | zero or one  | An implicit default value is used if zero values are provided; an explicit value is set when the flag is specified. |
-| '+'  | more than one| Stores n values in the `std::vector<Type>`. |
-| '*'  | zero or more | An implicit default value is used if zero values are provided; otherwise, behaves the same as '+'. |
+| narg | number of values | description |
+|------|------------------|-------------|
+| int  | exactly n        | Stores exactly n values in the `std::vector<Type>`. |
+| '?'  | zero or one      | An implicit default value is used if zero values are provided; an explicit value is set when the flag is specified. |
+| '+'  | more than one    | Stores n values in the `std::vector<Type>`. |
+| '*'  | zero or more     | An implicit default value is used if zero values are provided; otherwise, behaves the same as '+'. |
 
 Example usage:
 ```cpp
