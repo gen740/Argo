@@ -18,11 +18,11 @@ TEST(ArgoTest, AllTypes) {
   );
 
   auto argo = Argo::Parser<10>();
-  auto parser = argo.addArg<int, key("arg1")>()
-                    .addArg<float, key("arg2")>()
-                    .addArg<double, key("arg3")>()
-                    .addArg<std::string, key("arg4")>()
-                    .addArg<const char*, key("arg5")>();
+  auto parser = argo.addArg<key("arg1"), int>()
+                    .addArg<key("arg2"), float>()
+                    .addArg<key("arg3"), double>()
+                    .addArg<key("arg4"), std::string>()
+                    .addArg<key("arg5"), const char*>();
 
   parser.parse(argc, argv);
 

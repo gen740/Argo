@@ -15,7 +15,7 @@ std::tuple<size_t, char**> createArgcArgv(Args... args) {
 
 auto main() -> int {
 
-  auto argo = Argo::Parser();
+  // auto argo = Argo::Parser();
   // auto parser = argo.addArg<
 
   return 0;

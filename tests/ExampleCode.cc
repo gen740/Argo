@@ -11,9 +11,9 @@ TEST(ArgoTest, ExampleCode) {
   auto [argc, argv] = createArgcArgv("./main", "--arg1", "42", "--arg3", "Hello,World");
 
   auto parser = Argo::Parser<key("ExampleCode")>("Program name")  //
-                    .addArg<int, key("arg1")>()
-                    .addArg<float, key("arg2")>(Argo::explicitDefault(12.34))
-                    .addArg<std::string, key("arg3")>();
+                    .addArg<key("arg1"), int>()
+                    .addArg<key("arg2"), float>(Argo::explicitDefault(12.34))
+                    .addArg<key("arg3"), std::string>();
 
   parser.parse(argc, argv);
 

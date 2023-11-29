@@ -15,6 +15,7 @@ import :HelpGenerator;
 import :std_module;
 
 namespace Argo {
+export using ::Argo::NULLCHAR; // TODO(gen740) Delete
 
 struct Unspecified {};
 
@@ -74,28 +75,14 @@ class Parser {
   using PositionalArgument = PositionalArg;
   Args value;
 
-  template <class Type, auto Name, auto arg1 = Unspecified(), auto arg2 = Unspecified(),
-            auto arg3 = Unspecified(), class... T>
+  template <class Type, auto Name, char ShortName, auto arg1 = Unspecified(),
+            auto arg2 = Unspecified(), class... T>
   auto createArg(T... args) {
-    static constexpr char ShortName = []() {
-      if constexpr (std::is_same_v<std::remove_cvref_t<decltype(arg1)>, char>) {
-        return arg1;
-      } else if constexpr (std::is_same_v<std::remove_cvref_t<decltype(arg2)>, char>) {
-        return arg2;
-      } else if constexpr (std::is_same_v<std::remove_cvref_t<decltype(arg3)>, char>) {
-        return arg3;
-      } else {
-        return NULLCHAR;
-      }
-    }();
-
     static constexpr auto nargs = []() {
       if constexpr (std::is_same_v<std::remove_cvref_t<decltype(arg1)>, NArgs>) {
         return arg1;
       } else if constexpr (std::is_same_v<std::remove_cvref_t<decltype(arg2)>, NArgs>) {
         return arg2;
-      } else if constexpr (std::is_same_v<std::remove_cvref_t<decltype(arg3)>, NArgs>) {
-        return arg3;
       } else {
         return NArgs('?');
       }
@@ -106,8 +93,6 @@ class Parser {
         return arg1;
       } else if constexpr (std::is_same_v<std::remove_cvref_t<decltype(arg2)>, bool>) {
         return arg2;
-      } else if constexpr (std::is_same_v<std::remove_cvref_t<decltype(arg3)>, bool>) {
-        return arg3;
       } else {
         return false;
       }
@@ -141,10 +126,10 @@ class Parser {
    * arg1: ShortName or NArgs or Unspecified
    * arg2: NArgs or Unspecified
    */
-  template <class Type, auto Name, auto arg1 = Unspecified(), auto arg2 = Unspecified(),
-            auto arg3 = Unspecified(), class... T>
+  template <auto Name, class Type, char ShortName = NULLCHAR, auto arg1 = Unspecified(),
+            auto arg2 = Unspecified(), class... T>
   auto addArg(T... args) {
-    auto arg = createArg<Type, Name, arg1, arg2, arg3>(std::forward<T>(args)...);
+    auto arg = createArg<Type, Name, ShortName, arg1, arg2>(std::forward<T>(args)...);
     return Parser<ID,
                   decltype(std::tuple_cat(                                      //
                       std::declval<Arguments>(),                                //
@@ -153,12 +138,24 @@ class Parser {
                   PositionalArgument, HelpEnabled>();
   }
 
-  template <class Type, auto Name, auto arg1 = Unspecified(), auto arg2 = Unspecified(),
-            auto arg3 = Unspecified(), class... T>
+  // template <auto Name, class Type,  auto arg1 = Unspecified(),
+  //           auto arg2 = Unspecified(), class... T>
+  // auto addArg(T... args) {
+  //   auto arg = createArg<Type, Name, ShortName, arg1, arg2>(std::forward<T>(args)...);
+  //   return Parser<ID,
+  //                 decltype(std::tuple_cat(                                      //
+  //                     std::declval<Arguments>(),                                //
+  //                     std::declval<std::tuple<typename decltype(arg)::type>>()  //
+  //                     )),
+  //                 PositionalArgument, HelpEnabled>();
+  // }
+
+  template <class Type, auto Name, char ShortName = NULLCHAR, auto arg1 = Unspecified(),
+            auto arg2 = Unspecified(), class... T>
   auto addPositionalArg(T... args) {
     static_assert(std::is_same_v<PositionalArg, void>,
                   "Positional argument cannot set more than one");
-    auto arg = createArg<Type, Name, arg1, arg2, arg3>(std::forward<T>(args)...);
+    auto arg = createArg<Type, Name, ShortName, arg1, arg2>(std::forward<T>(args)...);
     static_assert(decltype(arg)::type::shortName == NULLCHAR,
                   "Positonal argument could not have short name");
     return Parser<ID, Arguments, typename decltype(arg)::type, HelpEnabled>();

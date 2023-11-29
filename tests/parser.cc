@@ -7,13 +7,14 @@ import Argo;
 
 using Argo::InvalidArgument;
 using Argo::key;
+using Argo::NULLCHAR;
 
 TEST(ArgoTest, ExceptionThow) {
   auto [argc, argv] = createArgcArgv("./main", "arg1=42", "--arg2=23.4");
 
   auto argo = Argo::Parser<20>();
-  auto parser = argo.addArg<int, key("arg1")>()  //
-                    .addArg<float, key("arg2")>();
+  auto parser = argo.addArg<key("arg1"), int>()  //
+                    .addArg<key("arg2"), float>();
 
   EXPECT_THROW(parser.getArg<key("arg1")>(), Argo::ParseError);
   EXPECT_THROW(parser.parse(argc, argv), Argo::InvalidArgument);
@@ -24,8 +25,8 @@ TEST(ArgoTest, EqualAssign) {
 
   auto argo = Argo::Parser<30>();
   auto parser = argo                             //
-                    .addArg<int, key("arg1")>()  //
-                    .addArg<std::string, key("arg2")>();
+                    .addArg<key("arg1"), int>()  //
+                    .addArg<key("arg2"), std::string>();
 
   parser.parse(argc, argv);
 
@@ -42,10 +43,10 @@ TEST(ArgoTest, FlagArgument) {
 
   auto argo = Argo::Parser<40>();
   auto parser = argo.addFlag<key("arg1")>()
-                    .addArg<bool, key("arg2")>()
-                    .addArg<bool, key("arg3")>()
-                    .addArg<bool, key("arg4")>()
-                    .addArg<bool, key("arg5")>();
+                    .addArg<key("arg2"), bool>()
+                    .addArg<key("arg3"), bool>()
+                    .addArg<key("arg4"), bool>()
+                    .addArg<key("arg5"), bool>();
 
   parser.parse(argc, argv);
 
@@ -65,9 +66,9 @@ TEST(ArgoTest, ShortArgument) {
   );
 
   auto argo = Argo::Parser<50>();
-  auto parser = argo.addArg<std::string, key("arg1"), 'a'>()
-                    .addArg<int, key("arg2"), 'b'>()
-                    .addArg<float, key("arg3"), 'c'>();
+  auto parser = argo.addArg<key("arg1"), std::string, 'a'>()
+                    .addArg<key("arg2"), int, 'b'>()
+                    .addArg<key("arg3"), float, 'c'>();
 
   parser.parse(argc, argv);
 
@@ -105,7 +106,7 @@ TEST(ArgoTest, CombiningFlagsWithOptionalArg) {
   auto argo = Argo::Parser<70>();
   auto parser = argo.addFlag<key("arg1"), 'a'>()
                     .addFlag<key("arg2"), 'b'>()
-                    .addArg<std::string, key("arg3"), 'c'>()
+                    .addArg<key("arg3"), std::string, 'c'>()
                     .addFlag<key("arg4"), 'd'>();
 
   parser.parse(argc, argv);
@@ -125,7 +126,7 @@ TEST(ArgoTest, Validation) {
     auto argo = Argo::Parser<80>();
 
     auto parser = argo  //
-                      .addArg<int, key("arg")>(new Argo::Validation::MinMax<int>(0, 100))
+                      .addArg<key("arg"), int>(new Argo::Validation::MinMax<int>(0, 100))
                       .addFlag<key("arg2")>();
 
     parser.parse(argc, argv);
@@ -137,7 +138,7 @@ TEST(ArgoTest, Validation) {
 
     auto argo = Argo::Parser<81>();
     auto parser = argo  //
-                      .addArg<int, key("arg")>(new Argo::Validation::MinMax<int>(0, 100))
+                      .addArg<key("arg"), int>(new Argo::Validation::MinMax<int>(0, 100))
                       .addFlag<key("arg2")>();
 
     EXPECT_THROW(parser.parse(argc, argv), Argo::ValidationError);
@@ -157,10 +158,10 @@ TEST(ArgoTest, Narg) {
     auto argo = Argo::Parser<90>();
 
     auto parser = argo  //
-                      .addArg<int, key("arg1"), Argo::nargs(3)>()
-                      .addArg<std::string, key("arg2")>(Argo::implicitDefault("Bar"))
-                      .addArg<float, key("arg3"), Argo::nargs('*')>()
-                      .addArg<float, key("arg4"), Argo::nargs('+')>();
+                      .addArg<key("arg1"), int, NULLCHAR, Argo::nargs(3)>()
+                      .addArg<key("arg2"), std::string>(Argo::implicitDefault("Bar"))
+                      .addArg<key("arg3"), float, NULLCHAR, Argo::nargs('*')>()
+                      .addArg<key("arg4"), float, NULLCHAR, Argo::nargs('+')>();
 
     parser.parse(argc, argv);
 
@@ -176,7 +177,7 @@ TEST(ArgoTest, Narg) {
     auto argo = Argo::Parser<91>();
 
     auto parser = argo  //
-                      .addArg<int, key("arg1"), Argo::nargs(1)>();
+                      .addArg<key("arg1"), int, NULLCHAR, Argo::nargs(1)>();
 
     parser.parse(argc, argv);
 
@@ -194,7 +195,7 @@ TEST(ArgoTest, NargException) {
     auto argo = Argo::Parser<100>();
 
     auto parser = argo  //
-                      .addArg<int, key("arg1"), Argo::nargs('+')>();
+                      .addArg<key("arg1"), int, NULLCHAR, Argo::nargs('+')>();
 
     EXPECT_THROW(parser.parse(argc, argv), Argo::InvalidArgument);
   }
@@ -208,8 +209,8 @@ TEST(ArgoTest, NargException) {
     auto argo = Argo::Parser<101>();
 
     auto parser = argo  //
-                      .addArg<int, key("arg1"), Argo::nargs('+')>()
-                      .addArg<int, key("arg2")>();
+                      .addArg<key("arg1"), int, NULLCHAR, Argo::nargs('+')>()
+                      .addArg<key("arg2"), int>();
 
     EXPECT_THROW(parser.parse(argc, argv), Argo::InvalidArgument);
   }
@@ -218,10 +219,10 @@ TEST(ArgoTest, NargException) {
 TEST(ArgoTest, Help) {  // TODO(gen740): more help
   {
     auto argo = Argo::Parser<110>("Sample Program");
-    auto parser =
-        argo  //
-            .addArg<int, key("arg1"), 'a', Argo::nargs('+')>()
-            .addArg<int, key("arg2"), Argo::nargs('+')>(Argo::withDescription("This is arg2"));
+    auto parser = argo  //
+                      .addArg<key("arg1"), int, 'a', Argo::nargs('+')>()
+                      .addArg<key("arg2"), int, NULLCHAR, Argo::nargs('+')>(
+                          Argo::withDescription("This is arg2"));
 
     auto ArgInfo = parser.getArgInfo();
 
@@ -238,10 +239,10 @@ TEST(ArgoTest, Help) {  // TODO(gen740): more help
 
   {
     auto argo = Argo::Parser<111>("program");
-    auto parser =
-        argo  //
-            .addArg<int, key("arg1"), 'a', Argo::nargs('+')>()
-            .addArg<int, key("arg2"), Argo::nargs('+')>(Argo::withDescription("This is arg2"));
+    auto parser = argo  //
+                      .addArg<key("arg1"), int, 'a', Argo::nargs('+')>()
+                      .addArg<key("arg2"), int, NULLCHAR, Argo::nargs('+')>(
+                          Argo::withDescription("This is arg2"));
 
     auto ArgInfo = parser.getArgInfo();
 
@@ -262,11 +263,11 @@ TEST(ArgoTest, Required) {
 
     auto argo = Argo::Parser<120>("Sample Program");
     auto parser = argo  //
-                      .addArg<int, key("arg1"), 'a', Argo::nargs(1)>()
-                      .addArg<int, key("arg2"), Argo::nargs(1)>()
-                      .addArg<int, key("arg3"), true, Argo::nargs(1)>()
-                      .addArg<int, key("arg4"), Argo::nargs(1), 'b', true>()
-                      .addArg<int, key("arg5"), 'c', Argo::nargs(1), true>();
+                      .addArg<key("arg1"), int, 'a', Argo::nargs(1)>()
+                      .addArg<key("arg2"), int, NULLCHAR, Argo::nargs(1)>()
+                      .addArg<key("arg3"), int, NULLCHAR, true, Argo::nargs(1)>()
+                      .addArg<key("arg4"), int, 'b', Argo::nargs(1), true>()
+                      .addArg<key("arg5"), int, 'c', Argo::nargs(1), true>();
 
     EXPECT_THROW(parser.parse(argc, argv), Argo::InvalidArgument);
     // parser.parse(argc, argv);
@@ -282,7 +283,7 @@ TEST(ArgoTest, Positional) {
 
     auto argo = Argo::Parser<130>("Sample Program");
     auto parser = argo  //
-                      .addPositionalArg<int, key("arg1"), Argo::nargs(3)>();
+                      .addPositionalArg<int, key("arg1"), NULLCHAR, Argo::nargs(3)>();
 
     parser.parse(argc, argv);
     EXPECT_THAT(parser.getArg<key("arg1")>(), testing::ElementsAre(1, 2, 3));
@@ -295,8 +296,8 @@ TEST(ArgoTest, Positional) {
 
     auto argo = Argo::Parser<131>("Sample Program");
     auto parser = argo  //
-                      .addPositionalArg<int, key("arg1"), Argo::nargs(3)>()
-                      .addArg<float, key("arg2")>();
+                      .addPositionalArg<int, key("arg1"), NULLCHAR, Argo::nargs(3)>()
+                      .addArg<key("arg2"), float>();
 
     parser.parse(argc, argv);
 
@@ -312,8 +313,8 @@ TEST(ArgoTest, Positional) {
 
     auto argo = Argo::Parser<132>("Sample Program");
     auto parser = argo  //
-                      .addPositionalArg<int, key("arg1"), Argo::nargs(3)>()
-                      .addArg<float, key("arg2"), Argo::nargs(1)>();
+                      .addPositionalArg<int, key("arg1"), NULLCHAR, Argo::nargs(3)>()
+                      .addArg<key("arg2"), float, NULLCHAR, Argo::nargs(1)>();
 
     parser.parse(argc, argv);
 
@@ -329,8 +330,8 @@ TEST(ArgoTest, Positional) {
 
     auto argo = Argo::Parser<133>("Sample Program");
     auto parser = argo  //
-                      .addPositionalArg<int, key("arg1"), Argo::nargs(3)>()
-                      .addArg<float, key("arg2"), Argo::nargs(2)>();
+                      .addPositionalArg<int, key("arg1"), NULLCHAR, Argo::nargs(3)>()
+                      .addArg<key("arg2"), float, NULLCHAR, Argo::nargs(2)>();
 
     parser.parse(argc, argv);
 
@@ -346,7 +347,7 @@ TEST(ArgoTest, Positional) {
 
     auto argo = Argo::Parser<134>("Sample Program");
     auto parser = argo  //
-                      .addPositionalArg<int, key("arg1"), Argo::nargs(3)>()
+                      .addPositionalArg<int, key("arg1"), NULLCHAR, Argo::nargs(3)>()
                       .addFlag<key("arg2")>();
 
     parser.parse(argc, argv);
@@ -363,7 +364,7 @@ TEST(ArgoTest, Positional) {
 
     auto argo = Argo::Parser<135>("Sample Program");
     auto parser = argo  //
-                      .addPositionalArg<int, key("arg1"), Argo::nargs(3)>()
+                      .addPositionalArg<int, key("arg1"), NULLCHAR, Argo::nargs(3)>()
                       .addFlag<key("arg2"), 'b'>();
 
     parser.parse(argc, argv);
@@ -380,9 +381,9 @@ TEST(ArgoTest, Positional) {
 
     auto argo = Argo::Parser<136>("Sample Program");
     auto parser = argo  //
-                      .addPositionalArg<int, key("arg1"), Argo::nargs(3)>()
+                      .addPositionalArg<int, key("arg1"), NULLCHAR, Argo::nargs(3)>()
                       .addFlag<key("arg2"), 'b'>()
-                      .addArg<float, key("arg3"), 'c'>();
+                      .addArg<key("arg3"), float, 'c'>();
 
     parser.parse(argc, argv);
 
@@ -418,7 +419,7 @@ TEST(ArgoTest, CallBack) {
     };
 
     auto argo = Argo::Parser<150>("Sample Program");
-    auto parser = argo.addPositionalArg<int, key("arg1"), Argo::nargs(3)>(
+    auto parser = argo.addPositionalArg<int, key("arg1"), NULLCHAR, Argo::nargs(3)>(
         [](auto value, [[maybe_unused]] auto raw) {
           EXPECT_THAT(value, testing::ElementsAre(1, 2, 3));
           // EXPECT_EQ(key, "arg1");

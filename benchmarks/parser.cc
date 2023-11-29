@@ -42,19 +42,20 @@ auto [argc, argv] = createArgcArgv(                              //
 
 using Argo::key;
 using Argo::nargs;
+using Argo::NULLCHAR;
 using Argo::Parser;
 
 static void ArgoParser(benchmark::State& state) {
   for (auto _ : state) {
     auto argo = Parser<1>();
     auto parser = argo  //
-                      .addArg<int, key("arg1"), nargs(8)>()
-                      .addArg<float, key("arg2")>()
+                      .addArg<key("arg1"), int, NULLCHAR, nargs(8)>()
+                      .addArg<key("arg2"), float>()
                       .addFlag<key("arg3")>()
-                      .addArg<std::string, key("arg4"), nargs(1)>()
+                      .addArg<key("arg4"), std::string, NULLCHAR, nargs(1)>()
                       .addFlag<key("arg5"), 'b'>()
                       .addFlag<key("arg6"), 'c'>()
-                      .addArg<float, key("arg7"), 'd'>()
+                      .addArg<key("arg7"), float, 'd'>()
                       .addFlag<key("arg8"), 'e'>()
                       .addFlag<key("arg9"), 'f'>()
                       .addFlag<key("arg10"), 'g'>()
@@ -64,7 +65,7 @@ static void ArgoParser(benchmark::State& state) {
                       .addFlag<key("arg15"), 'l'>()
                       .addFlag<key("arg16"), 'm'>()
                       .addFlag<key("arg17"), 'n'>()
-                      .addArg<int, key("arg18"), nargs('+')>();
+                      .addArg<key("arg18"), int, NULLCHAR, nargs('+')>();
     parser.parse(argc, argv);
   }
 }
