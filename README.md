@@ -75,8 +75,8 @@ version of the argument flag. In the above code, you can pass the flag `-a` to
 the parser.
 
 Example usage:
-```
-Argo::Parser("Program").addArg<key("arg1"), Type, 'a'>();
+```cpp
+Argo::Parser("Program").addArg<key("arg1"), 'a', Type>();
 ```
 
 ### Required
@@ -111,12 +111,11 @@ one or more arguments, which will be stored in a `std::vector<Type>`.
 
 ---
 
-These values are interchangable you can specify these value in the same time.
+`required` ond `nargs` values are interchangable you can specify these value in the same time.
 
 ```cpp
-Argo::Parser("Program").addArg<key("arg1"), Type, true, 'a', nargs('+')>();
-Argo::Parser("Program").addArg<key("arg1"), Type, nargs('+'), 'a', true>();
-Argo::Parser("Program").addArg<key("arg1"), Type, nargs('+'), true, 'a'>();
+Argo::Parser("Program").addArg<key("arg1"), Type, true, nargs('+')>();
+Argo::Parser("Program").addArg<key("arg1"), Type, nargs('+'), true>();
 ```
 
 These are all the same.

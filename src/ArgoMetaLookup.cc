@@ -7,28 +7,19 @@ import :std_module;
 
 export namespace Argo {
 
-template <std::size_t N>
-constexpr auto ArrayToString(const std::array<char, N>& from) -> std::string {
-  std::string ret;
-  for (std::size_t i = 0; i < N; i++) {
-    ret.push_back(from[i]);
-  }
-  return ret;
-}
-
 template <class Arguments>
 struct GetNameFromShortName {
   template <class Head, class... Tails>
   struct GetNameFromShortNameImpl {
-    [[noreturn]] static auto get([[maybe_unused]] char key) -> std::string {
+    [[noreturn]] static auto get(char /* unused */) -> std::string_view {
       throw ParserInternalError("Fail to lookup");
     }
   };
 
   template <class Head, class... Tails>
   struct GetNameFromShortNameImpl<std::tuple<Head, Tails...>> {
-    static auto get(char key) -> std::string {
-      auto name = ArrayToString(Head::name);
+    static auto get(char key) -> std::string_view {
+      auto name = std::string_view(Head::name);
       if (Head::shortName == key) {
         return name;
       }
@@ -36,23 +27,8 @@ struct GetNameFromShortName {
     }
   };
 
-  static auto eval(char key) -> std::string {
+  static auto eval(char key) -> std::string_view {
     return GetNameFromShortNameImpl<Arguments>::get(key);
-  }
-};
-
-template <auto T, auto U>
-struct ConstexprStringCmp {
-  static consteval auto eval() {
-    if (T.size() != U.size()) {
-      return false;
-    }
-    for (int i = 0; i < T.size(); i++) {
-      if (T[i] != U[i]) {
-        return false;
-      }
-    }
-    return true;
   }
 };
 
@@ -69,9 +45,8 @@ struct SearchIndex<std::tuple<>, T, Index> {
 
 template <auto T, std::size_t Index, typename Head, typename... Tails>
 struct SearchIndex<std::tuple<Head, Tails...>, T, Index> {
-  static constexpr int value = ConstexprStringCmp<Head::name, T>::eval()
-                                   ? Index
-                                   : SearchIndex<std::tuple<Tails...>, T, Index + 1>::value;
+  static constexpr int value =
+      (Head::name == T) ? Index : SearchIndex<std::tuple<Tails...>, T, Index + 1>::value;
 };
 
 /*!

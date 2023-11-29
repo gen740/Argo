@@ -1,8 +1,7 @@
 import Argo;
-#include <iostream>
+
+#include <print>
 #include <tuple>
-
-
 
 template <typename... Args>
 std::tuple<size_t, char**> createArgcArgv(Args... args) {
@@ -13,10 +12,16 @@ std::tuple<size_t, char**> createArgcArgv(Args... args) {
   return std::make_tuple(N, array);
 }
 
-auto main() -> int {
+using Argo::key;
 
-  // auto argo = Argo::Parser();
-  // auto parser = argo.addArg<
+auto main() -> int {
+  // auto[argc, argv] = createArgcArgv("./main", "--arg1", "23")
+
+  auto argo = Argo::Parser();
+  auto parser = argo  //
+                    .addArg<key("arg1"), int>(Argo::withDescription("Hello\nWorld!"));
+
+  std::println("{}", parser.formatHelp());
 
   return 0;
 }

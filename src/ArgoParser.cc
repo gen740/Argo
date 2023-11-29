@@ -15,7 +15,7 @@ import :HelpGenerator;
 import :std_module;
 
 namespace Argo {
-export using ::Argo::NULLCHAR; // TODO(gen740) Delete
+export using ::Argo::NULLCHAR;  // TODO(gen740) Delete
 
 struct Unspecified {};
 
@@ -23,12 +23,16 @@ struct Unspecified {};
  * convert const char[] to std::array<char, N>
  */
 export template <std::size_t N>
-consteval auto key(const char (&a)[N]) {
-  std::array<char, N - 1> arr{};
-  for (std::size_t i = 0; i < N - 1; ++i) {
-    arr[i] = a[i];
-  }
-  return arr;
+consteval auto key(const char (&a)[N]) -> ArgName<N - 1> {
+  return {a};
+}
+
+/*!
+ * convert const char[] to std::array<char, N>
+ */
+export template <std::size_t N>
+consteval auto key(const char (&a)[N], char short_name) -> ArgName<N - 1> {
+  return {a, short_name};
 }
 
 /*!
@@ -45,11 +49,11 @@ export {
 }
 
 template <char Name>
-struct ShortName {
+struct ShortNameHolder {
   static constexpr char value = Name;
 };
 
-auto split(std::string_view str, char delimeter) -> std::vector<std::string_view> {
+auto splitStringView(std::string_view str, char delimeter) -> std::vector<std::string_view> {
   std::vector<std::string_view> ret;
   while (str.contains(delimeter)) {
     auto pos = str.find(delimeter);
@@ -126,7 +130,7 @@ class Parser {
    * arg1: ShortName or NArgs or Unspecified
    * arg2: NArgs or Unspecified
    */
-  template <auto Name, class Type, char ShortName = NULLCHAR, auto arg1 = Unspecified(),
+  template <auto Name, char ShortName, class Type, auto arg1 = Unspecified(),
             auto arg2 = Unspecified(), class... T>
   auto addArg(T... args) {
     auto arg = createArg<Type, Name, ShortName, arg1, arg2>(std::forward<T>(args)...);
@@ -138,26 +142,22 @@ class Parser {
                   PositionalArgument, HelpEnabled>();
   }
 
-  // template <auto Name, class Type,  auto arg1 = Unspecified(),
-  //           auto arg2 = Unspecified(), class... T>
-  // auto addArg(T... args) {
-  //   auto arg = createArg<Type, Name, ShortName, arg1, arg2>(std::forward<T>(args)...);
-  //   return Parser<ID,
-  //                 decltype(std::tuple_cat(                                      //
-  //                     std::declval<Arguments>(),                                //
-  //                     std::declval<std::tuple<typename decltype(arg)::type>>()  //
-  //                     )),
-  //                 PositionalArgument, HelpEnabled>();
-  // }
+  template <auto Name, class Type, auto arg1 = Unspecified(), auto arg2 = Unspecified(), class... T>
+  auto addArg(T... args) {
+    auto arg = createArg<Type, Name, NULLCHAR, arg1, arg2>(std::forward<T>(args)...);
+    return Parser<ID,
+                  decltype(std::tuple_cat(                                      //
+                      std::declval<Arguments>(),                                //
+                      std::declval<std::tuple<typename decltype(arg)::type>>()  //
+                      )),
+                  PositionalArgument, HelpEnabled>();
+  }
 
-  template <class Type, auto Name, char ShortName = NULLCHAR, auto arg1 = Unspecified(),
-            auto arg2 = Unspecified(), class... T>
+  template <auto Name, class Type, auto arg1 = Unspecified(), auto arg2 = Unspecified(), class... T>
   auto addPositionalArg(T... args) {
     static_assert(std::is_same_v<PositionalArg, void>,
                   "Positional argument cannot set more than one");
-    auto arg = createArg<Type, Name, ShortName, arg1, arg2>(std::forward<T>(args)...);
-    static_assert(decltype(arg)::type::shortName == NULLCHAR,
-                  "Positonal argument could not have short name");
+    auto arg = createArg<Type, Name, NULLCHAR, arg1, arg2>(std::forward<T>(args)...);
     return Parser<ID, Arguments, typename decltype(arg)::type, HelpEnabled>();
   }
 
@@ -183,14 +183,10 @@ class Parser {
                   PositionalArgument, HelpEnabled>();
   }
 
-  auto addHelp() {
-    static_assert((SearchIndexFromShortName<Arguments, 'h'>::value == -1), "Duplicated short name");
-    static_assert(Argo::SearchIndex<Arguments, key("help")>::value == -1, "Duplicated name");
-    return Parser<ID, Arguments, PositionalArgument, true>();
-  }
+  auto addHelp() -> void;
 
   template <auto Name>
-  auto getArg() {
+  auto getArg() -> decltype(auto) {
     if (!this->parsed_) {
       throw ParseError("Parser did not parse argument, call parse first");
     }
@@ -347,28 +343,29 @@ class Parser {
     std::string help;
     auto helpInfo = this->getArgInfo();
     std::size_t maxFlagLength = 0;
-    for (const auto& i : helpInfo) {
-      if (maxFlagLength < i.name.size()) {
-        maxFlagLength = i.name.size();
+    for (const auto& option : helpInfo) {
+      if (maxFlagLength < option.name.size()) {
+        maxFlagLength = option.name.size();
       }
     }
     help.append("Options:");
-    for (const auto& i : helpInfo) {
+    for (const auto& option : helpInfo) {
       help.push_back('\n');
-      auto description = split(i.description, '\n');
+      auto description = splitStringView(option.description, '\n');
 
-      help.append(std::format(                                                   //
-          "  {} --{} {} {}",                                                     //
-          (i.shortName == NULLCHAR) ? "   " : std::format("-{},", i.shortName),  //
-          i.name,                                                                //
-          std::string(maxFlagLength - i.name.size(), ' '),                       //
-          description[0]                                                         //
+      help.append(std::format(                                                             //
+          "  {} --{} {} {}",                                                               //
+          (option.shortName == NULLCHAR) ? "   " : std::format("-{},", option.shortName),  //
+          option.name,                                                                     //
+          std::string(maxFlagLength - option.name.size(), ' '),                            //
+          description[0]                                                                   //
           ));
-      for (std::size_t j = 1; j < description.size(); j++) {
+      for (std::size_t i = 1; i < description.size(); i++) {
+        help.push_back('\n');
         help.append(std::format(              //
-            "        {}    {}",               //
+            "      {}    {}",                 //
             std::string(maxFlagLength, ' '),  //
-            description[0]                    //
+            description[i]                    //
             ));
       }
 
