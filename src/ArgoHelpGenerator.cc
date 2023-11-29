@@ -19,8 +19,8 @@ struct HelpGenerator<std::tuple<Args...>> {
   static auto generate() -> std::vector<ArgInfo> {
     std::vector<ArgInfo> ret;
     (
-        [&]<class T>() {
-          ret.emplace_back(std::string_view(Args::name), Args::shortName, Args::description);
+        [&ret]<class T>() {
+          ret.emplace_back(std::string_view(Args::name), Args::name.shortName, Args::description);
         }.template operator()<Args>(),
         ...  //
     );

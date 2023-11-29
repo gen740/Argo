@@ -70,13 +70,14 @@ This approach ensures that each argument is properly added and stored, enabling 
 ## Template Options
 
 ### ShortKey
-Specifying a `char` character as a template parameter indicates the short
-version of the argument flag. In the above code, you can pass the flag `-a` to
-the parser.
+
+Specifying a `char` character as the `key` parameter designates the abbreviated
+version of the argument flag. In the provided code, the flag `-a` can be passed
+to the parser.
 
 Example usage:
 ```cpp
-Argo::Parser("Program").addArg<key("arg1"), 'a', Type>();
+Argo::Parser("Program").addArg<key("arg1", 'a'), Type>();
 ```
 
 ### Required

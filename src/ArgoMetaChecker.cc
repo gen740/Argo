@@ -21,7 +21,7 @@ struct RequiredChecker<std::tuple<Args...>> {
         [&invalid_keys]<class T>() {
           if constexpr (std::derived_from<T, ArgTag>) {
             if (T::required && !T::assigned) {
-              invalid_keys.push_back(std::string_view(T::name.begin(), T::name.end()));
+              invalid_keys.push_back(std::string_view(T::name));
             }
           }
         }.template operator()<Args>(),

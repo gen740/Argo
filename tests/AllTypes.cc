@@ -6,7 +6,6 @@ import Argo;
 #include "TestHelper.h"
 
 using Argo::key;
-using Argo::NULLCHAR;
 
 TEST(ArgoTest, AllTypes) {
   auto [argc, argv] = createArgcArgv(       //
@@ -19,11 +18,11 @@ TEST(ArgoTest, AllTypes) {
   );
 
   auto argo = Argo::Parser<10>();
-  auto parser = argo.addArg<key("arg1"), NULLCHAR, int>()
-                    .addArg<key("arg2"), NULLCHAR, float>()
-                    .addArg<key("arg3"), NULLCHAR, double>()
-                    .addArg<key("arg4"), NULLCHAR, std::string>()
-                    .addArg<key("arg5"), NULLCHAR, const char*>();
+  auto parser = argo.addArg<key("arg1"), int>()
+                    .addArg<key("arg2"), float>()
+                    .addArg<key("arg3"), double>()
+                    .addArg<key("arg4"), std::string>()
+                    .addArg<key("arg5"), const char*>();
 
   parser.parse(argc, argv);
 

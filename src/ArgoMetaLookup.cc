@@ -20,7 +20,7 @@ struct GetNameFromShortName {
   struct GetNameFromShortNameImpl<std::tuple<Head, Tails...>> {
     static auto get(char key) -> std::string_view {
       auto name = std::string_view(Head::name);
-      if (Head::shortName == key) {
+      if (Head::name.shortName == key) {
         return name;
       }
       return GetNameFromShortNameImpl<std::tuple<Tails...>>::get(key);
@@ -63,8 +63,9 @@ struct SearchIndexFromShortName<std::tuple<>, T, Index> {
 template <char T, std::size_t Index, typename Head, typename... Tails>
 struct SearchIndexFromShortName<std::tuple<Head, Tails...>, T, Index> {
   static constexpr int value =
-      Head::shortName == T ? Index
-                           : SearchIndexFromShortName<std::tuple<Tails...>, T, Index + 1>::value;
+      Head::name.shortName == T
+          ? Index
+          : SearchIndexFromShortName<std::tuple<Tails...>, T, Index + 1>::value;
 };
 
 };  // namespace Argo

@@ -48,11 +48,6 @@ export {
   }
 }
 
-template <char Name>
-struct ShortNameHolder {
-  static constexpr char value = Name;
-};
-
 auto splitStringView(std::string_view str, char delimeter) -> std::vector<std::string_view> {
   std::vector<std::string_view> ret;
   while (str.contains(delimeter)) {
@@ -79,8 +74,7 @@ class Parser {
   using PositionalArgument = PositionalArg;
   Args value;
 
-  template <class Type, auto Name, char ShortName, auto arg1 = Unspecified(),
-            auto arg2 = Unspecified(), class... T>
+  template <class Type, auto Name, auto arg1 = Unspecified(), auto arg2 = Unspecified(), class... T>
   auto createArg(T... args) {
     static constexpr auto nargs = []() {
       if constexpr (std::is_same_v<std::remove_cvref_t<decltype(arg1)>, NArgs>) {
@@ -107,9 +101,9 @@ class Parser {
                     "Duplicated name");
     }
 
-    static_assert(
-        (ShortName == NULLCHAR) || (SearchIndexFromShortName<Arguments, ShortName>::value == -1),
-        "Duplicated short name");
+    static_assert((Name.shortName == NULLCHAR) ||
+                      (SearchIndexFromShortName<Arguments, Name.shortName>::value == -1),
+                  "Duplicated short name");
     static_assert(                                        //
         Argo::SearchIndex<Arguments, Name>::value == -1,  //
         "Duplicated name");
@@ -120,8 +114,8 @@ class Parser {
          || nargs.nargs_char == '*'),  //
         "nargs must be '?', '+', '*' or int");
 
-    ArgInitializer<Type, Name, ShortName, nargs, required, ID>::init(std::forward<T>(args)...);
-    return std::type_identity<Arg<Type, Name, ShortName, nargs, required, ID>>();
+    ArgInitializer<Type, Name, nargs, required, ID>::init(std::forward<T>(args)...);
+    return std::type_identity<Arg<Type, Name, nargs, required, ID>>();
   }
 
   /*!
@@ -130,21 +124,9 @@ class Parser {
    * arg1: ShortName or NArgs or Unspecified
    * arg2: NArgs or Unspecified
    */
-  template <auto Name, char ShortName, class Type, auto arg1 = Unspecified(),
-            auto arg2 = Unspecified(), class... T>
-  auto addArg(T... args) {
-    auto arg = createArg<Type, Name, ShortName, arg1, arg2>(std::forward<T>(args)...);
-    return Parser<ID,
-                  decltype(std::tuple_cat(                                      //
-                      std::declval<Arguments>(),                                //
-                      std::declval<std::tuple<typename decltype(arg)::type>>()  //
-                      )),
-                  PositionalArgument, HelpEnabled>();
-  }
-
   template <auto Name, class Type, auto arg1 = Unspecified(), auto arg2 = Unspecified(), class... T>
   auto addArg(T... args) {
-    auto arg = createArg<Type, Name, NULLCHAR, arg1, arg2>(std::forward<T>(args)...);
+    auto arg = createArg<Type, Name, arg1, arg2>(std::forward<T>(args)...);
     return Parser<ID,
                   decltype(std::tuple_cat(                                      //
                       std::declval<Arguments>(),                                //
@@ -157,33 +139,38 @@ class Parser {
   auto addPositionalArg(T... args) {
     static_assert(std::is_same_v<PositionalArg, void>,
                   "Positional argument cannot set more than one");
-    auto arg = createArg<Type, Name, NULLCHAR, arg1, arg2>(std::forward<T>(args)...);
+    static_assert(Name.shortName == NULLCHAR, "Positional argment cannot have short name");
+    auto arg = createArg<Type, Name, arg1, arg2>(std::forward<T>(args)...);
     return Parser<ID, Arguments, typename decltype(arg)::type, HelpEnabled>();
   }
 
-  template <auto Name, char ShortName = NULLCHAR, class... T>
+  template <auto Name, class... T>
   auto addFlag(T... args) {
     if constexpr (!std::is_same_v<PositionalArgument, void>) {
       static_assert(!(std::string_view(Name) == std::string_view(PositionalArgument::name)),
                     "Duplicated name");
     }
-    static_assert(
-        (ShortName == NULLCHAR) || (SearchIndexFromShortName<Arguments, ShortName>::value == -1),
-        "Duplicated short name");
+    static_assert((Name.shortName == NULLCHAR) ||
+                      (SearchIndexFromShortName<Arguments, Name.shortName>::value == -1),
+                  "Duplicated short name");
     static_assert(                                        //
         Argo::SearchIndex<Arguments, Name>::value == -1,  //
         "Duplicated name");
 
-    FlagArgInitializer<Name, ShortName, ID>::init(std::forward<T>(args)...);
+    FlagArgInitializer<Name, ID>::init(std::forward<T>(args)...);
     return Parser<ID,
-                  decltype(std::tuple_cat(                                      //
-                      std::declval<Arguments>(),                                //
-                      std::declval<std::tuple<FlagArg<Name, ShortName, ID>>>()  //
+                  decltype(std::tuple_cat(                           //
+                      std::declval<Arguments>(),                     //
+                      std::declval<std::tuple<FlagArg<Name, ID>>>()  //
                       )),
                   PositionalArgument, HelpEnabled>();
   }
 
-  auto addHelp() -> void;
+  auto addHelp() {
+    static_assert((SearchIndexFromShortName<Arguments, 'h'>::value == -1), "Duplicated short name");
+    static_assert(Argo::SearchIndex<Arguments, key("help")>::value == -1, "Duplicated name");
+    return Parser<ID, Arguments, PositionalArgument, true>();
+  }
 
   template <auto Name>
   auto getArg() -> decltype(auto) {

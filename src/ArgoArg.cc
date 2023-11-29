@@ -12,7 +12,7 @@ struct ArgNameTag {};
 
 template <std::size_t N>
 struct ArgName : ArgNameTag {
-  char name[N];
+  char name[N] = {};
   char shortName = '\0';
 
   explicit ArgName() = default;
@@ -88,7 +88,6 @@ struct ArgName : ArgNameTag {
 
 template <class T>
 concept ArgType = requires(T& x) {
-  std::is_same_v<decltype(T::shortName), char>;
   std::is_same_v<decltype(T::isVariadic), char>;
   std::is_same_v<decltype(T::nargs), NArgs>;
   typename T::baseType;
@@ -98,10 +97,9 @@ concept ArgType = requires(T& x) {
   std::is_same_v<decltype(T::description), std::string_view>;
 };
 
-template <typename BaseType, auto Name, char ShortName, auto ID>
+template <typename BaseType, auto Name, auto ID>
 struct ArgBase {
   static constexpr auto name = Name;
-  static constexpr char shortName = ShortName;
   static constexpr auto id = ID;
   inline static bool assigned = false;
   inline static std::string_view description;
@@ -113,8 +111,8 @@ struct ArgTag {};
 /*!
  * Arg type this holds argument value
  */
-template <class Type, auto Name, char ShortName, NArgs TNArgs, bool Required, auto ID>
-struct Arg : ArgTag, ArgBase<Type, Name, ShortName, ID> {
+template <class Type, auto Name, NArgs TNArgs, bool Required, auto ID>
+struct Arg : ArgTag, ArgBase<Type, Name, ID> {
   static constexpr bool isVariadic =
       (TNArgs.nargs > 1) || (TNArgs.nargs_char == '+') || (TNArgs.nargs_char == '*');
   using type = std::conditional_t<  //
@@ -135,8 +133,8 @@ struct Arg : ArgTag, ArgBase<Type, Name, ShortName, ID> {
 
 struct FlagArgTag {};
 
-template <auto Name, char ShortName, auto ID>
-struct FlagArg : FlagArgTag, ArgBase<bool, Name, ShortName, ID> {
+template <auto Name, auto ID>
+struct FlagArg : FlagArgTag, ArgBase<bool, Name, ID> {
   static constexpr bool isVariadic = false;
   using type = bool;
 

@@ -6,15 +6,14 @@ import Argo;
 #include "TestHelper.h"
 
 using Argo::key;
-using Argo::NULLCHAR;
 
 TEST(ArgoTest, ExampleCode) {
   auto [argc, argv] = createArgcArgv("./main", "--arg1", "42", "--arg3", "Hello,World");
 
   auto parser = Argo::Parser<key("ExampleCode")>("Program name")  //
-                    .addArg<key("arg1"), NULLCHAR, int>()
-                    .addArg<key("arg2"), NULLCHAR, float>(Argo::explicitDefault(12.34))
-                    .addArg<key("arg3"), NULLCHAR, std::string>();
+                    .addArg<key("arg1"), int>()
+                    .addArg<key("arg2"), float>(Argo::explicitDefault(12.34))
+                    .addArg<key("arg3"), std::string>();
 
   parser.parse(argc, argv);
 

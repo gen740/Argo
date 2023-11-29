@@ -45,11 +45,11 @@ constexpr auto implicitDefault(T value) -> ImplicitDefaultValue<T> {
   return {.implicit_default_value = value};
 }
 
-template <class Type, auto Name, char ShortName, NArgs nargs, bool Required, auto ID>
+template <class Type, auto Name, NArgs nargs, bool Required, auto ID>
 struct ArgInitializer {
   template <class Head, class... Tails>
   static auto init(Head head, Tails... tails) {
-    using Arg = Arg<Type, Name, ShortName, nargs, Required, ID>;
+    using Arg = Arg<Type, Name, nargs, Required, ID>;
     if constexpr (std::is_same_v<Head, Description>) {
       Arg::description = head.description;
     } else if constexpr (std::derived_from<std::remove_cvref_t<std::remove_pointer_t<Head>>,
@@ -74,11 +74,11 @@ struct ArgInitializer {
   static auto init() {}
 };
 
-template <auto Name, char ShortName, auto ID>
+template <auto Name, auto ID>
 struct FlagArgInitializer {
   template <class Head, class... Tails>
   static auto init(Head head, Tails... tails) {
-    using FlagArg = FlagArg<Name, ShortName, ID>;
+    using FlagArg = FlagArg<Name, ID>;
     if constexpr (std::is_same_v<Head, Description>) {
       FlagArg::description = head.description;
     } else if constexpr (std::derived_from<std::remove_cvref_t<std::remove_pointer_t<Head>>,
