@@ -206,7 +206,7 @@ target_link_libraries(YOUR_TARGET PRIVATE Argo)
 - [x] "narg" argument
 - [x] Required argument
 - [x] Positional argument
+- [x] sub command
 - [ ] Description and help auto generation
 - [ ] Standard validations
 - [ ] Custom class casting
-- [ ] sub command

@@ -4,6 +4,8 @@ export module Argo:Parser;
 
 import :Exceptions;
 import :Initializer;
+import :MetaParse;
+import :TypeTraits;
 import :MetaLookup;
 import :Arg;
 import :NArgs;
@@ -35,7 +37,7 @@ export {
 }
 
 export template <ParserID ID = 0, class Args = std::tuple<>, class PositionalArg = void,
-                 bool HelpEnabled = false>
+                 class SubParserTuple = std::tuple<>, bool HelpEnabled = false>
 class Parser {
  private:
   bool parsed_ = false;
@@ -44,10 +46,14 @@ class Parser {
  public:
   constexpr explicit Parser() = default;
   constexpr explicit Parser(std::string_view programName) : programName_(programName){};
+  Parser(const Parser&) = delete;
+  Parser(Parser&&) = delete;
 
   using Arguments = Args;
   using PositionalArgument = PositionalArg;
-  Args value;
+  SubParserTuple subParsers;
+
+  constexpr explicit Parser(SubParserTuple tuple) : subParsers(tuple) {}
 
   template <class Type, ArgName Name, auto arg1 = Unspecified(), auto arg2 = Unspecified(),
             class... T>
@@ -108,7 +114,7 @@ class Parser {
                       std::declval<Arguments>(),                                //
                       std::declval<std::tuple<typename decltype(arg)::type>>()  //
                       )),
-                  PositionalArgument, HelpEnabled>();
+                  PositionalArgument, SubParserTuple, HelpEnabled>();
   }
 
   template <ArgName Name, class Type, auto arg1 = Unspecified(), auto arg2 = Unspecified(),
@@ -118,7 +124,7 @@ class Parser {
                   "Positional argument cannot set more than one");
     static_assert(Name.shortName == NULLCHAR, "Positional argment cannot have short name");
     auto arg = createArg<Type, Name, arg1, arg2>(std::forward<T>(args)...);
-    return Parser<ID, Arguments, typename decltype(arg)::type, HelpEnabled>();
+    return Parser<ID, Arguments, typename decltype(arg)::type, SubParserTuple, HelpEnabled>();
   }
 
   template <ArgName Name, class... T>
@@ -140,13 +146,13 @@ class Parser {
                       std::declval<Arguments>(),                     //
                       std::declval<std::tuple<FlagArg<Name, ID>>>()  //
                       )),
-                  PositionalArgument, HelpEnabled>();
+                  PositionalArgument, SubParserTuple, HelpEnabled>();
   }
 
   auto addHelp() {
     static_assert((SearchIndexFromShortName<Arguments, 'h'>::value == -1), "Duplicated short name");
     static_assert(Argo::SearchIndex<Arguments, "help">::value == -1, "Duplicated name");
-    return Parser<ID, Arguments, PositionalArgument, true>();
+    return Parser<ID, Arguments, PositionalArgument, SubParserTuple, true>();
   }
 
   template <ArgName Name>
@@ -159,12 +165,21 @@ class Parser {
         return PositionalArgument::value;
       } else {
         return std::remove_cvref_t<decltype(std::get<SearchIndex<Arguments, Name>::value>(
-            this->value))>::value;
+            std::declval<Arguments>()))>::value;
       }
     } else {
       return std::remove_cvref_t<decltype(std::get<SearchIndex<Arguments, Name>::value>(
-          this->value))>::value;
+          std::declval<Arguments>()))>::value;
     }
+  }
+
+  template <ArgName Name>
+  auto& getSubParser() {
+    if constexpr (std::is_same_v<SubParserTuple, std::tuple<>>) {
+      static_assert(false, "Parser has no sub parser");
+    }
+    static_assert(!(SearchIndex<SubParserTuple, Name>::value == -1), "Could not find subparser");
+    return std::get<SearchIndex<SubParserTuple, Name>::value>(subParsers).parser.get();
   }
 
   template <ArgName Name>
@@ -177,12 +192,27 @@ class Parser {
         return PositionalArgument::assigend;
       } else {
         return std::remove_cvref_t<decltype(std::get<SearchIndex<Arguments, Name>::value>(
-            this->value))>::assigend;
+            std::declval<Arguments>()))>::assigend;
       }
     } else {
       return std::remove_cvref_t<decltype(std::get<SearchIndex<Arguments, Name>::value>(
-          this->value))>::assigend;
+          std::declval<Arguments>()))>::assigend;
     }
+  }
+
+  template <ArgName Name, class T>
+  auto addSubParser(T& sub_parser, std::string_view description = "") {
+    // auto s = std::tuple<SubParser<Name, T>>({{sub_parser, description}});
+    auto s = std::make_tuple(                                  //
+        SubParser<Name, T>{std::ref(sub_parser), description}  //
+    );
+    auto sub_parsers = std::tuple_cat(subParsers, s);
+    return Parser<ID,                     //
+                  Arguments,              //
+                  PositionalArgument,     //
+                  decltype(sub_parsers),  //
+                  HelpEnabled>(sub_parsers);
+    ;
   }
 
  private:

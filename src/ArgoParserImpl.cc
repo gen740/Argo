@@ -5,6 +5,7 @@ export module Argo:ParserImpl;
 import :MetaAssigner;
 import :Parser;
 import :MetaLookup;
+import :MetaParse;
 import :HelpGenerator;
 import :NArgs;
 import :Arg;
@@ -25,8 +26,8 @@ auto splitStringView(std::string_view str, char delimeter) -> std::vector<std::s
   return ret;
 }
 
-template <ParserID ID, class Args, class PositionalArg, bool HelpEnabled>
-auto Parser<ID, Args, PositionalArg, HelpEnabled>::setArg(
+template <ParserID ID, class Args, class PositionalArg, class SubParsers, bool HelpEnabled>
+auto Parser<ID, Args, PositionalArg, SubParsers, HelpEnabled>::setArg(
     std::string_view key, std::span<std::string_view> val) const -> void {
   if constexpr (HelpEnabled) {
     if (key == "help") {
@@ -37,8 +38,8 @@ auto Parser<ID, Args, PositionalArg, HelpEnabled>::setArg(
   Assigner<Arguments, PositionalArgument>::assign(key, val);
 }
 
-template <ParserID ID, class Args, class PositionalArg, bool HelpEnabled>
-auto Parser<ID, Args, PositionalArg, HelpEnabled>::setArg(
+template <ParserID ID, class Args, class PositionalArg, class SubParsers, bool HelpEnabled>
+auto Parser<ID, Args, PositionalArg, SubParsers, HelpEnabled>::setArg(
     std::span<char> key, std::span<std::string_view> val) const -> void {
   if constexpr (HelpEnabled) {
     for (const auto& i : key) {
@@ -51,8 +52,15 @@ auto Parser<ID, Args, PositionalArg, HelpEnabled>::setArg(
   Assigner<Arguments, PositionalArgument>::assign(key, val);
 }
 
-template <ParserID ID, class Args, class PositionalArg, bool HelpEnabled>
-auto Parser<ID, Args, PositionalArg, HelpEnabled>::parse(int argc, char* argv[]) -> void {
+template <ParserID ID, class Args, class PositionalArg, class SubParsers, bool HelpEnabled>
+auto Parser<ID, Args, PositionalArg, SubParsers, HelpEnabled>::parse(int argc,
+                                                                     char* argv[]) -> void {
+  if constexpr (!std::is_same_v<SubParsers, std::tuple<>>) {
+    if (argc > 2 && MetaParser<SubParsers>::parse(subParsers, argv[1], argc - 1, &argv[1])) {
+      return;
+    }
+  }
+
   std::string_view key{};
   std::vector<char> short_keys{};
   short_keys.reserve(10);
@@ -142,41 +150,81 @@ auto Parser<ID, Args, PositionalArg, HelpEnabled>::parse(int argc, char* argv[])
   this->parsed_ = true;
 }
 
-template <ParserID ID, class Args, class PositionalArg, bool HelpEnabled>
-auto Parser<ID, Args, PositionalArg, HelpEnabled>::formatHelp() const -> std::string {
+template <ParserID ID, class Args, class PositionalArg, class SubParsers, bool HelpEnabled>
+auto Parser<ID, Args, PositionalArg, SubParsers, HelpEnabled>::formatHelp() const -> std::string {
   std::string help;
-  auto helpInfo = HelpGenerator<Arguments>::generate();
-  std::size_t maxFlagLength = 0;
-  for (const auto& option : helpInfo) {
-    if (maxFlagLength < option.name.size()) {
-      maxFlagLength = option.name.size();
-    }
-  }
-  help.append("Options:");
-  for (const auto& option : helpInfo) {
-    help.push_back('\n');
-    auto description = splitStringView(option.description, '\n');
 
-    help.append(std::format(                                                             //
-        "  {} --{} {} {}",                                                               //
-        (option.shortName == NULLCHAR) ? "   " : std::format("-{},", option.shortName),  //
-        option.name,                                                                     //
-        std::string(maxFlagLength - option.name.size(), ' '),                            //
-        description[0]                                                                   //
-        ));
-    for (std::size_t i = 1; i < description.size(); i++) {
+  if constexpr (!std::is_same_v<SubParsers, std::tuple<>>) {
+    auto sub_commands = SubParserHelpGenerator::generate(subParsers);
+
+    std::size_t max_command_length = 0;
+    for (const auto& command : sub_commands) {
+      if (max_command_length < command.name.size()) {
+        max_command_length = command.name.size();
+      }
+    }
+
+    help.append("Subcommands:");
+
+    for (const auto& command : sub_commands) {
       help.push_back('\n');
-      help.append(std::format(              //
-          "      {}    {}",                 //
-          std::string(maxFlagLength, ' '),  //
-          description[i]                    //
-          ));
-    }
+      auto description = splitStringView(command.description, '\n');
 
-    // erase trailing spaces
-    auto pos = help.find_last_not_of(' ');
-    help = help.substr(0, pos + 1);
+      help.append(std::format(                                         //
+          "  {} {} {}",                                                //
+          command.name,                                                //
+          std::string(max_command_length - command.name.size(), ' '),  //
+          description[0]                                               //
+          ));
+      for (std::size_t i = 1; i < description.size(); i++) {
+        help.push_back('\n');
+        help.append(std::format(                   //
+            "    {}{}",                            //
+            std::string(max_command_length, ' '),  //
+            description[i]                         //
+            ));
+      }
+
+      // erase trailing spaces
+      auto pos = help.find_last_not_of(' ');
+      help = help.substr(0, pos + 1);
+    }
   }
+
+  auto help_info = HelpGenerator<Arguments>::generate();
+  if (!help_info.empty()) {
+    std::size_t max_flag_length = 0;
+    for (const auto& option : help_info) {
+      if (max_flag_length < option.name.size()) {
+        max_flag_length = option.name.size();
+      }
+    }
+    help.append("Options:");
+    for (const auto& option : help_info) {
+      help.push_back('\n');
+      auto description = splitStringView(option.description, '\n');
+
+      help.append(std::format(                                                             //
+          "  {} --{} {} {}",                                                               //
+          (option.shortName == NULLCHAR) ? "   " : std::format("-{},", option.shortName),  //
+          option.name,                                                                     //
+          std::string(max_flag_length - option.name.size(), ' '),                          //
+          description[0]                                                                   //
+          ));
+      for (std::size_t i = 1; i < description.size(); i++) {
+        help.push_back('\n');
+        help.append(std::format(                //
+            "      {}    {}",                   //
+            std::string(max_flag_length, ' '),  //
+            description[i]                      //
+            ));
+      }
+
+      auto pos = help.find_last_not_of(' ');
+      help = help.substr(0, pos + 1);
+    }
+  }
+
   return help;
 }
 

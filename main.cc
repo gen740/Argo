@@ -12,57 +12,22 @@ std::tuple<size_t, char**> createArgcArgv(Args... args) {
   return std::make_tuple(N, array);
 }
 
-auto [argc, argv] = createArgcArgv("./main", "--arg1", "23", "-h");
-
-template <size_t N>
-struct cstring {
-  char data[N];
-
-  consteval cstring(char const* str) {
-    for (auto i = 0zu; i < N; ++i) {
-      data[i] = str[i];
-    }
-  }
-};
-
-template <size_t N>
-cstring(const char (&)[N]) -> cstring<N>;
-
-template <std::size_t N>
-struct ParserID {
-  int idInt = 0;
-  const char idName[N];
-
-  ParserID(int id) : idInt(id){};
-
-  ParserID(const char (&id)[N + 1]) {
-    for (int i = 0; i < N; i++) {
-      idName[i] = id[i];
-    }
-  };
-};
-
-ParserID(int) -> ParserID<0>;
-
-template <std::size_t N>
-ParserID(const char (&)[N]) -> ParserID<N - 1>;
+auto [argc, argv] = createArgcArgv("./main", "cmd1", "--p1a1", "23");
 
 auto main() -> int {
-  [[maybe_unused]] auto a = ParserID(0);
+  auto parser1 = Argo::Parser<"P1">()  //
+                     .addArg<"p1a1", int>()
+                     .addArg<"p1a2", int>();
+  auto parser2 = Argo::Parser<"Parser2">()
+                     .addArg<"p2a1", int>(Argo::withDescription("Hello\nWorld!"))
+                     .addArg<"p2a2", int>(Argo::withDescription("Hello\nWorld!"));
 
-  auto argo = Argo::Parser<"HoegHoge">();
-
-  // auto parser = argo  //
-  //                   .addArg<key("dummy", 'e'), int>(Argo::withDescription("Hello\nWorld!"))
-  //                   .addArg<"arg1", int>(Argo::withDescription("Hello\nWorld!"))
-  //                   .addHelp();
-  auto parser = argo  //
-                    .addArg<"arg1,o", int>();
+  auto parser = Argo::Parser<"Parser">()  //
+                    .addSubParser<"cmd1">(parser1, "subparser of 1\nsome help")
+                    .addSubParser<"cmd2">(parser2, "subparser of 2\nsoemu");
 
   parser.parse(argc, argv);
-  //
-  // std::println("{}", parser.getArg<key("arg1")>());
-  // // std::println("{}", parser.formatHelp());
+  std::println("{}", parser1.getArg<"p1a1">());
 
   return 0;
 }

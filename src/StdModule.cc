@@ -78,6 +78,8 @@ using ::std::tuple_cat;   // NOLINT(misc-unused-using-decls)
 // type_traits
 using ::std::conditional;          // NOLINT(misc-unused-using-decls)
 using ::std::conditional_t;        // NOLINT(misc-unused-using-decls)
+using ::std::index_sequence;        // NOLINT(misc-unused-using-decls)
+using ::std::make_index_sequence;        // NOLINT(misc-unused-using-decls)
 using ::std::declval;              // NOLINT(misc-unused-using-decls)
 using ::std::enable_if;            // NOLINT(misc-unused-using-decls)
 using ::std::enable_if_t;          // NOLINT(misc-unused-using-decls)
@@ -97,6 +99,8 @@ using ::std::remove_pointer_t;     // NOLINT(misc-unused-using-decls)
 using ::std::type_identity;        // NOLINT(misc-unused-using-decls)
 using ::std::type_identity_t;      // NOLINT(misc-unused-using-decls)
 using ::std::void_t;               // NOLINT(misc-unused-using-decls)
+using ::std::false_type;               // NOLINT(misc-unused-using-decls)
+using ::std::true_type;               // NOLINT(misc-unused-using-decls)
 
 // concept
 using ::std::derived_from;  // NOLINT(misc-unused-using-decls)
@@ -110,7 +114,9 @@ using ::std::runtime_error;     // NOLINT(misc-unused-using-decls)
 using ::std::unique_ptr;  // NOLINT(misc-unused-using-decls)
 
 // functional
-using ::std::function;  // NOLINT(misc-unused-using-decls)
+using ::std::function;           // NOLINT(misc-unused-using-decls)
+using ::std::reference_wrapper;  // NOLINT(misc-unused-using-decls)
+using ::std::ref;  // NOLINT(misc-unused-using-decls)
 
 // optional
 using ::std::nullopt;    // NOLINT(misc-unused-using-decls)

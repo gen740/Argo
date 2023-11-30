@@ -29,4 +29,31 @@ struct HelpGenerator<std::tuple<Args...>> {
   }
 };
 
+struct SubCommandInfo {
+  std::string_view name;
+  std::string_view description;
+};
+
+struct SubParserHelpGenerator {
+  template <class SubParsers, std::size_t... Numbers>
+  static auto eval(SubParsers tuple, std::index_sequence<Numbers...>) {
+    std::vector<SubCommandInfo> ret{};
+    (
+        [&tuple, &ret]<std::size_t N>() {  //
+          ret.emplace_back(std::get<N>(tuple).name, std::get<N>(tuple).description);
+        }
+            .template operator()<Numbers>(),
+        ...  //
+    );
+    return ret;
+  }
+
+  template <class... SubParsers>
+  static auto generate([[maybe_unused]] std::tuple<SubParsers...> tuple) {
+    // return "foo";
+    std::println("{}", sizeof...(SubParsers));
+    return eval(tuple, std::make_index_sequence<sizeof...(SubParsers)>());
+  }
+};
+
 }  // namespace Argo
