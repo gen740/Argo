@@ -59,7 +59,7 @@ TEST(ArgoTest, ShortArgument) {
   auto [argc, argv] = createArgcArgv(  //
       "./main",                        //
       "-a", "Hello,World",             //
-      "-b", "42",                      //
+      "--arg2", "42",                  //
       "-c", "3.1415"                   //
   );
 
@@ -214,32 +214,11 @@ TEST(ArgoTest, NargException) {
 
 TEST(ArgoTest, Help) {  // TODO(gen740): more help
   {
-    auto argo = Argo::Parser<110>("Sample Program");
-    auto parser = argo  //
-                      .addArg<"arg1,a", int, Argo::nargs('+')>()
-                      .addArg<"arg2", int, Argo::nargs('+')>(Argo::withDescription("This is arg2"));
-
-    auto ArgInfo = parser.getArgInfo();
-
-    EXPECT_EQ(ArgInfo[0].name, "arg1");
-    EXPECT_EQ(ArgInfo[0].shortName, 'a');
-    EXPECT_EQ(ArgInfo[0].description, "");
-
-    EXPECT_EQ(ArgInfo[1].name, "arg2");
-    EXPECT_EQ(ArgInfo[1].shortName, '\0');
-    EXPECT_EQ(ArgInfo[1].description, "This is arg2");
-
-    // EXPECT_THROW(parser.parse(argc, argv), Argo::InvalidArgument);
-  }
-
-  {
-    auto argo = Argo::Parser<111>("program");
+    auto argo = Argo::Parser<110>("program");
     auto parser = argo  //
                       .addArg<"arg0,k", int>()
                       .addArg<"arg1,a", int, Argo::nargs('+')>()
                       .addArg<"arg2", int, Argo::nargs('+')>(Argo::withDescription("This is arg2"));
-
-    auto ArgInfo = parser.getArgInfo();
 
     auto expect_help = R"(Options:
   -k, --arg0
@@ -260,13 +239,12 @@ TEST(ArgoTest, Required) {
     auto argo = Argo::Parser<120>("Sample Program");
     auto parser = argo  //
                       .addArg<"arg1,a", int, Argo::nargs(1)>()
-                      .addArg<"arg2", int, Argo::nargs(1)>()
-                      .addArg<"arg3", int, true, Argo::nargs(1)>()
-                      .addArg<"arg4,b", int, Argo::nargs(1), true>()
-                      .addArg<"arg5,c", int, Argo::nargs(1), true>();
+                      .addArg<"arg2", int, Argo::required, Argo::nargs(1)>()
+                      .addArg<"arg3", int, Argo::nargs(1), Argo::required>()
+                      .addArg<"arg4,b", int, Argo::nargs(1)>()
+                      .addArg<"arg5,c", int, Argo::nargs(1)>();
 
     EXPECT_THROW(parser.parse(argc, argv), Argo::InvalidArgument);
-    // parser.parse(argc, argv);
   }
 }
 

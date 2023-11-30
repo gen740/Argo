@@ -1,8 +1,7 @@
 module;
 
 export module Argo;
-
-// export import :ParserImpl;
+export import :ParserImpl;
 
 export import :Exceptions;
 export import :Parser;

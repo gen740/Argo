@@ -41,10 +41,8 @@ struct ArgName : ArgNameTag {
     for (std::size_t i = 0; i < N; i++) {
       if (lhs[i] == ',') {
         nameLen = i;
-        if (N - i != 2) {
-          throw "Error";
-        }
         shortName = lhs[i + 1];
+        return;
       }
       this->name[i] = lhs[i];
     }
@@ -63,7 +61,7 @@ struct ArgName : ArgNameTag {
   }
 
   constexpr auto end() const {
-    return &this->name[N - 1];
+    return &this->name[this->nameLen];
   }
 
   constexpr auto size() const {
@@ -108,6 +106,30 @@ struct ArgName : ArgNameTag {
       return true;
     }
   }
+
+  constexpr operator std::string_view() const {
+    return std::string_view(this->begin(), this->end());
+  }
+
+  constexpr auto containsInvalidChar() const -> bool {
+    auto invalid_chars = std::string_view(" \\\"'<>&|$[]");
+    if (invalid_chars.contains(this->shortName)) {
+      return true;
+    }
+    for (std::size_t i = 0; i < this->nameLen; i++) {
+      if (invalid_chars.contains(this->name[i])) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  constexpr auto hasValidNameLength() const -> bool {
+    if (this->shortName == '\0') {
+      return true;
+    }
+    return (N - this->nameLen) == 2;
+  }
 };
 
 template <std::size_t N>
@@ -120,6 +142,7 @@ ArgName(const char (&)[N]) -> ArgName<N - 1>;
 
 template <class T>
 concept ArgType = requires(T& x) {
+  std::derived_from<decltype(T::name), ArgNameTag>;
   std::is_same_v<decltype(T::isVariadic), char>;
   std::is_same_v<decltype(T::nargs), NArgs>;
   typename T::baseType;

@@ -3,21 +3,23 @@ module;
 export module Argo:Parser;
 
 import :Exceptions;
-import :Validation;
 import :Initializer;
-import :TypeTraits;
-import :MetaAssigner;
-import :MetaChecker;
 import :MetaLookup;
 import :Arg;
 import :NArgs;
-import :HelpGenerator;
 import :std_module;
 
 namespace Argo {
-export using ::Argo::NULLCHAR;  // TODO(gen740) Delete
 
 struct Unspecified {};
+
+export enum class RequiredFlag : bool {
+  optional = false,
+  required = true,
+};
+
+export using RequiredFlag::required;  // NOLINT(misc-unused-using-decls)
+export using RequiredFlag::optional;  // NOLINT(misc-unused-using-decls)
 
 /*!
  * Helper function to create nargs
@@ -30,17 +32,6 @@ export {
   consteval auto nargs(int narg) -> NArgs {
     return NArgs(narg);
   }
-}
-
-auto splitStringView(std::string_view str, char delimeter) -> std::vector<std::string_view> {
-  std::vector<std::string_view> ret;
-  while (str.contains(delimeter)) {
-    auto pos = str.find(delimeter);
-    ret.push_back(str.substr(0, pos));
-    str = str.substr(pos + 1);
-  }
-  ret.push_back(str);
-  return ret;
 }
 
 export template <ParserID ID = 0, class Args = std::tuple<>, class PositionalArg = void,
@@ -61,6 +52,8 @@ class Parser {
   template <class Type, ArgName Name, auto arg1 = Unspecified(), auto arg2 = Unspecified(),
             class... T>
   auto createArg(T... args) {
+    static_assert(!Name.containsInvalidChar(), "Name has invalid char");
+    static_assert(Name.hasValidNameLength(), "Short name can't be more than one charactor");
     static constexpr auto nargs = []() {
       if constexpr (std::is_same_v<std::remove_cvref_t<decltype(arg1)>, NArgs>) {
         return arg1;
@@ -70,22 +63,19 @@ class Parser {
         return NArgs('?');
       }
     }();
-
     static constexpr auto required = []() {
-      if constexpr (std::is_same_v<std::remove_cvref_t<decltype(arg1)>, bool>) {
-        return arg1;
-      } else if constexpr (std::is_same_v<std::remove_cvref_t<decltype(arg2)>, bool>) {
-        return arg2;
+      if constexpr (std::is_same_v<std::remove_cvref_t<decltype(arg1)>, RequiredFlag>) {
+        return static_cast<bool>(arg1);
+      } else if constexpr (std::is_same_v<std::remove_cvref_t<decltype(arg2)>, RequiredFlag>) {
+        return static_cast<bool>(arg2);
       } else {
         return false;
       }
     }();
-
     if constexpr (!std::is_same_v<PositionalArgument, void>) {
       static_assert(!(std::string_view(Name) == std::string_view(PositionalArgument::name)),
                     "Duplicated name");
     }
-
     static_assert((Name.shortName == NULLCHAR) ||
                       (SearchIndexFromShortName<Arguments, Name.shortName>::value == -1),
                   "Duplicated short name");
@@ -160,7 +150,7 @@ class Parser {
   }
 
   template <ArgName Name>
-  auto getArg() -> decltype(auto) {
+  auto getArg() {
     if (!this->parsed_) {
       throw ParseError("Parser did not parse argument, call parse first");
     }
@@ -175,11 +165,6 @@ class Parser {
       return std::remove_cvref_t<decltype(std::get<SearchIndex<Arguments, Name>::value>(
           this->value))>::value;
     }
-  }
-
-  template <ArgName Name>
-  auto operator()() {
-    return this->getArg<Name>();
   }
 
   template <ArgName Name>
@@ -201,159 +186,12 @@ class Parser {
   }
 
  private:
-  auto setArg(std::string_view key, std::span<std::string_view> val) const {
-    if constexpr (HelpEnabled) {
-      if (key == "help") {
-        std::println("{}", formatHelp());
-        std::exit(0);
-      }
-    }
-    Assigner<Arguments, PositionalArgument>::assign(key, val);
-  }
-
-  auto setArg(std::span<char> key, std::span<std::string_view> val) const {
-    if constexpr (HelpEnabled) {
-      for (const auto& i : key) {
-        if (i == 'h') {
-          std::println("{}", formatHelp());
-          std::exit(0);
-        }
-      }
-    }
-    Assigner<Arguments, PositionalArgument>::assign(key, val);
-  }
+  auto setArg(std::string_view key, std::span<std::string_view> val) const -> void;
+  auto setArg(std::span<char> key, std::span<std::string_view> val) const -> void;
 
  public:
-  auto parse(int argc, char* argv[]) -> void {
-    std::string_view key{};
-    std::vector<char> short_keys{};
-    short_keys.reserve(10);
-    std::vector<std::string_view> values{};
-    values.reserve(10);
-
-    for (int i = 1; i < argc; i++) {
-      std::string_view arg = argv[i];
-      if (arg.starts_with('-')) {
-        if (arg.starts_with("--")) {  // start with --
-          if (!key.empty()) {
-            this->setArg(key, values);
-            key = "";
-            values.clear();
-          } else if (!short_keys.empty()) {
-            this->setArg(short_keys, values);
-            short_keys.clear();
-            values.clear();
-          } else if (!values.empty()) {
-            if constexpr (!std::is_same_v<PositionalArgument, void>) {
-              this->setArg(key, values);
-              values.clear();
-            }
-          }
-          if (arg.contains('=')) {
-            auto equal_pos = arg.find('=');
-            auto value = std::vector<std::string_view>{arg.substr(equal_pos + 1)};
-            this->setArg(arg.substr(2, equal_pos - 2), value);
-            continue;
-          }
-          key = arg.substr(2);
-          if (i == (argc - 1)) {
-            this->setArg(key, {});
-          }
-          continue;
-        }
-        if (!key.empty()) {
-          this->setArg(key, values);
-          key = "";
-          values.clear();
-        } else if (!short_keys.empty()) {
-          this->setArg(short_keys, values);
-          short_keys.clear();
-          values.clear();
-        } else if (!values.empty()) {
-          if constexpr (!std::is_same_v<PositionalArgument, void>) {
-            this->setArg(key, values);
-            values.clear();
-          }
-        }
-        if (key.empty() && short_keys.empty()) {
-          for (const auto& j : arg.substr(1)) {
-            short_keys.push_back(j);
-          }
-          if (i == (argc - 1)) {
-            this->setArg(short_keys, {});
-          }
-          continue;
-        }
-      } else {
-        if constexpr (std::is_same_v<PositionalArgument, void>) {
-          if (key.empty() && short_keys.empty()) {
-            throw InvalidArgument(std::format("No keys specified"));
-          }
-        }
-        values.push_back(arg);
-
-        if (i == argc - 1) {
-          if (!key.empty()) {
-            this->setArg(key, values);
-          } else if (!short_keys.empty()) {
-            this->setArg(short_keys, values);
-          } else {
-            if constexpr (std::is_same_v<PositionalArgument, void>) {
-              throw InvalidArgument(std::format("No keys specified"));
-            } else {
-              this->setArg(key, values);
-            }
-          }
-        }
-      }
-    }
-    auto required_keys = RequiredChecker<Arguments>::check();
-    if (!required_keys.empty()) {
-      throw InvalidArgument(std::format("Requried {}", required_keys));
-    }
-    this->parsed_ = true;
-  }
-
-  std::vector<ArgInfo> getArgInfo() const {
-    return HelpGenerator<Arguments>::generate();
-  }
-
-  std::string formatHelp() const {
-    std::string help;
-    auto helpInfo = this->getArgInfo();
-    std::size_t maxFlagLength = 0;
-    for (const auto& option : helpInfo) {
-      if (maxFlagLength < option.name.size()) {
-        maxFlagLength = option.name.size();
-      }
-    }
-    help.append("Options:");
-    for (const auto& option : helpInfo) {
-      help.push_back('\n');
-      auto description = splitStringView(option.description, '\n');
-
-      help.append(std::format(                                                             //
-          "  {} --{} {} {}",                                                               //
-          (option.shortName == NULLCHAR) ? "   " : std::format("-{},", option.shortName),  //
-          option.name,                                                                     //
-          std::string(maxFlagLength - option.name.size(), ' '),                            //
-          description[0]                                                                   //
-          ));
-      for (std::size_t i = 1; i < description.size(); i++) {
-        help.push_back('\n');
-        help.append(std::format(              //
-            "      {}    {}",                 //
-            std::string(maxFlagLength, ' '),  //
-            description[i]                    //
-            ));
-      }
-
-      // erase trailing spaces
-      auto pos = help.find_last_not_of(' ');
-      help = help.substr(0, pos + 1);
-    }
-    return help;
-  }
+  auto parse(int argc, char* argv[]) -> void;
+  std::string formatHelp() const;
 };
 
 }  // namespace Argo

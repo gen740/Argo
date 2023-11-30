@@ -22,7 +22,7 @@ constexpr auto caster(std::string_view value) -> Type {
     if ((value == "false") || (value == "False") || (value == "FALSE") || (value == "0")) {
       return false;
     }
-    throw ParserInternalError("Invalid Argument expect bool");
+    throw ParserInternalError("Invalid argument expect bool");
   } else if constexpr (std::is_integral_v<Type>) {
     Type tmpValue;
     std::from_chars(std::begin(value), std::end(value), tmpValue);
