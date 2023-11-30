@@ -4,6 +4,7 @@ export module Argo:Arg;
 
 import :NArgs;
 import :Validation;
+import :TypeTraits;
 import :std_module;
 
 export namespace Argo {
@@ -170,10 +171,20 @@ template <class Type, ArgName Name, NArgs TNArgs, bool Required, ParserID ID>
 struct Arg : ArgTag, ArgBase<Type, Name, ID> {
   static constexpr bool isVariadic =
       (TNArgs.nargs > 1) || (TNArgs.nargs_char == '+') || (TNArgs.nargs_char == '*');
-  using type = std::conditional_t<  //
-      isVariadic,                   //
-      std::vector<Type>,            //
-      Type>;
+  static constexpr bool isFixedLength = (TNArgs.nargs > 1);
+  using type =                                                           //
+      std::conditional_t<                                                //
+          !isVariadic                                                    //
+              || is_array_v<Type>                                        //
+              || is_tuple_v<Type>                                        //
+              || is_vector_v<Type>,                                      //
+          Type,                                                          //
+          std::conditional_t<                                            //
+              isFixedLength,                                             //
+              std::array<Type, static_cast<std::size_t>(TNArgs.nargs)>,  //
+              std::vector<Type>                                          //
+              >                                                          //
+          >;                                                             //
 
   inline static type value = {};
   inline static type defaultValue = {};

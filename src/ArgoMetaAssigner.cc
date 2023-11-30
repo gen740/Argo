@@ -4,6 +4,7 @@ export module Argo:MetaAssigner;
 
 import :Exceptions;
 import :Validation;
+import :TypeTraits;
 import :MetaLookup;
 import :Arg;
 import :std_module;
@@ -34,6 +35,16 @@ constexpr auto caster(std::string_view value) -> Type {
   } else {
     return static_cast<Type>(value);
   }
+}
+
+template <class... T, std::size_t... N>
+constexpr auto tupleAssign(std::tuple<T...>& t, std::span<std::string_view> v,
+                           std::index_sequence<N...> /* unused */) {
+  (
+      [&t, &v]<std::size_t M>() {
+        std::get<M>(t) = caster<std::remove_cvref_t<decltype(std::get<M>(t))>>(v[M]);
+      }.template operator()<N>(),
+      ...);
 }
 
 template <typename Arguments, typename PositionalArgument>
@@ -76,7 +87,7 @@ struct Assigner {
           return true;
         }
         if (values.size() == 1) {
-          Head::value = caster<typename Head::baseType>(values[0]);
+          Head::value = caster<typename Head::type>(values[0]);
           Head::assigned = true;
           if (Head::validator) {
             (*Head::validator)(key, Head::value);
@@ -106,7 +117,7 @@ struct Assigner {
           return true;
         }
         for (const auto& value : values) {
-          Head::value.push_back(caster<typename Head::baseType>(value));
+          Head::value.emplace_back(caster<vector_base_t<typename Head::type>>(value));
         }
         Head::assigned = true;
         if (Head::validator) {
@@ -122,7 +133,7 @@ struct Assigner {
               std::format("Argument {} should take more than one value", key));
         }
         for (const auto& value : values) {
-          Head::value.push_back(caster<typename Head::baseType>(value));
+          Head::value.emplace_back(caster<typename Head::baseType>(value));
         }
         Head::assigned = true;
         if (Head::validator) {
@@ -163,10 +174,19 @@ struct Assigner {
         return true;
       } else {
         if (values.size() == Head::nargs.getNargs()) {
-          Head::value = typename Head::type();
-          for (const auto& j : values) {
-            Head::value.push_back(caster<typename Head::baseType>(j));
+          if constexpr (is_array_v<typename Head::type>) {
+            for (int idx = 0; idx < Head::nargs.getNargs(); idx++) {
+              Head::value[idx] = caster<array_base_t<typename Head::type>>(values[idx]);
+            }
+          } else if constexpr (is_tuple_v<typename Head::type>) {
+            tupleAssign(Head::value, values,
+                        std::make_index_sequence<std::tuple_size_v<typename Head::type>>());
+          } else {
+            for (const auto& value : values) {
+              Head::value.emplace_back(caster<vector_base_t<typename Head::type>>(value));
+            }
           }
+
           Head::assigned = true;
           if (Head::validator) {
             (*Head::validator)(key, Head::value);
@@ -181,12 +201,14 @@ struct Assigner {
                                                   key, Head::nargs.getNargs(), values.size()));
         } else {
           if constexpr (std::is_same_v<PositionalArgument, void>) {
-            throw Argo::InvalidArgument(std::format(
-                "Argument {} should take exactly one value but {}", key, values.size()));
+            throw Argo::InvalidArgument(
+                std::format("Argument {} should take exactly {} value but {}", key,
+                            Head::nargs.getNargs(), values.size()));
           } else {
             if (PositionalArgument::assigned) {
-              throw Argo::InvalidArgument(std::format(
-                  "Argument {} should take exactly one value but {}", key, values.size()));
+              throw Argo::InvalidArgument(
+                  std::format("Argument {} should take exactly {} value but {}", key,
+                              Head::nargs.getNargs(), values.size()));
             }
             assignOneArg<Head>(key, values.subspan(0, Head::nargs.getNargs()));
             assignOneArg<PositionalArgument>(std::string_view(PositionalArgument::name),

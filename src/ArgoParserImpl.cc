@@ -55,6 +55,9 @@ auto Parser<ID, Args, PositionalArg, SubParsers, HelpEnabled>::setArg(
 template <ParserID ID, class Args, class PositionalArg, class SubParsers, bool HelpEnabled>
 auto Parser<ID, Args, PositionalArg, SubParsers, HelpEnabled>::parse(int argc,
                                                                      char* argv[]) -> void {
+  if (this->parsed_) {
+    throw ParseError("Cannot parse twice");
+  }
   if constexpr (!std::is_same_v<SubParsers, std::tuple<>>) {
     if (argc > 2 && MetaParser<SubParsers>::parse(subParsers, argv[1], argc - 1, &argv[1])) {
       this->parsed_ = true;

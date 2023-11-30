@@ -60,15 +60,40 @@ class Parser {
   auto createArg(T... args) {
     static_assert(!Name.containsInvalidChar(), "Name has invalid char");
     static_assert(Name.hasValidNameLength(), "Short name can't be more than one charactor");
+
     static constexpr auto nargs = []() {
       if constexpr (std::is_same_v<std::remove_cvref_t<decltype(arg1)>, NArgs>) {
+        if constexpr (is_array_v<Type>) {
+          static_assert(array_len_v<Type> == arg1.nargs, "Array size mismatch with nargs");
+        }
+        if constexpr (is_vector_v<Type>) {
+          static_assert(arg1.nargs_char != '?' && arg1.nargs != 1,
+                        "Vector size mismatch with nargs");
+        }
         return arg1;
       } else if constexpr (std::is_same_v<std::remove_cvref_t<decltype(arg2)>, NArgs>) {
+        if constexpr (is_array_v<Type>) {
+          static_assert(array_len_v<Type> == arg1.nargs, "Array size mismatch with nargs");
+        }
+        if constexpr (is_vector_v<Type>) {
+          static_assert(arg1.nargs_char != '?' && arg1.nargs != 1,
+                        "Vector size mismatch with nargs");
+        }
         return arg2;
       } else {
+        if constexpr (is_array_v<Type>) {
+          return NArgs(static_cast<int>(array_len_v<Type>));
+        }
+        if constexpr (is_vector_v<Type>) {
+          return NArgs('*');
+        }
+        if constexpr (is_tuple_v<Type>) {
+          return NArgs(static_cast<int>(std::tuple_size_v<Type>));
+        }
         return NArgs('?');
       }
     }();
+
     static constexpr auto required = []() {
       if constexpr (std::is_same_v<std::remove_cvref_t<decltype(arg1)>, RequiredFlag>) {
         return static_cast<bool>(arg1);

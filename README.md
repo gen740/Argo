@@ -77,7 +77,7 @@ to the parser.
 
 Example:
 ```cpp
-Argo::Parser("Program").addArg<"arg1,a", Type>();
+Argo::Parser().addArg<"arg1,a", Type>();
 ```
 
 ### Required
@@ -87,7 +87,7 @@ specified.
 
 Example:
 ```cpp
-Argo::Parser("Program").addArg<"arg1", Type, true>();
+Argo::Parser().addArg<"arg1", Type, true>();
 ```
 
 ### nargs
@@ -105,7 +105,7 @@ options for `nargs`.
 
 Example usage:
 ```cpp
-Argo::Parser("Program").addArg<"arg1", Type, nargs('+')>();
+Argo::Parser().addArg<"arg1", Type, nargs('+')>();
 ```
 This template parameter configuration specifies that the `arg1` flag accepts
 one or more arguments, which will be stored in a `std::vector<Type>`.
@@ -115,8 +115,8 @@ one or more arguments, which will be stored in a `std::vector<Type>`.
 `required` ond `nargs` values are interchangable you can specify these value in the same time.
 
 ```cpp
-Argo::Parser("Program").addArg<"arg1", Type, true, nargs('+')>();
-Argo::Parser("Program").addArg<"arg1", Type, nargs('+'), true>();
+Argo::Parser().addArg<"arg1", Type, true, nargs('+')>();
+Argo::Parser().addArg<"arg1", Type, nargs('+'), true>();
 ```
 
 These are all the same.
@@ -129,32 +129,46 @@ You can specify the implicit or explicit default value as follows:
 
 - Implicit Default
   ```cpp
-  Argo::Parser("Program").addArg<"arg1", int>(Argo::implicitDefault(12.34));
+  Argo::Parser().addArg<"arg1", int>(Argo::implicitDefault(12.34));
   ```
 - Explicit Default
   ```cpp
-  Argo::Parser("Program").addArg<"arg1", int>(Argo::explicitDefault(12.34));
+  Argo::Parser().addArg<"arg1", int>(Argo::explicitDefault(12.34));
   ```
 
 ### Description
 Specify a description for the argument like this:
   ```cpp
-  Argo::Parser("Program").addArg<"arg1", int>(Argo::withDescription("Description of arg1"));
+  Argo::Parser().addArg<"arg1", int>(Argo::withDescription("Description of arg1"));
   ```
 
 ### Validator
 Define a validator for the argument, for example, a range validator:
   ```cpp
-  Argo::Parser("Program").addArg<"arg1", int>(Argo::validator::MinMax(10, 20));
+  Argo::Parser().addArg<"arg1", int>(Argo::validator::MinMax(10, 20));
   ```
 
 ### Callback
 Set a callback for the flag, which is triggered as soon as the option is parsed:
   ```cpp
-  Argo::Parser("Program").addArg<"arg1", int>([](auto value, auto raw_value){
+  Argo::Parser().addArg<"arg1", int>([](auto value, auto raw_value){
       // Implement some callback using value and raw_value
   });
   ```
+
+### STL Support
+
+You can use `std::vector` and `std::array` or `std::tuple` for type,
+specifying these types, Argo guess the nargs and automatically set it for you.
+
+```cpp
+// suppose ./main.a --arg1 42 3.14 "Hello,World"
+auto argo = Argo::Parser();
+auto parser = argo.addArg<"arg1", std::tuple<int, double, std::string>>();
+parser.parse(argc, argv);
+
+auto [a1, a2, a3] = parser.getArg<"arg1">(); // 42 3.14 "Hello,World"
+```
 
 ## How to Create Multiple Parsers
 

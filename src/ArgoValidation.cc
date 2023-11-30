@@ -18,7 +18,6 @@ struct ValidationBase : public ValidationTag {
     }
   }
 
-
   virtual auto isValid(const Type& value) const -> bool = 0;
   virtual ~ValidationBase() = default;
 };
