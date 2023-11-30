@@ -157,6 +157,7 @@ Set a callback for the flag, which is triggered as soon as the option is parsed:
   ```
 
 ## How to Create Multiple Parsers
+
 Because `Argo` generates types for each argument and stores variables within
 these types, using the same ID in multiple parsers might cause conflicts with
 the arguments. This conflict can sometimes lead to variables in one parser
@@ -167,7 +168,48 @@ auto argo1 = Argo::Parser<42>();
 auto argo2 = Argo::Parser<"unique ID">();
 ```
 
-## Usage(CMake)
+## Adding Subcommands
+
+```cpp
+#include <Argo.h>
+
+int main() {
+    auto parser1 = Argo::Parser<"SubCommands1_cmd1">()
+                       .addArg<"arg1,a", int>()
+                       .addArg<"arg2,b", int>(Argo::explicitDefault(123));
+    auto parser2 = Argo::Parser<"SubCommands1_cmd2">()
+                       .addArg<"arg3,a", int>()
+                       .addArg<"arg4,b", int>();
+
+    auto parser = Argo::Parser<"SubCommands1">()
+                      .addParser<"cmd1">(parser1, Argo::description("cmd1"))
+                      .addParser<"cmd2">(parser2, Argo::description("cmd2"));
+
+    parser.parse(argc, argv);
+}
+```
+
+To integrate a subparser into your main parser, use the `addParser` method. The
+template argument for this method will be the name of the subcommand. With this
+setup, you can easily handle command line arguments like `cmd1 --arg1 42` or
+`cmd2 -b 24`.
+
+### Parsing Results
+
+To obtain parse results:
+
+To access a subcommand parser, use `getParser<Identifier>()`. This returns the
+same parser object that was initially added with `addParser`. To determine if a
+particular subcommand was invoked, evaluate the truth of the respective parser
+object.
+
+```cpp
+if (parser1) {
+    println("{}", parser1.getArg<"arg1">());
+}
+```
+
+## Installation(CMake)
 
 ### Using submodule
 1. clone this repository into you project
