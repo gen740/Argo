@@ -31,8 +31,8 @@ struct Description {
 
 export namespace Argo {
 
-constexpr auto withDescription(std::string_view description) -> Description {
-  return {.description = description};
+constexpr auto description(std::string_view desc) -> Description {
+  return {.description = desc};
 }
 
 template <class T>

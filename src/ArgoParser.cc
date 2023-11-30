@@ -174,7 +174,7 @@ class Parser {
   }
 
   template <ArgName Name>
-  auto& getSubParser() {
+  auto& getParser() {
     if constexpr (std::is_same_v<SubParserTuple, std::tuple<>>) {
       static_assert(false, "Parser has no sub parser");
     }
@@ -200,11 +200,13 @@ class Parser {
     }
   }
 
+  /*!
+   * Add subcommand
+   */
   template <ArgName Name, class T>
-  auto addSubParser(T& sub_parser, std::string_view description = "") {
-    // auto s = std::tuple<SubParser<Name, T>>({{sub_parser, description}});
-    auto s = std::make_tuple(                                  //
-        SubParser<Name, T>{std::ref(sub_parser), description}  //
+  auto addParser(T& sub_parser, Description description = {""}) {
+    auto s = std::make_tuple(                                              //
+        SubParser<Name, T>{std::ref(sub_parser), description.description}  //
     );
     auto sub_parsers = std::tuple_cat(subParsers, s);
     return Parser<ID,                     //
@@ -212,7 +214,6 @@ class Parser {
                   PositionalArgument,     //
                   decltype(sub_parsers),  //
                   HelpEnabled>(sub_parsers);
-    ;
   }
 
  private:
@@ -222,6 +223,10 @@ class Parser {
  public:
   auto parse(int argc, char* argv[]) -> void;
   std::string formatHelp() const;
+
+  operator bool() const {
+    return this->parsed_;
+  }
 };
 
 }  // namespace Argo

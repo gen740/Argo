@@ -218,7 +218,7 @@ TEST(ArgoTest, Help) {  // TODO(gen740): more help
     auto parser = argo  //
                       .addArg<"arg0,k", int>()
                       .addArg<"arg1,a", int, Argo::nargs('+')>()
-                      .addArg<"arg2", int, Argo::nargs('+')>(Argo::withDescription("This is arg2"));
+                      .addArg<"arg2", int, Argo::nargs('+')>(Argo::description("This is arg2"));
 
     auto expect_help = R"(Options:
   -k, --arg0

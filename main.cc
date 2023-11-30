@@ -19,12 +19,12 @@ auto main() -> int {
                      .addArg<"p1a1", int>()
                      .addArg<"p1a2", int>();
   auto parser2 = Argo::Parser<"Parser2">()
-                     .addArg<"p2a1", int>(Argo::withDescription("Hello\nWorld!"))
-                     .addArg<"p2a2", int>(Argo::withDescription("Hello\nWorld!"));
+                     .addArg<"p2a1", int>(Argo::description("Hello\nWorld!"))
+                     .addArg<"p2a2", int>(Argo::description("Hello\nWorld!"));
 
   auto parser = Argo::Parser<"Parser">()  //
-                    .addSubParser<"cmd1">(parser1, "subparser of 1\nsome help")
-                    .addSubParser<"cmd2">(parser2, "subparser of 2\nsoemu");
+                    .addParser<"cmd1">(parser1, Argo::description("subparser of 1\nsome help"))
+                    .addParser<"cmd2">(parser2, Argo::description("subparser of 2\nsoemu"));
 
   parser.parse(argc, argv);
   std::println("{}", parser1.getArg<"p1a1">());
