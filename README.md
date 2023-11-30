@@ -18,26 +18,26 @@ import std;
 // suppose ./main --arg1 42 --arg3 "Hello,World"
 auto main(int argc, char* argv[]) -> int {
 
-  auto parser = Argo::Parser("Program name")  //
-                    .addArg<key("arg1"), int>()
-                    .addArg<key("arg2"), float>(Argo::explicitDefault(12.34))
-                    .addArg<key("arg3"), std::string>();
+    auto parser = Argo::Parser("Program name")  //
+                    .addArg<"arg1", int>()
+                    .addArg<"arg2", float>(Argo::explicitDefault(12.34))
+                    .addArg<"arg3", std::string>();
 
   parser.parse(argc, argv);
 
-  std::println("{}", parser.getArg<Argo::key("arg1")>()); // 42
-  std::println("{}", parser.getArg<Argo::key("arg2")>()); // 12.34 (default value)
-  std::println("{}", parser.getArg<Argo::key("arg3")>()); // Hello,World
+  std::println("{}", parser.getArg<"arg1">()); // 42
+  std::println("{}", parser.getArg<"arg2">()); // 12.34 (default value)
+  std::println("{}", parser.getArg<"arg3">()); // Hello,World
 
-  // std::println("{}", parser.getArg<Argo::key("arg4")>()); // compile error
+  // std::println("{}", parser.getArg<"arg4">()); // compile error
 
   // Static Typing
   static_assert(
-      std::is_same_v<decltype(parser.getArg<Argo::key("arg1")>()), int>);
+      std::is_same_v<decltype(parser.getArg<"arg1">()), int>);
   static_assert(
-      std::is_same_v<decltype(parser.getArg<Argo::key("arg2")>()), float>);
+      std::is_same_v<decltype(parser.getArg<"arg2">()), float>);
   static_assert(
-      std::is_same_v<decltype(parser.getArg<Argo::key("arg3")>()), std::string>);
+      std::is_same_v<decltype(parser.getArg<"arg3">()), std::string>);
 
   return 0;
 }
@@ -49,8 +49,8 @@ Defining a parser in Argo can be somewhat intricate. It is not accurate to defin
 
 ```cpp
 auto parser = Argo::Parser();
-parser.addArg<key("arg1"), int>();
-parser.addArg<key("arg2"), int>();
+parser.addArg<"arg1", int>();
+parser.addArg<"arg2", int>();
 
 parser.parse(argc, argv);
 ```
@@ -59,8 +59,8 @@ In Argo, arguments are stored in the return types of the `addArg` method. Theref
 
 ```cpp
 auto argo = Argo::Parser();
-auto pre_parser = argo.addArg<key("arg1"), int>();
-auto parser = argo.addArg<key("arg2"), int>();
+auto pre_parser = argo.addArg<"arg1", int>();
+auto parser = argo.addArg<"arg2", int>();
 
 parser.parse(argc, argv);
 ```
@@ -75,9 +75,9 @@ Specifying a `char` character as the `key` parameter designates the abbreviated
 version of the argument flag. In the provided code, the flag `-a` can be passed
 to the parser.
 
-Example usage:
+Example:
 ```cpp
-Argo::Parser("Program").addArg<key("arg1", 'a'), Type>();
+Argo::Parser("Program").addArg<"arg1,a", Type>();
 ```
 
 ### Required
@@ -85,9 +85,9 @@ Specifying `true` as the addArg template parameter indicates that the argument
 will be `required`. The parser will throw an exception if that argument is not
 specified.
 
-Example usage:
-```
-Argo::Parser("Program").addArg<key("arg1"), Type, true>();
+Example:
+```cpp
+Argo::Parser("Program").addArg<"arg1", Type, true>();
 ```
 
 ### nargs
@@ -105,7 +105,7 @@ options for `nargs`.
 
 Example usage:
 ```cpp
-Argo::Parser("Program").addArg<key("arg1"), Type, nargs('+')>();
+Argo::Parser("Program").addArg<"arg1", Type, nargs('+')>();
 ```
 This template parameter configuration specifies that the `arg1` flag accepts
 one or more arguments, which will be stored in a `std::vector<Type>`.
@@ -115,8 +115,8 @@ one or more arguments, which will be stored in a `std::vector<Type>`.
 `required` ond `nargs` values are interchangable you can specify these value in the same time.
 
 ```cpp
-Argo::Parser("Program").addArg<key("arg1"), Type, true, nargs('+')>();
-Argo::Parser("Program").addArg<key("arg1"), Type, nargs('+'), true>();
+Argo::Parser("Program").addArg<"arg1", Type, true, nargs('+')>();
+Argo::Parser("Program").addArg<"arg1", Type, nargs('+'), true>();
 ```
 
 These are all the same.
@@ -129,29 +129,29 @@ You can specify the implicit or explicit default value as follows:
 
 - Implicit Default
   ```cpp
-  Argo::Parser("Program").addArg<key("arg1"), int>(Argo::implicitDefault(12.34));
+  Argo::Parser("Program").addArg<"arg1", int>(Argo::implicitDefault(12.34));
   ```
 - Explicit Default
   ```cpp
-  Argo::Parser("Program").addArg<key("arg1"), int>(Argo::explicitDefault(12.34));
+  Argo::Parser("Program").addArg<"arg1", int>(Argo::explicitDefault(12.34));
   ```
 
 ### Description
 Specify a description for the argument like this:
   ```cpp
-  Argo::Parser("Program").addArg<key("arg1"), int>(Argo::withDescription("Description of arg1"));
+  Argo::Parser("Program").addArg<"arg1", int>(Argo::withDescription("Description of arg1"));
   ```
 
 ### Validator
 Define a validator for the argument, for example, a range validator:
   ```cpp
-  Argo::Parser("Program").addArg<key("arg1"), int>(Argo::validator::MinMax(10, 20));
+  Argo::Parser("Program").addArg<"arg1", int>(Argo::validator::MinMax(10, 20));
   ```
 
 ### Callback
 Set a callback for the flag, which is triggered as soon as the option is parsed:
   ```cpp
-  Argo::Parser("Program").addArg<key("arg1"), int>([](auto value, auto raw_value){
+  Argo::Parser("Program").addArg<"arg1", int>([](auto value, auto raw_value){
       // Implement some callback using value and raw_value
   });
   ```
@@ -164,7 +164,7 @@ being overwritten by another. To prevent this, you should assign a unique ID.
 
 ```cpp
 auto argo1 = Argo::Parser<42>();
-auto argo2 = Argo::Parser<Argo::key("unique ID")>();
+auto argo2 = Argo::Parser<"unique ID">();
 ```
 
 ## Usage(CMake)

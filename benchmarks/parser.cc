@@ -40,7 +40,6 @@ auto [argc, argv] = createArgcArgv(                              //
     "90", "91", "92", "93", "94", "95", "96", "97", "98", "99"   //
 );
 
-using Argo::key;
 using Argo::nargs;
 using Argo::Parser;
 
@@ -48,23 +47,23 @@ static void ArgoParser(benchmark::State& state) {
   for (auto _ : state) {
     auto argo = Parser<1>();
     auto parser = argo  //
-                      .addArg<key("arg1"), int, nargs(8)>()
-                      .addArg<key("arg2"), float>()
-                      .addFlag<key("arg3")>()
-                      .addArg<key("arg4"), std::string, nargs(1)>()
-                      .addFlag<key("arg5", 'b')>()
-                      .addFlag<key("arg6", 'c')>()
-                      .addArg<key("arg7", 'd'), float>()
-                      .addFlag<key("arg8", 'e')>()
-                      .addFlag<key("arg9", 'f')>()
-                      .addFlag<key("arg10", 'g')>()
-                      .addFlag<key("arg12", 'i')>()
-                      .addFlag<key("arg13", 'j')>()
-                      .addFlag<key("arg14", 'k')>()
-                      .addFlag<key("arg15", 'l')>()
-                      .addFlag<key("arg16", 'm')>()
-                      .addFlag<key("arg17", 'n')>()
-                      .addArg<key("arg18"), int, nargs('+')>();
+                      .addArg<"arg1", int, nargs(8)>()
+                      .addArg<"arg2", float>()
+                      .addFlag<"arg3">()
+                      .addArg<"arg4", std::string, nargs(1)>()
+                      .addFlag<"arg5,b">()
+                      .addFlag<"arg6,c">()
+                      .addArg<"arg7,d", float>()
+                      .addFlag<"arg8,e">()
+                      .addFlag<"arg9,f">()
+                      .addFlag<"arg10,g">()
+                      .addFlag<"arg12,i">()
+                      .addFlag<"arg13,j">()
+                      .addFlag<"arg14,k">()
+                      .addFlag<"arg15,l">()
+                      .addFlag<"arg16,m">()
+                      .addFlag<"arg17,n">()
+                      .addArg<"arg18", int, nargs('+')>();
     parser.parse(argc, argv);
   }
 }

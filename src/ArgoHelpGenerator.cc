@@ -20,7 +20,8 @@ struct HelpGenerator<std::tuple<Args...>> {
     std::vector<ArgInfo> ret;
     (
         [&ret]<class T>() {
-          ret.emplace_back(std::string_view(Args::name), Args::name.shortName, Args::description);
+          ret.emplace_back(std::string_view(Args::name).substr(0, Args::name.nameLen),
+                           Args::name.shortName, Args::description);
         }.template operator()<Args>(),
         ...  //
     );

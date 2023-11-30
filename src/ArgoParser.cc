@@ -20,22 +20,6 @@ export using ::Argo::NULLCHAR;  // TODO(gen740) Delete
 struct Unspecified {};
 
 /*!
- * convert const char[] to std::array<char, N>
- */
-export template <std::size_t N>
-consteval auto key(const char (&a)[N]) -> ArgName<N - 1> {
-  return {a};
-}
-
-/*!
- * convert const char[] to std::array<char, N>
- */
-export template <std::size_t N>
-consteval auto key(const char (&a)[N], char short_name) -> ArgName<N - 1> {
-  return {a, short_name};
-}
-
-/*!
  * Helper function to create nargs
  */
 export {
@@ -59,7 +43,7 @@ auto splitStringView(std::string_view str, char delimeter) -> std::vector<std::s
   return ret;
 }
 
-export template <auto ID = 0, class Args = std::tuple<>, class PositionalArg = void,
+export template <ParserID ID = 0, class Args = std::tuple<>, class PositionalArg = void,
                  bool HelpEnabled = false>
 class Parser {
  private:
@@ -74,7 +58,8 @@ class Parser {
   using PositionalArgument = PositionalArg;
   Args value;
 
-  template <class Type, auto Name, auto arg1 = Unspecified(), auto arg2 = Unspecified(), class... T>
+  template <class Type, ArgName Name, auto arg1 = Unspecified(), auto arg2 = Unspecified(),
+            class... T>
   auto createArg(T... args) {
     static constexpr auto nargs = []() {
       if constexpr (std::is_same_v<std::remove_cvref_t<decltype(arg1)>, NArgs>) {
@@ -124,7 +109,8 @@ class Parser {
    * arg1: ShortName or NArgs or Unspecified
    * arg2: NArgs or Unspecified
    */
-  template <auto Name, class Type, auto arg1 = Unspecified(), auto arg2 = Unspecified(), class... T>
+  template <ArgName Name, class Type, auto arg1 = Unspecified(), auto arg2 = Unspecified(),
+            class... T>
   auto addArg(T... args) {
     auto arg = createArg<Type, Name, arg1, arg2>(std::forward<T>(args)...);
     return Parser<ID,
@@ -135,7 +121,8 @@ class Parser {
                   PositionalArgument, HelpEnabled>();
   }
 
-  template <auto Name, class Type, auto arg1 = Unspecified(), auto arg2 = Unspecified(), class... T>
+  template <ArgName Name, class Type, auto arg1 = Unspecified(), auto arg2 = Unspecified(),
+            class... T>
   auto addPositionalArg(T... args) {
     static_assert(std::is_same_v<PositionalArg, void>,
                   "Positional argument cannot set more than one");
@@ -144,7 +131,7 @@ class Parser {
     return Parser<ID, Arguments, typename decltype(arg)::type, HelpEnabled>();
   }
 
-  template <auto Name, class... T>
+  template <ArgName Name, class... T>
   auto addFlag(T... args) {
     if constexpr (!std::is_same_v<PositionalArgument, void>) {
       static_assert(!(std::string_view(Name) == std::string_view(PositionalArgument::name)),
@@ -168,11 +155,11 @@ class Parser {
 
   auto addHelp() {
     static_assert((SearchIndexFromShortName<Arguments, 'h'>::value == -1), "Duplicated short name");
-    static_assert(Argo::SearchIndex<Arguments, key("help")>::value == -1, "Duplicated name");
+    static_assert(Argo::SearchIndex<Arguments, "help">::value == -1, "Duplicated name");
     return Parser<ID, Arguments, PositionalArgument, true>();
   }
 
-  template <auto Name>
+  template <ArgName Name>
   auto getArg() -> decltype(auto) {
     if (!this->parsed_) {
       throw ParseError("Parser did not parse argument, call parse first");
@@ -190,7 +177,12 @@ class Parser {
     }
   }
 
-  template <auto Name>
+  template <ArgName Name>
+  auto operator()() {
+    return this->getArg<Name>();
+  }
+
+  template <ArgName Name>
   auto isAssigend() {
     if (!this->parsed_) {
       throw ParseError("Parser did not parse argument, call parse first");

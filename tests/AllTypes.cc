@@ -5,8 +5,6 @@ import Argo;
 
 #include "TestHelper.h"
 
-using Argo::key;
-
 TEST(ArgoTest, AllTypes) {
   auto [argc, argv] = createArgcArgv(       //
       "./main",                             //
@@ -18,28 +16,28 @@ TEST(ArgoTest, AllTypes) {
   );
 
   auto argo = Argo::Parser<10>();
-  auto parser = argo.addArg<key("arg1"), int>()
-                    .addArg<key("arg2"), float>()
-                    .addArg<key("arg3"), double>()
-                    .addArg<key("arg4"), std::string>()
-                    .addArg<key("arg5"), const char*>();
+  auto parser = argo.addArg<"arg1", int>()
+                    .addArg<"arg2", float>()
+                    .addArg<"arg3", double>()
+                    .addArg<"arg4", std::string>()
+                    .addArg<"arg5", const char*>();
 
   parser.parse(argc, argv);
 
-  EXPECT_EQ(parser.getArg<key("arg1")>(), 42);
-  EXPECT_FLOAT_EQ(parser.getArg<key("arg2")>(), 42.1234567890f);
-  EXPECT_DOUBLE_EQ(parser.getArg<key("arg3")>(), 42.12345678901234567890);
-  EXPECT_EQ(parser.getArg<key("arg4")>(), "Hello,World!");
-  EXPECT_TRUE(std::strcmp(parser.getArg<key("arg5")>(), "Hello,World!const char*") == 0);
+  EXPECT_EQ(parser.getArg<"arg1">(), 42);
+  EXPECT_FLOAT_EQ(parser.getArg<"arg2">(), 42.1234567890f);
+  EXPECT_DOUBLE_EQ(parser.getArg<"arg3">(), 42.12345678901234567890);
+  EXPECT_EQ(parser.getArg<"arg4">(), "Hello,World!");
+  EXPECT_TRUE(std::strcmp(parser.getArg<"arg5">(), "Hello,World!const char*") == 0);
 
   EXPECT_TRUE((  //
-      std::is_same_v<decltype(parser.getArg<key("arg1")>()), int>));
+      std::is_same_v<decltype(parser.getArg<"arg1">()), int>));
   EXPECT_TRUE((  //
-      std::is_same_v<decltype(parser.getArg<key("arg2")>()), float>));
+      std::is_same_v<decltype(parser.getArg<"arg2">()), float>));
   EXPECT_TRUE((  //
-      std::is_same_v<decltype(parser.getArg<key("arg3")>()), double>));
+      std::is_same_v<decltype(parser.getArg<"arg3">()), double>));
   EXPECT_TRUE((  //
-      std::is_same_v<decltype(parser.getArg<key("arg4")>()), std::string>));
+      std::is_same_v<decltype(parser.getArg<"arg4">()), std::string>));
   EXPECT_TRUE((  //
-      std::is_same_v<decltype(parser.getArg<key("arg5")>()), const char*>));
+      std::is_same_v<decltype(parser.getArg<"arg5">()), const char*>));
 }

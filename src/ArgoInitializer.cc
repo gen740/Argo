@@ -45,7 +45,7 @@ constexpr auto implicitDefault(T value) -> ImplicitDefaultValue<T> {
   return {.implicit_default_value = value};
 }
 
-template <class Type, auto Name, NArgs nargs, bool Required, auto ID>
+template <class Type, ArgName Name, NArgs nargs, bool Required, ParserID ID>
 struct ArgInitializer {
   template <class Head, class... Tails>
   static auto init(Head head, Tails... tails) {
@@ -74,7 +74,7 @@ struct ArgInitializer {
   static auto init() {}
 };
 
-template <auto Name, auto ID>
+template <ArgName Name, ParserID ID>
 struct FlagArgInitializer {
   template <class Head, class... Tails>
   static auto init(Head head, Tails... tails) {

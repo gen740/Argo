@@ -8,23 +8,44 @@ import :std_module;
 
 export namespace Argo {
 
+template <std::size_t N>
+struct ParserID {
+  int idInt = 0;
+  char idName[N];
+
+  constexpr ParserID(int id) : idInt(id){};
+
+  constexpr ParserID(const char (&id)[N + 1]) {
+    for (std::size_t i = 0; i < N; i++) {
+      this->idName[i] = id[i];
+    }
+  };
+};
+
+ParserID(int) -> ParserID<0>;
+
+template <std::size_t N>
+ParserID(const char (&)[N]) -> ParserID<N - 1>;
+
 struct ArgNameTag {};
 
 template <std::size_t N>
 struct ArgName : ArgNameTag {
   char name[N] = {};
   char shortName = '\0';
+  std::size_t nameLen = N;
 
   explicit ArgName() = default;
 
   constexpr ArgName(const char (&lhs)[N + 1]) {
     for (std::size_t i = 0; i < N; i++) {
-      this->name[i] = lhs[i];
-    }
-  };
-
-  constexpr ArgName(const char (&lhs)[N + 1], char short_name) : shortName(short_name) {
-    for (std::size_t i = 0; i < N; i++) {
+      if (lhs[i] == ',') {
+        nameLen = i;
+        if (N - i != 2) {
+          throw "Error";
+        }
+        shortName = lhs[i + 1];
+      }
       this->name[i] = lhs[i];
     }
   };
@@ -73,10 +94,13 @@ struct ArgName : ArgNameTag {
 
   template <std::size_t M>
   constexpr auto operator==(ArgName<M> lhs) const -> bool {
-    if constexpr (M != N) {
+    auto NV = this->nameLen;
+    auto MV = lhs.nameLen;
+
+    if (MV != NV) {
       return false;
     } else {
-      for (std::size_t i = 0; i < N; i++) {
+      for (std::size_t i = 0; i < NV; i++) {
         if ((*this)[i] != lhs[i]) {
           return false;
         }
@@ -85,6 +109,14 @@ struct ArgName : ArgNameTag {
     }
   }
 };
+
+template <std::size_t N>
+consteval std::size_t calcN(const char (&)[N]) {
+  return 4;
+}
+
+template <std::size_t N>
+ArgName(const char (&)[N]) -> ArgName<N - 1>;
 
 template <class T>
 concept ArgType = requires(T& x) {
@@ -97,7 +129,7 @@ concept ArgType = requires(T& x) {
   std::is_same_v<decltype(T::description), std::string_view>;
 };
 
-template <typename BaseType, auto Name, auto ID>
+template <typename BaseType, ArgName Name, ParserID ID>
 struct ArgBase {
   static constexpr auto name = Name;
   static constexpr auto id = ID;
@@ -111,7 +143,7 @@ struct ArgTag {};
 /*!
  * Arg type this holds argument value
  */
-template <class Type, auto Name, NArgs TNArgs, bool Required, auto ID>
+template <class Type, ArgName Name, NArgs TNArgs, bool Required, ParserID ID>
 struct Arg : ArgTag, ArgBase<Type, Name, ID> {
   static constexpr bool isVariadic =
       (TNArgs.nargs > 1) || (TNArgs.nargs_char == '+') || (TNArgs.nargs_char == '*');
@@ -133,7 +165,7 @@ struct Arg : ArgTag, ArgBase<Type, Name, ID> {
 
 struct FlagArgTag {};
 
-template <auto Name, auto ID>
+template <ArgName Name, ParserID ID>
 struct FlagArg : FlagArgTag, ArgBase<bool, Name, ID> {
   static constexpr bool isVariadic = false;
   using type = bool;

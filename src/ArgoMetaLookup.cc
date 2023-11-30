@@ -4,6 +4,7 @@ export module Argo:MetaLookup;
 
 import :Exceptions;
 import :std_module;
+import :Arg;
 
 export namespace Argo {
 
@@ -35,15 +36,15 @@ struct GetNameFromShortName {
 /*!
  * Index Search meta function
  */
-template <typename Tuple, auto T, int Index = 0>
+template <typename Tuple, ArgName T, int Index = 0>
 struct SearchIndex;
 
-template <auto T, std::size_t Index>
+template <ArgName T, std::size_t Index>
 struct SearchIndex<std::tuple<>, T, Index> {
   static constexpr int value = -1;
 };
 
-template <auto T, std::size_t Index, typename Head, typename... Tails>
+template <ArgName T, std::size_t Index, typename Head, typename... Tails>
 struct SearchIndex<std::tuple<Head, Tails...>, T, Index> {
   static constexpr int value =
       (Head::name == T) ? Index : SearchIndex<std::tuple<Tails...>, T, Index + 1>::value;
