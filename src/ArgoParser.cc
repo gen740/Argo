@@ -208,20 +208,20 @@ class Parser {
   }
 
   template <ArgName Name>
-  auto isAssigend() {
+  auto isAssigned() {
     if (!this->parsed_) {
       throw ParseError("Parser did not parse argument, call parse first");
     }
     if constexpr (!std::is_same_v<PositionalArgument, void>) {
       if constexpr (std::string_view(Name) == std::string_view(PositionalArgument::name)) {
-        return PositionalArgument::assigend;
+        return PositionalArgument::assigned;
       } else {
         return std::remove_cvref_t<decltype(std::get<SearchIndex<Arguments, Name>::value>(
-            std::declval<Arguments>()))>::assigend;
+            std::declval<Arguments>()))>::assigned;
       }
     } else {
       return std::remove_cvref_t<decltype(std::get<SearchIndex<Arguments, Name>::value>(
-          std::declval<Arguments>()))>::assigend;
+          std::declval<Arguments>()))>::assigned;
     }
   }
 

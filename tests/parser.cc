@@ -124,7 +124,7 @@ TEST(ArgoTest, Validation) {
     auto argo = Argo::Parser<"Validation 1">();
 
     auto parser = argo  //
-                      .addArg<"arg", int>(new Argo::Validation::MinMax<int>(0, 100))
+                      .addArg<"arg", int>(Argo::Validation::Range(0, 100))
                       .addFlag<"arg2">();
 
     parser.parse(argc, argv);
@@ -136,11 +136,36 @@ TEST(ArgoTest, Validation) {
 
     auto argo = Argo::Parser<"Validation 2">();
     auto parser = argo  //
-                      .addArg<"arg", int>(new Argo::Validation::MinMax<int>(0, 100))
+                      .addArg<"arg", int>(Argo::Validation::Range(0, 100))
                       .addFlag<"arg2">();
 
     EXPECT_THROW(parser.parse(argc, argv), Argo::ValidationError);
   }
+  //   {
+  //     auto [argc, argv] = createArgcArgv(  //
+  //         "./main", "--arg", "41"          //
+  //     );
+  //
+  //     auto argo = Argo::Parser<"Validation 3">();
+  //     auto parser = argo  //
+  //                       .addArg<"arg", int>(new Argo::Validation::Callback<int>(
+  //                           [](auto value) { return value % 2 == 0; }))
+  //                       .addFlag<"arg2">();
+  //     EXPECT_THROW(parser.parse(argc, argv), Argo::ValidationError);
+  //   }
+  //
+  //   {
+  //     auto [argc, argv] = createArgcArgv(  //
+  //         "./main", "--arg", "42"          //
+  //     );
+  //
+  //     auto argo = Argo::Parser<"Validation 4">();
+  //     auto parser = argo  //
+  //                       .addArg<"arg", int>(new Argo::Validation::Callback<int>(
+  //                           [](auto value) { return value % 2 == 0; }))
+  //                       .addFlag<"arg2">();
+  //     parser.parse(argc, argv);
+  //   }
 }
 
 TEST(ArgoTest, Narg) {
@@ -195,7 +220,6 @@ TEST(ArgoTest, NargException) {
 
     EXPECT_THROW(parser.parse(argc, argv), Argo::InvalidArgument);
   }
-
   {
     auto [argc, argv] = createArgcArgv(  //
         "./main",                        //
@@ -367,28 +391,33 @@ TEST(ArgoTest, Positional) {
   }
 }
 
-// TEST(ArgoTest, IsAssigned) {
-//   {
-//     const int argc = 4;
-//     char* argv[argc] = {
-//         "./main",       //
-//         "1", "2", "3",  //
-//     };
-//
-//     auto argo = Argo::Parser<130>("Sample Program");
-//     auto parser = argo  //
-//                       .addPositionalArg<int, key("arg1"), 'a', Argo::nargs(3)>();
-//
-//     parser.parse(argc, argv);
-//     EXPECT_THAT(parser.getArg<key("arg1")>(), testing::ElementsAre(1, 2, 3));
-//   }
-// }
+TEST(ArgoTest, IsAssigned) {
+  {
+    auto [argc, argv] = createArgcArgv(     //
+        "./main",                           //
+        "--arg1", "42", "--arg2", "--arg4"  //
+    );
+
+    auto argo = Argo::Parser<"Is assigned">("Sample Program");
+    auto parser = argo                                        //
+                      .addArg<"arg1", int, Argo::nargs(1)>()  //
+                      .addFlag<"arg2">()                      //
+                      .addArg<"arg3", int, Argo::nargs(1)>()  //
+                      .addFlag<"arg4">();
+
+    parser.parse(argc, argv);
+
+    EXPECT_TRUE(parser.isAssigned<"arg1">());
+    EXPECT_TRUE(parser.isAssigned<"arg2">());
+    EXPECT_FALSE(parser.isAssigned<"arg3">());
+    EXPECT_TRUE(parser.isAssigned<"arg4">());
+  }
+}
 
 TEST(ArgoTest, CallBack) {
   {
-    auto [argc, argv] = createArgcArgv(
-        "./main",      //
-        "1", "2", "3"  //
+    auto [argc, argv] = createArgcArgv("./main",      //
+                                       "1", "2", "3"  //
     );
 
     auto argo = Argo::Parser<150>("Sample Program");

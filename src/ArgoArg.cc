@@ -190,9 +190,11 @@ struct Arg : ArgTag, ArgBase<Type, Name, ID> {
   inline static type defaultValue = {};
 
   inline static constexpr NArgs nargs = TNArgs;
-  inline static Validation::ValidationBase<type>* validator = nullptr;
-  inline static std::function<Type(std::string_view)> caster = nullptr;
-  inline static std::function<void(type, std::string_view)> callback = nullptr;
+  inline static std::function<type(std::string_view)> caster = nullptr;
+  inline static std::function<void(const type& value, std::span<std::string_view>,
+                                   std::string_view)>
+      validator = nullptr;
+  inline static std::function<void(type&, std::span<std::string_view>)> callback = nullptr;
 
   inline static bool required = Required;
 };

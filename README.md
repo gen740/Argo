@@ -142,12 +142,6 @@ Specify a description for the argument like this:
   Argo::Parser().addArg<"arg1", int>(Argo::withDescription("Description of arg1"));
   ```
 
-### Validator
-Define a validator for the argument, for example, a range validator:
-  ```cpp
-  Argo::Parser().addArg<"arg1", int>(Argo::validator::MinMax(10, 20));
-  ```
-
 ### Callback
 Set a callback for the flag, which is triggered as soon as the option is parsed:
   ```cpp

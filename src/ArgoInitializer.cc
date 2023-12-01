@@ -54,7 +54,9 @@ struct ArgInitializer {
     if constexpr (std::is_same_v<Head, Description>) {
       Arg::description = head.description;
     } else if constexpr (std::derived_from<std::remove_cvref_t<std::remove_pointer_t<Head>>,
-                                           Validation::ValidationTag>) {
+                                           Validation::ValidationBase>) {
+      static_assert(std::is_invocable_v<decltype(head), typename Arg::type,
+                                        std::span<std::string_view>, std::string_view>);
       Arg::validator = head;
     } else if constexpr (std::derived_from<std::remove_cvref_t<std::remove_pointer_t<Head>>,
                                            ImplicitDefaultValueTag>) {
@@ -83,7 +85,7 @@ struct FlagArgInitializer {
     if constexpr (std::is_same_v<Head, Description>) {
       FlagArg::description = head.description;
     } else if constexpr (std::derived_from<std::remove_cvref_t<std::remove_pointer_t<Head>>,
-                                           Validation::ValidationTag>) {
+                                           Validation::ValidationBase>) {
       static_assert(false, "Flag cannot have validator");
     } else if constexpr (std::derived_from<std::remove_cvref_t<std::remove_pointer_t<Head>>,
                                            ImplicitDefaultValueTag>) {

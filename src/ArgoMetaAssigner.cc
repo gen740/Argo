@@ -93,10 +93,10 @@ struct Assigner {
           Head::value = caster<typename Head::type>(values[0]);
           Head::assigned = true;
           if (Head::validator) {
-            (*Head::validator)(key, Head::value);
+            Head::validator(Head::value, values, key);
           }
           if (Head::callback) {
-            Head::callback(Head::value, key);
+            Head::callback(Head::value, values);
           }
           return true;
         }
@@ -124,10 +124,10 @@ struct Assigner {
         }
         Head::assigned = true;
         if (Head::validator) {
-          (*Head::validator)(key, Head::value);
+          Head::validator(Head::value, values, key);
         }
         if (Head::callback) {
-          Head::callback(Head::value, key);
+          Head::callback(Head::value, values);
         }
         return true;
       } else if constexpr (Head::nargs.getNargsChar() == '+') {
@@ -140,10 +140,10 @@ struct Assigner {
         }
         Head::assigned = true;
         if (Head::validator) {
-          (*Head::validator)(key, Head::value);
+          Head::validator(Head::value, values, key);
         }
         if (Head::callback) {
-          Head::callback(Head::value, key);
+          Head::callback(Head::value, values);
         }
         return true;
       } else if constexpr (Head::nargs.getNargs() == 1) {
@@ -169,10 +169,10 @@ struct Assigner {
         Head::value = caster<typename Head::baseType>(values[0]);
         Head::assigned = true;
         if (Head::validator) {
-          (*Head::validator)(key, Head::value);
+          Head::validator(Head::value, values, key);
         }
         if (Head::callback) {
-          Head::callback(Head::value, key);
+          Head::callback(Head::value, values);
         }
         return true;
       } else {
@@ -192,10 +192,10 @@ struct Assigner {
 
           Head::assigned = true;
           if (Head::validator) {
-            (*Head::validator)(key, Head::value);
+            Head::validator(Head::value, values, key);
           }
           if (Head::callback) {
-            Head::callback(Head::value, key);
+            Head::callback(Head::value, values);
           }
           return true;
         }
