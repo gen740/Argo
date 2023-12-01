@@ -47,9 +47,9 @@ constexpr auto tupleAssign(std::tuple<T...>& t, std::span<std::string_view> v,
       ...);
 }
 
-template <typename Arguments, typename PositionalArgument>
+template <class Arguments, class PositionalArgument>
 struct Assigner {
-  template <int Index, typename Head, typename... Tails>
+  template <int Index, class Head, class... Tails>
   struct AssignImpl {};
 
   template <int Index>
@@ -78,6 +78,9 @@ struct Assigner {
       }
       Head::value = true;
       Head::assigned = true;
+      if (Head::callback) {
+        Head::callback();
+      }
       return true;
     } else {
       if constexpr (Head::nargs.getNargsChar() == '?') {
@@ -221,7 +224,7 @@ struct Assigner {
     return false;
   }
 
-  template <int Index, ArgType Head, typename... Tails>
+  template <int Index, ArgType Head, ArgType... Tails>
   struct AssignImpl<Index, std::tuple<Head, Tails...>> {
     static auto eval(std::string_view key, std::span<std::string_view> values) {
       if (std::string_view(Head::name) == key) {
@@ -233,7 +236,7 @@ struct Assigner {
     }
   };
 
-  template <int Index, typename Head, typename... Tails>
+  template <int Index, class Head, class... Tails>
   struct AssignFlagImpl {};
 
   template <int Index>
@@ -243,7 +246,7 @@ struct Assigner {
     }
   };
 
-  template <int Index, ArgType Head, typename... Tails>
+  template <int Index, ArgType Head, ArgType... Tails>
   struct AssignFlagImpl<Index, std::tuple<Head, Tails...>> {
     static auto eval(std::string_view key) {
       if constexpr (std::derived_from<Head, FlagArgTag>) {
@@ -279,6 +282,25 @@ struct Assigner {
     }
     name = GetNameFromShortName<Arguments>::eval(key.back());
     AssignImpl<0, Arguments>::eval(name, values);
+  };
+};
+
+template <class Args>
+struct ValueResetter {};
+
+template <ArgType... Args>
+struct ValueResetter<std::tuple<Args...>> {
+  static auto reset() {
+    (
+        []<class T>() {
+          if constexpr (std::derived_from<T, ArgTag>) {
+            if (T::assigned) {
+              T::value = typename T::type();
+              T::assigned = false;
+            }
+          }
+        }.template operator()<Args>(),
+        ...);
   };
 };
 

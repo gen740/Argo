@@ -194,7 +194,7 @@ struct Arg : ArgTag, ArgBase<Type, Name, ID> {
   inline static std::function<Type(std::string_view)> caster = nullptr;
   inline static std::function<void(type, std::string_view)> callback = nullptr;
 
-  inline static constexpr bool required = Required;
+  inline static bool required = Required;
 };
 
 struct FlagArgTag {};
@@ -208,7 +208,7 @@ struct FlagArg : FlagArgTag, ArgBase<bool, Name, ID> {
   inline static type defaultValue = {};
 
   inline static constexpr NArgs nargs = NArgs(-1);
-  inline static std::function<void(type, std::string_view)> callback = nullptr;
+  inline static std::function<void()> callback = nullptr;
 };
 
 }  // namespace Argo

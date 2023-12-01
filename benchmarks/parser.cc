@@ -65,6 +65,7 @@ static void ArgoParser(benchmark::State& state) {
                       .addFlag<"arg17,n">()
                       .addArg<"arg18", int, nargs('+')>();
     parser.parse(argc, argv);
+    parser.resetArgs();
   }
 }
 

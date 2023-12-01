@@ -6,15 +6,6 @@ import Argo;
 #include "TestHelper.h"
 
 TEST(ArgoTest, STLTypes) {
-  // auto [argc, argv] = createArgcArgv(       //
-  //     "./main",                             //
-  //     "--arg1", "42",                       // int
-  //     "--arg2", "42.1234567890",            // float
-  //     "--arg3", "42.12345678901234567890",  // double
-  //     "--arg4", "Hello,World!",             // string
-  //     "--arg5", "Hello,World!const char*"   // const char*
-  // );
-  //
   {
     auto [argc, argv] = createArgcArgv(  //
         "./main",                        //
@@ -49,7 +40,5 @@ TEST(ArgoTest, STLTypes) {
     EXPECT_EQ(a1, 42);
     EXPECT_DOUBLE_EQ(a2, 43.24);
     EXPECT_EQ(a3, "Hello,World");
-
-    // EXPECT_THAT(parser.getArg<"arg1">(), testing::ElementsAre(42, 43, 44));
   }
 }

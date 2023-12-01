@@ -7,10 +7,10 @@ import Argo;
 
 using Argo::InvalidArgument;
 
-TEST(ArgoTest, ExceptionThow) {
+TEST(ArgoTest, ExceptionThrow) {
   auto [argc, argv] = createArgcArgv("./main", "arg1=42", "--arg2=23.4");
 
-  auto argo = Argo::Parser<20>();
+  auto argo = Argo::Parser<"ExceptionThrow">();
   auto parser = argo.addArg<"arg1", int>()  //
                     .addArg<"arg2", float>();
 
@@ -21,7 +21,7 @@ TEST(ArgoTest, ExceptionThow) {
 TEST(ArgoTest, EqualAssign) {
   auto [argc, argv] = createArgcArgv("./main", "--arg1=42", "--arg2=Hello,World");
 
-  auto argo = Argo::Parser<30>();
+  auto argo = Argo::Parser<"Equal assign">();
   auto parser = argo                        //
                     .addArg<"arg1", int>()  //
                     .addArg<"arg2", std::string>();
@@ -39,7 +39,7 @@ TEST(ArgoTest, FlagArgument) {
       "--arg4", "true", "--arg5", "1"       //
   );
 
-  auto argo = Argo::Parser<40>();
+  auto argo = Argo::Parser<"Flag arguments">();
   auto parser = argo.addFlag<"arg1">()
                     .addArg<"arg2", bool>()
                     .addArg<"arg3", bool>()
@@ -63,7 +63,7 @@ TEST(ArgoTest, ShortArgument) {
       "-c", "3.1415"                   //
   );
 
-  auto argo = Argo::Parser<50>();
+  auto argo = Argo::Parser<"Short argument">();
   auto parser = argo.addArg<"arg1,a", std::string>()  //
                     .addArg<"arg2,b", int>()
                     .addArg<"arg3,c", float>();
@@ -80,7 +80,7 @@ TEST(ArgoTest, CombiningFlags) {
       "./main", "-abd", "-e"           //
   );
 
-  auto argo = Argo::Parser<60>();
+  auto argo = Argo::Parser<"Combined flags">();
   auto parser = argo.addFlag<"arg1,a">()
                     .addFlag<"arg2,b">()
                     .addFlag<"arg3,c">()
@@ -101,7 +101,7 @@ TEST(ArgoTest, CombiningFlagsWithOptionalArg) {
       "./main", "-abdc", "Hello,World"  //
   );
 
-  auto argo = Argo::Parser<70>();
+  auto argo = Argo::Parser<"flag with optional args">();
   auto parser = argo.addFlag<"arg1,a">()
                     .addFlag<"arg2,b">()
                     .addArg<"arg3,c", std::string>()
@@ -121,7 +121,7 @@ TEST(ArgoTest, Validation) {
         "./main", "--arg", "42"          //
     );
 
-    auto argo = Argo::Parser<80>();
+    auto argo = Argo::Parser<"Validation 1">();
 
     auto parser = argo  //
                       .addArg<"arg", int>(new Argo::Validation::MinMax<int>(0, 100))
@@ -134,7 +134,7 @@ TEST(ArgoTest, Validation) {
         "./main", "--arg", "121"         //
     );
 
-    auto argo = Argo::Parser<81>();
+    auto argo = Argo::Parser<"Validation 2">();
     auto parser = argo  //
                       .addArg<"arg", int>(new Argo::Validation::MinMax<int>(0, 100))
                       .addFlag<"arg2">();
@@ -153,7 +153,7 @@ TEST(ArgoTest, Narg) {
         "--arg4", "11", "12", "8", "9"         //
     );
 
-    auto argo = Argo::Parser<90>();
+    auto argo = Argo::Parser<"Narg 1">();
 
     auto parser = argo  //
                       .addArg<"arg1", int, Argo::nargs(3)>()
@@ -172,7 +172,7 @@ TEST(ArgoTest, Narg) {
         "./main",                        //
         "--arg1", "1"                    //
     );
-    auto argo = Argo::Parser<91>();
+    auto argo = Argo::Parser<"Narg 2">();
 
     auto parser = argo  //
                       .addArg<"arg1", int, Argo::nargs(1)>();
@@ -188,7 +188,7 @@ TEST(ArgoTest, NargException) {
         "--arg1"                         //
     );
 
-    auto argo = Argo::Parser<100>();
+    auto argo = Argo::Parser<"Narg exception">();
 
     auto parser = argo  //
                       .addArg<"arg1", int, Argo::nargs('+')>();
@@ -202,7 +202,7 @@ TEST(ArgoTest, NargException) {
         "--arg1", "--arg2"               //
     );
 
-    auto argo = Argo::Parser<101>();
+    auto argo = Argo::Parser<"Narg exception 2">();
 
     auto parser = argo  //
                       .addArg<"arg1", int, Argo::nargs('+')>()
@@ -214,7 +214,7 @@ TEST(ArgoTest, NargException) {
 
 TEST(ArgoTest, Help) {  // TODO(gen740): more help
   {
-    auto argo = Argo::Parser<110>("program");
+    auto argo = Argo::Parser<"Help 1">("program");
     auto parser = argo  //
                       .addArg<"arg0,k", int>()
                       .addArg<"arg1,a", int, Argo::nargs('+')>()
@@ -236,7 +236,7 @@ TEST(ArgoTest, Required) {
         "--arg1", "1", "--arg2", "2"     //
     );
 
-    auto argo = Argo::Parser<120>("Sample Program");
+    auto argo = Argo::Parser<"Required argument">("Sample Program");
     auto parser = argo  //
                       .addArg<"arg1,a", int, Argo::nargs(1)>()
                       .addArg<"arg2", int, Argo::required, Argo::nargs(1)>()
@@ -255,7 +255,7 @@ TEST(ArgoTest, Positional) {
         "1", "2", "3"                    //
     );
 
-    auto argo = Argo::Parser<130>("Sample Program");
+    auto argo = Argo::Parser<"Positional arguments">("Sample Program");
     auto parser = argo  //
                       .addPositionalArg<"arg1", int, Argo::nargs(3)>();
 
@@ -268,7 +268,7 @@ TEST(ArgoTest, Positional) {
         "--arg2", "42.195"               //
     );
 
-    auto argo = Argo::Parser<131>("Sample Program");
+    auto argo = Argo::Parser<"positional argument2">("Sample Program");
     auto parser = argo  //
                       .addPositionalArg<"arg1", int, Argo::nargs(3)>()
                       .addArg<"arg2", float>();
@@ -285,7 +285,7 @@ TEST(ArgoTest, Positional) {
         "1", "2", "3"                    //
     );
 
-    auto argo = Argo::Parser<132>("Sample Program");
+    auto argo = Argo::Parser<"positional argument3">("Sample Program");
     auto parser = argo  //
                       .addPositionalArg<"arg1", int, Argo::nargs(3)>()
                       .addArg<"arg2", float, Argo::nargs(1)>();
@@ -302,7 +302,7 @@ TEST(ArgoTest, Positional) {
         "1", "2", "3"                    //
     );
 
-    auto argo = Argo::Parser<133>("Sample Program");
+    auto argo = Argo::Parser<"positonal argument 4">("Sample Program");
     auto parser = argo  //
                       .addPositionalArg<"arg1", int, Argo::nargs(3)>()
                       .addArg<"arg2", float, Argo::nargs(2)>();
@@ -319,7 +319,7 @@ TEST(ArgoTest, Positional) {
         "1", "2", "3"                    //
     );
 
-    auto argo = Argo::Parser<134>("Sample Program");
+    auto argo = Argo::Parser<"positonal argument 5">("Sample Program");
     auto parser = argo  //
                       .addPositionalArg<"arg1", int, Argo::nargs(3)>()
                       .addFlag<"arg2">();
@@ -336,7 +336,7 @@ TEST(ArgoTest, Positional) {
         "1", "2", "3", "-b"              //
     );
 
-    auto argo = Argo::Parser<135>("Sample Program");
+    auto argo = Argo::Parser<"positonal argument 6">("Sample Program");
     auto parser = argo  //
                       .addPositionalArg<"arg1", int, Argo::nargs(3)>()
                       .addFlag<"arg2,b">();
@@ -353,7 +353,7 @@ TEST(ArgoTest, Positional) {
         "1", "2", "3", "-bc", "234.86"   //
     );
 
-    auto argo = Argo::Parser<136>("Sample Program");
+    auto argo = Argo::Parser<"positonal argument 7">("Sample Program");
     auto parser = argo  //
                       .addPositionalArg<"arg1", int, Argo::nargs(3)>()
                       .addFlag<"arg2,b">()
@@ -386,11 +386,10 @@ TEST(ArgoTest, Positional) {
 
 TEST(ArgoTest, CallBack) {
   {
-    const int argc = 4;
-    char* argv[argc] = {
-        "./main",       //
-        "1", "2", "3",  //
-    };
+    auto [argc, argv] = createArgcArgv(
+        "./main",      //
+        "1", "2", "3"  //
+    );
 
     auto argo = Argo::Parser<150>("Sample Program");
     auto parser = argo.addPositionalArg<"arg1", int, Argo::nargs(3)>(

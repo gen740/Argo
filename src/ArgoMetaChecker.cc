@@ -10,23 +10,51 @@ import :std_module;
 
 export namespace Argo {
 
-template <typename... Args>
+/*!
+ * Checking if the given argument is required key, cycle through all the
+ * tuple argument.
+ */
+template <class Args>
 struct RequiredChecker {};
 
-template <typename... Args>
+template <ArgType... Args>
 struct RequiredChecker<std::tuple<Args...>> {
   static auto check() -> std::vector<std::string_view> {
-    auto invalid_keys = std::vector<std::string_view>();
+    auto required_keys = std::vector<std::string_view>();
     (
-        [&invalid_keys]<class T>() {
+        [&required_keys]<class T>() {
           if constexpr (std::derived_from<T, ArgTag>) {
             if (T::required && !T::assigned) {
-              invalid_keys.push_back(std::string_view(T::name));
+              required_keys.push_back(std::string_view(T::name));
             }
           }
         }.template operator()<Args>(),
         ...);
-    return invalid_keys;
+    return required_keys;
+  };
+};
+
+/*!
+ * Checking if the given argument is assigned, cycle through all the
+ * tuple argument.
+ */
+template <class Args>
+struct AssignChecker {};
+
+template <ArgType... Args>
+struct AssignChecker<std::tuple<Args...>> {
+  static auto check() -> std::vector<std::string_view> {
+    auto assigned_keys = std::vector<std::string_view>();
+    (
+        [&assigned_keys]<class T>() {
+          if constexpr (std::derived_from<T, ArgTag>) {
+            if (T::assigned) {
+              assigned_keys.push_back(std::string_view(T::name));
+            }
+          }
+        }.template operator()<Args>(),
+        ...);
+    return assigned_keys;
   };
 };
 

@@ -27,6 +27,11 @@ auto splitStringView(std::string_view str, char delimeter) -> std::vector<std::s
 }
 
 template <ParserID ID, class Args, class PositionalArg, class SubParsers, bool HelpEnabled>
+auto Parser<ID, Args, PositionalArg, SubParsers, HelpEnabled>::resetArgs() ->void{
+  ValueResetter<Arguments>::reset();
+}
+
+template <ParserID ID, class Args, class PositionalArg, class SubParsers, bool HelpEnabled>
 auto Parser<ID, Args, PositionalArg, SubParsers, HelpEnabled>::setArg(
     std::string_view key, std::span<std::string_view> val) const -> void {
   if constexpr (HelpEnabled) {
@@ -55,9 +60,14 @@ auto Parser<ID, Args, PositionalArg, SubParsers, HelpEnabled>::setArg(
 template <ParserID ID, class Args, class PositionalArg, class SubParsers, bool HelpEnabled>
 auto Parser<ID, Args, PositionalArg, SubParsers, HelpEnabled>::parse(int argc,
                                                                      char* argv[]) -> void {
-  if (this->parsed_) {
+  if (this->parsed_) [[unlikely]] {
     throw ParseError("Cannot parse twice");
   }
+  auto assigned_keys = AssignChecker<Arguments>::check();
+  if (!assigned_keys.empty()) [[unlikely]] {
+    throw ParseError(std::format("keys {} already assigned", assigned_keys));
+  }
+
   if constexpr (!std::is_same_v<SubParsers, std::tuple<>>) {
     if (argc > 2 && MetaParser<SubParsers>::parse(subParsers, argv[1], argc - 1, &argv[1])) {
       this->parsed_ = true;

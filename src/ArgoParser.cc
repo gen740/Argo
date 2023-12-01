@@ -241,6 +241,8 @@ class Parser {
                   HelpEnabled>(sub_parsers);
   }
 
+  auto resetArgs() -> void;
+
  private:
   auto setArg(std::string_view key, std::span<std::string_view> val) const -> void;
   auto setArg(std::span<char> key, std::span<std::string_view> val) const -> void;
