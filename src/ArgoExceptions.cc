@@ -6,15 +6,12 @@ import :std_module;
 
 export namespace Argo {
 
-/*!
- * InvalidArgument exception class
- */
-class InvalidArgument : public std::invalid_argument {
+class ParserInternalError : public std::runtime_error {
  public:
-  explicit InvalidArgument(const std::string& msg) : std::invalid_argument(msg) {}
+  explicit ParserInternalError(const std::string& msg) : std::runtime_error(msg) {}
 
   [[nodiscard]] const char* what() const noexcept override {
-    return std::invalid_argument::what();
+    return std::runtime_error::what();
   }
 };
 
@@ -27,21 +24,24 @@ class ParseError : public std::runtime_error {
   }
 };
 
-class ParserInternalError : public std::runtime_error {
+/*!
+ * InvalidArgument exception class
+ */
+class InvalidArgument : public std::invalid_argument {
  public:
-  explicit ParserInternalError(const std::string& msg) : std::runtime_error(msg) {}
+  explicit InvalidArgument(const std::string& msg) : std::invalid_argument(msg) {}
 
   [[nodiscard]] const char* what() const noexcept override {
-    return std::runtime_error::what();
+    return std::invalid_argument::what();
   }
 };
 
-class ValidationError : public std::runtime_error {
+class ValidationError : public InvalidArgument {
  public:
-  explicit ValidationError(const std::string& msg) : std::runtime_error(msg) {}
+  explicit ValidationError(const std::string& msg) : InvalidArgument(msg) {}
 
   [[nodiscard]] const char* what() const noexcept override {
-    return std::runtime_error::what();
+    return InvalidArgument::what();
   }
 };
 

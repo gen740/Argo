@@ -27,8 +27,8 @@ auto splitStringView(std::string_view str, char delimeter) -> std::vector<std::s
 }
 
 template <ParserID ID, class Args, class PositionalArg, class SubParsers, bool HelpEnabled>
-auto Parser<ID, Args, PositionalArg, SubParsers, HelpEnabled>::resetArgs() ->void{
-  ValueResetter<Arguments>::reset();
+auto Parser<ID, Args, PositionalArg, SubParsers, HelpEnabled>::resetArgs() -> void {
+  ValueReset<Arguments>();
 }
 
 template <ParserID ID, class Args, class PositionalArg, class SubParsers, bool HelpEnabled>
@@ -69,7 +69,7 @@ auto Parser<ID, Args, PositionalArg, SubParsers, HelpEnabled>::parse(int argc,
   }
 
   if constexpr (!std::is_same_v<SubParsers, std::tuple<>>) {
-    if (argc > 2 && MetaParser<SubParsers>::parse(subParsers, argv[1], argc - 1, &argv[1])) {
+    if (argc > 2 && MetaParse(subParsers, argv[1], argc - 1, &argv[1])) {
       this->parsed_ = true;
       return;
     }

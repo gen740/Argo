@@ -23,8 +23,7 @@ struct HelpGenerator<std::tuple<Args...>> {
           ret.emplace_back(std::string_view(Args::name).substr(0, Args::name.nameLen),
                            Args::name.shortName, Args::description);
         }.template operator()<Args>(),
-        ...  //
-    );
+        ...);
     return ret;
   }
 };
@@ -39,19 +38,15 @@ struct SubParserHelpGenerator {
   static auto eval(SubParsers tuple, std::index_sequence<Numbers...>) {
     std::vector<SubCommandInfo> ret{};
     (
-        [&tuple, &ret]<std::size_t N>() {  //
+        [&tuple, &ret]<std::size_t N>() {
           ret.emplace_back(std::get<N>(tuple).name, std::get<N>(tuple).description);
-        }
-            .template operator()<Numbers>(),
-        ...  //
-    );
+        }.template operator()<Numbers>(),
+        ...);
     return ret;
   }
 
   template <class... SubParsers>
-  static auto generate([[maybe_unused]] std::tuple<SubParsers...> tuple) {
-    // return "foo";
-    std::println("{}", sizeof...(SubParsers));
+  static auto generate(std::tuple<SubParsers...> tuple) {
     return eval(tuple, std::make_index_sequence<sizeof...(SubParsers)>());
   }
 };

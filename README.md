@@ -147,6 +147,17 @@ Set a callback for the flag, which is triggered as soon as the option is parsed:
   ```cpp
   Argo::Parser().addArg<"arg1", int>([](auto value, auto raw_value){
       // Implement some callback using value and raw_value
+      // value would be reference to the value, so you can modify them.
+  });
+  ```
+In this callback, the parsed value is modifiable. You can validate the value inside this function.
+  ```cpp
+  namespace fs = std::filesystem;
+  Argo::Parser(),addArg<"file_path", fs::path>([](fs::path& value, std::span<std::string_view> /* unused */){
+      value = fs::absolute(value);
+      if (!fs::exists(value)) {
+          throw Argo::ValidationError(std::format("file {} does not exist"), value);
+      }
   });
   ```
 

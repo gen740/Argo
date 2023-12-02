@@ -71,11 +71,14 @@ using ::std::vector;  // NOLINT(misc-unused-using-decls)
 using ::std::span;  // NOLINT(misc-unused-using-decls)
 
 // tuple
-using ::std::make_tuple;    // NOLINT(misc-unused-using-decls)
-using ::std::tuple;         // NOLINT(misc-unused-using-decls)
-using ::std::tuple_cat;     // NOLINT(misc-unused-using-decls)
-using ::std::tuple_size;    // NOLINT(misc-unused-using-decls)
-using ::std::tuple_size_v;  // NOLINT(misc-unused-using-decls)
+using ::std::apply;            // NOLINT(misc-unused-using-decls)
+using ::std::make_tuple;       // NOLINT(misc-unused-using-decls)
+using ::std::tuple;            // NOLINT(misc-unused-using-decls)
+using ::std::tuple_cat;        // NOLINT(misc-unused-using-decls)
+using ::std::tuple_element;    // NOLINT(misc-unused-using-decls)
+using ::std::tuple_element_t;  // NOLINT(misc-unused-using-decls)
+using ::std::tuple_size;       // NOLINT(misc-unused-using-decls)
+using ::std::tuple_size_v;     // NOLINT(misc-unused-using-decls)
 
 // type_traits
 using ::std::conditional;          // NOLINT(misc-unused-using-decls)

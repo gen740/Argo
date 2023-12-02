@@ -422,12 +422,17 @@ TEST(ArgoTest, CallBack) {
 
     auto argo = Argo::Parser<150>("Sample Program");
     auto parser = argo.addPositionalArg<"arg1", int, Argo::nargs(3)>(
-        [](auto value, [[maybe_unused]] auto raw) {
+        [](std::array<int, 3>& value, std::span<std::string_view> raw) {
           EXPECT_THAT(value, testing::ElementsAre(1, 2, 3));
-          // EXPECT_EQ(key, "arg1");
+          EXPECT_EQ(raw[0], "1");
+          EXPECT_EQ(raw[1], "2");
+          EXPECT_EQ(raw[2], "3");
+          for (auto& i : value) {
+            i *= 2;
+            i += 5;
+          }
         });
-
     parser.parse(argc, argv);
-    EXPECT_THAT(parser.getArg<"arg1">(), testing::ElementsAre(1, 2, 3));
+    EXPECT_THAT(parser.getArg<"arg1">(), testing::ElementsAre(7, 9, 11));
   }
 }

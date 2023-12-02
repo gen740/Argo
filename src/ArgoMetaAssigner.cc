@@ -40,25 +40,11 @@ constexpr auto caster(std::string_view value) -> Type {
 template <class... T, std::size_t... N>
 constexpr auto tupleAssign(std::tuple<T...>& t, std::span<std::string_view> v,
                            std::index_sequence<N...> /* unused */) {
-  (
-      [&t, &v]<std::size_t M>() {
-        std::get<M>(t) = caster<std::remove_cvref_t<decltype(std::get<M>(t))>>(v[M]);
-      }.template operator()<N>(),
-      ...);
+  ((std::get<N>(t) = caster<std::remove_cvref_t<decltype(std::get<N>(t))>>(v[N])), ...);
 }
 
 template <class Arguments, class PositionalArgument>
 struct Assigner {
-  template <int Index, class Head, class... Tails>
-  struct AssignImpl {};
-
-  template <int Index>
-  struct AssignImpl<Index, std::tuple<>> {
-    static auto eval(std::string_view key, std::span<std::string_view>& /* unused */) {
-      throw Argo::InvalidArgument(std::format("Invalid argument {}", key));
-    }
-  };
-
   template <ArgType Head>
   static constexpr auto assignOneArg(std::string_view key,
                                      std::span<std::string_view> values) -> bool {
@@ -224,40 +210,34 @@ struct Assigner {
     return false;
   }
 
-  template <int Index, ArgType Head, ArgType... Tails>
-  struct AssignImpl<Index, std::tuple<Head, Tails...>> {
-    static auto eval(std::string_view key, std::span<std::string_view> values) {
-      if (std::string_view(Head::name) == key) {
-        if (assignOneArg<Head>(key, std::span<std::string_view>(values.begin(), values.end()))) {
-          return;
-        }
+  template <class Args>
+  static auto assignImpl(std::string_view key, std::span<std::string_view> values) {
+    [&key, &values]<std::size_t... Is>(std::index_sequence<Is...> /*unused*/) {
+      if (!(... || (std::string_view(std::tuple_element_t<Is, Args>::name) == key and
+                    assignOneArg<std::tuple_element_t<Is, Args>>(key, values)))) {
+        throw Argo::InvalidArgument(std::format("Invalid argument {}", key));
       }
-      AssignImpl<1 + Index, std::tuple<Tails...>>::eval(key, values);
-    }
-  };
+    }(std::make_index_sequence<std::tuple_size_v<Args>>());
+  }
 
-  template <int Index, class Head, class... Tails>
-  struct AssignFlagImpl {};
-
-  template <int Index>
-  struct AssignFlagImpl<Index, std::tuple<>> {
-    static auto eval(std::string_view key) {
-      throw Argo::InvalidArgument(std::format("Assigner: Invalid argument {}", key));
-    }
-  };
-
-  template <int Index, ArgType Head, ArgType... Tails>
-  struct AssignFlagImpl<Index, std::tuple<Head, Tails...>> {
-    static auto eval(std::string_view key) {
-      if constexpr (std::derived_from<Head, FlagArgTag>) {
-        if (std::string_view(Head::name) == key) {
-          Head::value = true;
-          return;
-        }
+  template <class T>
+  static auto assignFlagImpl(std::string_view key) {
+    [&key]<std::size_t... Is>(std::index_sequence<Is...>) {
+      if (!(... || [&key]<ArgType Head>() {
+            if constexpr (std::derived_from<Head, FlagArgTag>) {
+              if (std::string_view(Head::name) == key) {
+                Head::value = true;
+                return true;
+              }
+              return false;
+            } else {
+              return false;
+            }
+          }.template operator()<std::tuple_element_t<Is, T>>())) {
+        throw Argo::InvalidArgument("");
       }
-      AssignFlagImpl<1 + Index, std::tuple<Tails...>>::eval(key);
-    }
-  };
+    }(std::make_index_sequence<std::tuple_size_v<T>>());
+  }
 
   static auto assign(std::string_view key, std::span<std::string_view> values) {
     if (key.empty()) {
@@ -268,40 +248,30 @@ struct Assigner {
         assignOneArg<PositionalArgument>(std::string_view(PositionalArgument::name), values);
         return;
       } else {
-        throw InvalidArgument(std::format("No keys specified"));
+        throw Argo::InvalidArgument(std::format("Assigner: Invalid argument {}", key));
       }
     }
-    AssignImpl<0, Arguments>::eval(key, values);
+    assignImpl<Arguments>(key, values);
   };
 
   static auto assign(std::span<char> key, std::span<std::string_view> values) {
-    std::string name;
     for (std::size_t i = 0; i < key.size() - 1; i++) {
-      name = GetNameFromShortName<Arguments>::eval(key[i]);
-      AssignFlagImpl<0, Arguments>::eval(name);
+      assignFlagImpl<Arguments>(GetNameFromShortName<Arguments>::eval(key[i]));
     }
-    name = GetNameFromShortName<Arguments>::eval(key.back());
-    AssignImpl<0, Arguments>::eval(name, values);
+    assignImpl<Arguments>(GetNameFromShortName<Arguments>::eval(key.back()), values);
   };
 };
 
 template <class Args>
-struct ValueResetter {};
-
-template <ArgType... Args>
-struct ValueResetter<std::tuple<Args...>> {
-  static auto reset() {
-    (
-        []<class T>() {
-          if constexpr (std::derived_from<T, ArgTag>) {
-            if (T::assigned) {
-              T::value = typename T::type();
-              T::assigned = false;
-            }
-          }
-        }.template operator()<Args>(),
-        ...);
-  };
-};
+auto ValueReset() {
+  []<std::size_t... Is>(std::index_sequence<Is...>) {
+    (..., []<ArgType T>() {
+      if (T::assigned) {
+        T::value = typename T::type();
+        T::assigned = false;
+      }
+    }.template operator()<std::tuple_element_t<Is, Args>>());
+  }(std::make_index_sequence<std::tuple_size_v<Args>>());
+}
 
 };  // namespace Argo

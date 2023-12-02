@@ -36,7 +36,7 @@ struct GetNameFromShortName {
 /*!
  * Index Search meta function
  */
-template <typename Tuple, ArgName T, int Index = 0>
+template <class Tuple, ArgName T, int Index = 0>
 struct SearchIndex;
 
 template <ArgName T, std::size_t Index>
@@ -44,7 +44,7 @@ struct SearchIndex<std::tuple<>, T, Index> {
   static constexpr int value = -1;
 };
 
-template <ArgName T, std::size_t Index, typename Head, typename... Tails>
+template <ArgName T, std::size_t Index, class Head, class... Tails>
 struct SearchIndex<std::tuple<Head, Tails...>, T, Index> {
   static constexpr int value =
       (Head::name == T) ? Index : SearchIndex<std::tuple<Tails...>, T, Index + 1>::value;
@@ -53,7 +53,7 @@ struct SearchIndex<std::tuple<Head, Tails...>, T, Index> {
 /*!
  * Index Search meta function
  */
-template <typename Tuple, char T, int Index = 0>
+template <class Tuple, char T, int Index = 0>
 struct SearchIndexFromShortName;
 
 template <char T, std::size_t Index>
@@ -61,7 +61,7 @@ struct SearchIndexFromShortName<std::tuple<>, T, Index> {
   static constexpr int value = -1;
 };
 
-template <char T, std::size_t Index, typename Head, typename... Tails>
+template <char T, std::size_t Index, class Head, class... Tails>
 struct SearchIndexFromShortName<std::tuple<Head, Tails...>, T, Index> {
   static constexpr int value =
       Head::name.shortName == T

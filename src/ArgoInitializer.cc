@@ -53,18 +53,16 @@ struct ArgInitializer {
     using Arg = Arg<Type, Name, nargs, Required, ID>;
     if constexpr (std::is_same_v<Head, Description>) {
       Arg::description = head.description;
-    } else if constexpr (std::derived_from<std::remove_cvref_t<std::remove_pointer_t<Head>>,
-                                           Validation::ValidationBase>) {
+    } else if constexpr (std::derived_from<std::remove_cvref_t<Head>, Validation::ValidationBase>) {
       static_assert(std::is_invocable_v<decltype(head), typename Arg::type,
                                         std::span<std::string_view>, std::string_view>);
       Arg::validator = head;
-    } else if constexpr (std::derived_from<std::remove_cvref_t<std::remove_pointer_t<Head>>,
-                                           ImplicitDefaultValueTag>) {
+    } else if constexpr (std::derived_from<std::remove_cvref_t<Head>, ImplicitDefaultValueTag>) {
       Arg::defaultValue = static_cast<Type>(head.implicit_default_value);
-    } else if constexpr (std::derived_from<std::remove_cvref_t<std::remove_pointer_t<Head>>,
-                                           ExplicitDefaultValueTag>) {
+    } else if constexpr (std::derived_from<std::remove_cvref_t<Head>, ExplicitDefaultValueTag>) {
       Arg::value = static_cast<Type>(head.explicit_default_value);
-    } else if constexpr (std::is_invocable_v<Head, typename Arg::type, std::string_view>) {
+    } else if constexpr (std::is_invocable_v<Head, typename Arg::type&,
+                                             std::span<std::string_view>>) {
       Arg::callback = head;
     } else {
       static_assert(false, "Invalid argument");
@@ -84,16 +82,13 @@ struct FlagArgInitializer {
     using FlagArg = FlagArg<Name, ID>;
     if constexpr (std::is_same_v<Head, Description>) {
       FlagArg::description = head.description;
-    } else if constexpr (std::derived_from<std::remove_cvref_t<std::remove_pointer_t<Head>>,
-                                           Validation::ValidationBase>) {
+    } else if constexpr (std::derived_from<std::remove_cvref_t<Head>, Validation::ValidationBase>) {
       static_assert(false, "Flag cannot have validator");
-    } else if constexpr (std::derived_from<std::remove_cvref_t<std::remove_pointer_t<Head>>,
-                                           ImplicitDefaultValueTag>) {
+    } else if constexpr (std::derived_from<std::remove_cvref_t<Head>, ImplicitDefaultValueTag>) {
       static_assert(false, "Flag cannot have implicit default value");
-    } else if constexpr (std::derived_from<std::remove_cvref_t<std::remove_pointer_t<Head>>,
-                                           ExplicitDefaultValueTag>) {
+    } else if constexpr (std::derived_from<std::remove_cvref_t<Head>, ExplicitDefaultValueTag>) {
       static_assert(false, "Flag cannot have explicit default value");
-    } else if constexpr (std::is_invocable_v<Head, bool, std::string_view>) {
+    } else if constexpr (std::is_invocable_v<Head>) {
       FlagArg::callback = head;
     } else {
       static_assert(false, "Invalid argument");
