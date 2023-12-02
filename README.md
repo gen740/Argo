@@ -1,16 +1,48 @@
 # Argo
-C++ mordern argument parser, using C++ module and metaprogramming.
+C++ mordern and safest argument parser, using C++ modules and metaprogramming.
 
 ## Features
-- Static type argument parse
-- Detect duplicate argument in compile time
-- Rich feature
+
+1. **Static Type Argument Parsing**: Ensures command line arguments are parsed with strict type adherence, enhancing reliability.
+
+2. **Type Safety for All Flags**: Provides robust type safety for command line flags, reducing runtime errors and ensuring type preservation during retrieval.
+
+3. **Compile-Time Duplicate Argument Detection**: Detects duplicate flags at compile time, serving a better development experience.
+
+4. **Rich Feature Set**: Offers a comprehensive array of features for versatile command line parsing needs.
+
+5. **Fastest Parsing Mechanism**: Delivers high-speed parsing, ideal for performance-critical applications.
+
+6. **Compile-Time Calculations**: Performs certain operations at compile time for enhanced performance efficiency. 
+
+
+## Table of Contents
+1. [**Requirements**](#requirements)
+2. [**Basic Example**](#basic-example)
+3. [**Defining Arguments**](#defining-arguments)
+4. [**Template Options**](#template-options)
+   - [ShortKey](#shortkey)
+   - [Required](#required)
+   - [nargs](#nargs)
+5. [**Other Options**](#other-options)
+   - [Implicit/Explicit Default](#implicitexplicit-default)
+   - [Description](#description)
+   - [Callback](#callback)
+   - [STL Support](#stl-support)
+6. [**Creating Multiple Parsers**](#creating-multiple-parsers)
+7. [**Adding Subcommands**](#adding-subcommands)
+   - [Parsing Results](#parsing-results)
+8. [**Installation with CMake**](#installation-with-cmake)
+   - [Using Submodule](#using-submodule)
+   - [Using FetchContent](#using-fetchcontent)
 
 ## Requirement
 - **C++23 compiler** clang >= 17
+- **libcxx standard library**
 - **C++ Modules supported CMake** cmake >= 3.28
 
-## Example
+
+## Basic Example
 ```cpp
 import Argo;
 import std;
