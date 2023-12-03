@@ -47,7 +47,9 @@ struct SearchIndex<std::tuple<>, T, Index> {
 template <ArgName T, std::size_t Index, class Head, class... Tails>
 struct SearchIndex<std::tuple<Head, Tails...>, T, Index> {
   static constexpr int value =
-      (Head::name == T) ? Index : SearchIndex<std::tuple<Tails...>, T, Index + 1>::value;
+      (Head::name == T)
+          ? Index
+          : SearchIndex<std::tuple<Tails...>, T, Index + 1>::value;
 };
 
 /*!

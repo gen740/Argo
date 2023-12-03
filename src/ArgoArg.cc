@@ -134,11 +134,6 @@ struct ArgName : ArgNameTag {
 };
 
 template <std::size_t N>
-consteval std::size_t calcN(const char (&)[N]) {
-  return 4;
-}
-
-template <std::size_t N>
 ArgName(const char (&)[N]) -> ArgName<N - 1>;
 
 template <class T>
@@ -153,24 +148,109 @@ concept ArgType = requires(T& x) {
   std::is_same_v<decltype(T::description), std::string_view>;
 };
 
-template <typename BaseType, ArgName Name, ParserID ID>
+template <typename BaseType, ArgName Name, bool Required, ParserID ID>
 struct ArgBase {
   static constexpr auto name = Name;
   static constexpr auto id = ID;
   inline static bool assigned = false;
   inline static std::string_view description;
+  inline static bool required = Required;
   using baseType = BaseType;
 };
 
 struct ArgTag {};
 
+template <class T>
+consteval std::string get_type_name_base_type() {
+  if constexpr (std::is_integral_v<T>) {
+    return "NUMBER";
+  } else if constexpr (std::is_floating_point_v<T>) {
+    return "FLOAT";
+  } else if constexpr (std::is_same_v<T, const char*> or
+                       std::is_same_v<T, std::string> or
+                       std::is_same_v<T, std::string_view>) {
+    return "STRING";
+  } else if constexpr (std::is_same_v<T, bool>) {
+    return "BOOL";
+  } else {
+    return "UNKNOWN";
+  }
+}
+
+template <class T, NArgs TNArgs>
+constexpr std::string get_type_name() {
+  if constexpr (is_array_v<T> or TNArgs.nargs > 1) {
+    std::string ret("<");
+    auto base_type_name = std::string();
+    if constexpr (is_array_v<T>) {
+      base_type_name = get_type_name_base_type<array_base_t<T>>();
+    } else if constexpr (is_vector_v<T>) {
+      base_type_name = get_type_name_base_type<vector_base_t<T>>();
+    } else if constexpr (is_tuple_v<T>) {
+      return std::string("<") +
+             []<std::size_t... Is>(std::index_sequence<Is...>) {
+               std::string ret =
+                   ((get_type_name_base_type<std::tuple_element_t<Is, T>>() +
+                     std::string(",")) +
+                    ...);
+               ret.pop_back();
+               return ret;
+             }(std::make_index_sequence<std::tuple_size_v<T>>()) +
+             std::string(">");
+    } else {
+      throw std::runtime_error("Error");
+    }
+    for (std::size_t i = 0; i < TNArgs.nargs; i++) {
+      ret = ret + base_type_name;
+      ret.push_back(',');
+    }
+    ret.pop_back();
+    ret.push_back('>');
+    return ret;
+  } else if constexpr (TNArgs.nargs == 1) {
+    if constexpr (is_vector_v<T>) {
+      return get_type_name_base_type<vector_base_t<T>>();
+    } else {
+      return get_type_name_base_type<T>();
+    }
+  } else if constexpr (is_vector_v<T>) {
+    if constexpr (TNArgs.nargs_char == '*') {
+      return std::string("[<") + get_type_name_base_type<vector_base_t<T>>() +
+             ",...>]";
+    } else if constexpr (TNArgs.nargs_char == '+') {
+      return std::string("<") + get_type_name_base_type<vector_base_t<T>>() +
+             ",...>";
+    }
+  } else {
+    if constexpr (TNArgs.nargs_char == '?') {
+      return std::string("[<") + get_type_name_base_type<T>() +
+             std::string(">]");
+    }
+  }
+}
+
 /*!
  * Arg type this holds argument value
  */
 template <class Type, ArgName Name, NArgs TNArgs, bool Required, ParserID ID>
-struct Arg : ArgTag, ArgBase<Type, Name, ID> {
-  static constexpr bool isVariadic =
-      (TNArgs.nargs > 1) || (TNArgs.nargs_char == '+') || (TNArgs.nargs_char == '*');
+struct Arg : ArgTag,
+             ArgBase<                          //
+                 std::conditional_t<           //
+                     is_array_v<Type>,         //
+                     array_base_t<Type>,       //
+                     std::conditional_t<       //
+                         is_vector_v<Type>,    //
+                         vector_base_t<Type>,  //
+                         Type                  //
+                         >                     //
+                     >,                        //
+                 Name,                         //
+                 Required,                     //
+                 ID                            //
+                 > {
+  static constexpr bool isVariadic = (TNArgs.nargs > 1) ||
+                                     (TNArgs.nargs_char == '+') ||
+                                     (TNArgs.nargs_char == '*');
   static constexpr bool isFixedLength = (TNArgs.nargs > 1);
   using type =                                                           //
       std::conditional_t<                                                //
@@ -191,18 +271,19 @@ struct Arg : ArgTag, ArgBase<Type, Name, ID> {
 
   inline static constexpr NArgs nargs = TNArgs;
   inline static std::function<type(std::string_view)> caster = nullptr;
-  inline static std::function<void(const type& value, std::span<std::string_view>,
-                                   std::string_view)>
+  inline static std::function<void(
+      const type& value, std::span<std::string_view>, std::string_view)>
       validator = nullptr;
-  inline static std::function<void(type&, std::span<std::string_view>)> callback = nullptr;
-
+  inline static std::function<void(type&, std::span<std::string_view>)>
+      callback = nullptr;
+  inline static std::string typeName = get_type_name<type, TNArgs>();
   inline static bool required = Required;
 };
 
 struct FlagArgTag {};
 
 template <ArgName Name, ParserID ID>
-struct FlagArg : FlagArgTag, ArgBase<bool, Name, ID> {
+struct FlagArg : FlagArgTag, ArgBase<bool, Name, true, ID> {
   static constexpr bool isVariadic = false;
   using type = bool;
 
@@ -211,6 +292,7 @@ struct FlagArg : FlagArgTag, ArgBase<bool, Name, ID> {
 
   inline static constexpr NArgs nargs = NArgs(-1);
   inline static std::function<void()> callback = nullptr;
+  inline static std::string typeName = "";
 };
 
 }  // namespace Argo

@@ -2,6 +2,8 @@ module;
 
 // TODO(gen740): need to replace std
 // Declare all stds in this file
+#include <unistd.h>
+
 #include <array>
 #include <charconv>
 #include <cstring>
@@ -24,20 +26,26 @@ export module Argo:std_module;
 
 export {
   using ::__stderrp;  // NOLINT(misc-unused-using-decls)
+  using ::isatty;     // NOLINT(misc-unused-using-decls)
 }
 
 export namespace std {
 using ::std::exit;  // NOLINT(misc-unused-using-decls)
 
 // utility
-using ::std::get;         // NOLINT(misc-unused-using-decls)
-using ::std::operator==;  // NOLINT(misc-unused-using-decls)
-using ::std::begin;       // NOLINT(misc-unused-using-decls)
-using ::std::end;         // NOLINT(misc-unused-using-decls)
-using ::std::forward;     // NOLINT(misc-unused-using-decls)
+using ::std::get;          // NOLINT(misc-unused-using-decls)
+using ::std::operator==;   // NOLINT(misc-unused-using-decls)
+using ::std::operator+;    // NOLINT(misc-unused-using-decls)
+using ::std::begin;        // NOLINT(misc-unused-using-decls)
+using ::std::end;          // NOLINT(misc-unused-using-decls)
+using ::std::exchange;     // NOLINT(misc-unused-using-decls)
+using ::std::forward;      // NOLINT(misc-unused-using-decls)
+using ::std::move;         // NOLINT(misc-unused-using-decls)
+using ::std::unreachable;  // NOLINT(misc-unused-using-decls)
 
 // cstdint
-using ::std::size_t;  // NOLINT(misc-unused-using-decls)
+using ::std::int64_t;  // NOLINT(misc-unused-using-decls)
+using ::std::size_t;   // NOLINT(misc-unused-using-decls)
 
 // string
 using ::std::stod;                          // NOLINT(misc-unused-using-decls)
@@ -47,8 +55,9 @@ using ::std::string;                        // NOLINT(misc-unused-using-decls)
 using ::std::string_literals::operator""s;  // NOLINT(misc-unused-using-decls)
 
 // string_view
-using ::std::string_view;                         // NOLINT(misc-unused-using-decls)
-using ::std::string_view_literals::operator""sv;  // NOLINT(misc-unused-using-decls)
+using ::std::string_view;  // NOLINT(misc-unused-using-decls)
+using ::std::string_view_literals::
+operator""sv;  // NOLINT(misc-unused-using-decls)
 
 // charconv
 using ::std::chars_format;  // NOLINT(misc-unused-using-decls)
@@ -116,7 +125,8 @@ using ::std::invalid_argument;  // NOLINT(misc-unused-using-decls)
 using ::std::runtime_error;     // NOLINT(misc-unused-using-decls)
 
 // memory
-using ::std::unique_ptr;  // NOLINT(misc-unused-using-decls)
+using ::std::make_unique;  // NOLINT(misc-unused-using-decls)
+using ::std::unique_ptr;   // NOLINT(misc-unused-using-decls)
 
 // functional
 using ::std::function;           // NOLINT(misc-unused-using-decls)

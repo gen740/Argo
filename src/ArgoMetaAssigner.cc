@@ -17,10 +17,16 @@ export namespace Argo {
 template <class Type>
 constexpr auto caster(std::string_view value) -> Type {
   if constexpr (std::is_same_v<Type, bool>) {
-    if ((value == "true") || (value == "True") || (value == "TRUE") || (value == "1")) {
+    if ((value == "true")     //
+        || (value == "True")  //
+        || (value == "TRUE")  //
+        || (value == "1")) {
       return true;
     }
-    if ((value == "false") || (value == "False") || (value == "FALSE") || (value == "0")) {
+    if ((value == "false")     //
+        || (value == "False")  //
+        || (value == "FALSE")  //
+        || (value == "0")) {
       return false;
     }
     throw ParserInternalError("Invalid argument expect bool");
@@ -40,25 +46,30 @@ constexpr auto caster(std::string_view value) -> Type {
 template <class... T, std::size_t... N>
 constexpr auto tupleAssign(std::tuple<T...>& t, std::span<std::string_view> v,
                            std::index_sequence<N...> /* unused */) {
-  ((std::get<N>(t) = caster<std::remove_cvref_t<decltype(std::get<N>(t))>>(v[N])), ...);
+  ((std::get<N>(t) =
+        caster<std::remove_cvref_t<decltype(std::get<N>(t))>>(v[N])),
+   ...);
 }
 
 template <class Arguments, class PositionalArgument>
 struct Assigner {
   template <ArgType Head>
-  static constexpr auto assignOneArg(std::string_view key,
-                                     std::span<std::string_view> values) -> bool {
+  static constexpr auto assignOneArg(
+      std::string_view key, std::span<std::string_view> values) -> bool {
     if constexpr (std::derived_from<Head, FlagArgTag>) {
       if (!values.empty()) {
         if constexpr (std::is_same_v<PositionalArgument, void>) {
-          throw Argo::InvalidArgument(std::format("Flag {} can not take value", key));
+          throw Argo::InvalidArgument(
+              std::format("Flag {} can not take value", key));
         } else {
           if (PositionalArgument::assigned) {
-            throw Argo::InvalidArgument(std::format("Flag {} can not take value", key));
+            throw Argo::InvalidArgument(
+                std::format("Flag {} can not take value", key));
           }
           Head::value = true;
           Head::assigned = true;
-          assignOneArg<PositionalArgument>(std::string_view(PositionalArgument::name), values);
+          assignOneArg<PositionalArgument>(
+              std::string_view(PositionalArgument::name), values);
           return true;
         }
       }
@@ -87,16 +98,20 @@ struct Assigner {
           return true;
         }
         if constexpr (std::is_same_v<PositionalArgument, void>) {
-          throw Argo::InvalidArgument(std::format(
-              "Argument {} cannot take more than one value got {}", key, values.size()));
+          throw Argo::InvalidArgument(
+              std::format("Argument {} cannot take more than one value got {}",
+                          key,
+                          values.size()));
         } else {
           if (PositionalArgument::assigned) {
             throw Argo::InvalidArgument(std::format(
-                "Argument {} cannot take more than one value got {}", key, values.size()));
+                "Argument {} cannot take more than one value got {}",
+                key,
+                values.size()));
           }
           assignOneArg<Head>(key, values.subspan(0, 1));
-          assignOneArg<PositionalArgument>(std::string_view(PositionalArgument::name),
-                                           values.subspan(1));
+          assignOneArg<PositionalArgument>(
+              std::string_view(PositionalArgument::name), values.subspan(1));
           return true;
         }
       } else if constexpr (Head::nargs.getNargsChar() == '*') {
@@ -106,7 +121,8 @@ struct Assigner {
           return true;
         }
         for (const auto& value : values) {
-          Head::value.emplace_back(caster<vector_base_t<typename Head::type>>(value));
+          Head::value.emplace_back(
+              caster<vector_base_t<typename Head::type>>(value));
         }
         Head::assigned = true;
         if (Head::validator) {
@@ -134,21 +150,25 @@ struct Assigner {
         return true;
       } else if constexpr (Head::nargs.getNargs() == 1) {
         if (values.empty()) {
-          throw Argo::InvalidArgument(
-              std::format("Argument {} should take exactly one value but zero", key));
+          throw Argo::InvalidArgument(std::format(
+              "Argument {} should take exactly one value but zero", key));
         }
         if (values.size() > 1) {
           if constexpr (std::is_same_v<PositionalArgument, void>) {
-            throw Argo::InvalidArgument(std::format(
-                "Argument {} should take exactly one value but {}", key, values.size()));
+            throw Argo::InvalidArgument(
+                std::format("Argument {} should take exactly one value but {}",
+                            key,
+                            values.size()));
           } else {
             if (PositionalArgument::assigned) {
               throw Argo::InvalidArgument(std::format(
-                  "Argument {} should take exactly one value but {}", key, values.size()));
+                  "Argument {} should take exactly one value but {}",
+                  key,
+                  values.size()));
             }
             assignOneArg<Head>(key, values.subspan(0, 1));
-            assignOneArg<PositionalArgument>(std::string_view(PositionalArgument::name),
-                                             values.subspan(1));
+            assignOneArg<PositionalArgument>(
+                std::string_view(PositionalArgument::name), values.subspan(1));
             return true;
           }
         }
@@ -165,14 +185,18 @@ struct Assigner {
         if (values.size() == Head::nargs.getNargs()) {
           if constexpr (is_array_v<typename Head::type>) {
             for (int idx = 0; idx < Head::nargs.getNargs(); idx++) {
-              Head::value[idx] = caster<array_base_t<typename Head::type>>(values[idx]);
+              Head::value[idx] =
+                  caster<array_base_t<typename Head::type>>(values[idx]);
             }
           } else if constexpr (is_tuple_v<typename Head::type>) {
-            tupleAssign(Head::value, values,
-                        std::make_index_sequence<std::tuple_size_v<typename Head::type>>());
+            tupleAssign(Head::value,
+                        values,
+                        std::make_index_sequence<
+                            std::tuple_size_v<typename Head::type>>());
           } else {
             for (const auto& value : values) {
-              Head::value.emplace_back(caster<vector_base_t<typename Head::type>>(value));
+              Head::value.emplace_back(
+                  caster<vector_base_t<typename Head::type>>(value));
             }
           }
 
@@ -186,22 +210,30 @@ struct Assigner {
           return true;
         }
         if (values.size() < Head::nargs.getNargs()) {
-          throw Argo::InvalidArgument(std::format("Argument {} should take exactly {} value but {}",
-                                                  key, Head::nargs.getNargs(), values.size()));
+          throw Argo::InvalidArgument(
+              std::format("Argument {} should take exactly {} value but {}",
+                          key,
+                          Head::nargs.getNargs(),
+                          values.size()));
         } else {
           if constexpr (std::is_same_v<PositionalArgument, void>) {
             throw Argo::InvalidArgument(
-                std::format("Argument {} should take exactly {} value but {}", key,
-                            Head::nargs.getNargs(), values.size()));
+                std::format("Argument {} should take exactly {} value but {}",
+                            key,
+                            Head::nargs.getNargs(),
+                            values.size()));
           } else {
             if (PositionalArgument::assigned) {
               throw Argo::InvalidArgument(
-                  std::format("Argument {} should take exactly {} value but {}", key,
-                              Head::nargs.getNargs(), values.size()));
+                  std::format("Argument {} should take exactly {} value but {}",
+                              key,
+                              Head::nargs.getNargs(),
+                              values.size()));
             }
             assignOneArg<Head>(key, values.subspan(0, Head::nargs.getNargs()));
-            assignOneArg<PositionalArgument>(std::string_view(PositionalArgument::name),
-                                             values.subspan(Head::nargs.getNargs()));
+            assignOneArg<PositionalArgument>(
+                std::string_view(PositionalArgument::name),
+                values.subspan(Head::nargs.getNargs()));
             return true;
           }
         }
@@ -211,10 +243,12 @@ struct Assigner {
   }
 
   template <class Args>
-  static auto assignImpl(std::string_view key, std::span<std::string_view> values) {
+  static auto assignImpl(std::string_view key,
+                         std::span<std::string_view> values) {
     [&key, &values]<std::size_t... Is>(std::index_sequence<Is...> /*unused*/) {
-      if (!(... || (std::string_view(std::tuple_element_t<Is, Args>::name) == key and
-                    assignOneArg<std::tuple_element_t<Is, Args>>(key, values)))) {
+      if (!(... ||
+            (std::string_view(std::tuple_element_t<Is, Args>::name) == key and
+             assignOneArg<std::tuple_element_t<Is, Args>>(key, values)))) {
         throw Argo::InvalidArgument(std::format("Invalid argument {}", key));
       }
     }(std::make_index_sequence<std::tuple_size_v<Args>>());
@@ -245,10 +279,12 @@ struct Assigner {
         if (PositionalArgument::assigned) {
           throw InvalidArgument(std::format("Duplicated positional argument"));
         }
-        assignOneArg<PositionalArgument>(std::string_view(PositionalArgument::name), values);
+        assignOneArg<PositionalArgument>(
+            std::string_view(PositionalArgument::name), values);
         return;
       } else {
-        throw Argo::InvalidArgument(std::format("Assigner: Invalid argument {}", key));
+        throw Argo::InvalidArgument(
+            std::format("Assigner: Invalid argument {}", key));
       }
     }
     assignImpl<Arguments>(key, values);
@@ -258,7 +294,8 @@ struct Assigner {
     for (std::size_t i = 0; i < key.size() - 1; i++) {
       assignFlagImpl<Arguments>(GetNameFromShortName<Arguments>::eval(key[i]));
     }
-    assignImpl<Arguments>(GetNameFromShortName<Arguments>::eval(key.back()), values);
+    assignImpl<Arguments>(GetNameFromShortName<Arguments>::eval(key.back()),
+                          values);
   };
 };
 

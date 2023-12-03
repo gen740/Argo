@@ -14,10 +14,26 @@ struct SubParser {
 };
 
 template <class SubParsers>
-auto MetaParse(SubParsers sub_parsers, std::string_view key, int argc, char** argv) -> bool {
+auto MetaParse(SubParsers sub_parsers, int index, int argc,
+               char** argv) -> bool {
   return std::apply(
       [&](auto&&... s) {
-        return (... || (s.name == key && (s.parser.get().parse(argc, argv), true)));
+        std::int64_t idx = -1;
+        return (
+            ... ||
+            (idx++, idx == index && (s.parser.get().parse(argc, argv), true)));
+      },
+      sub_parsers);
+};
+
+template <class SubParsers>
+constexpr auto ParserIndex(SubParsers sub_parsers,  //
+                           std::string_view key) -> std::int64_t {
+  return std::apply(
+      [&](auto&&... s) {
+        std::int64_t index = -1;
+        bool found = (... || (index++, s.name == key));
+        return found ? index : -1;
       },
       sub_parsers);
 };
