@@ -20,8 +20,8 @@ import :MetaChecker;
 
 namespace Argo {
 
-auto splitStringView(std::string_view str,
-                     char delimeter) -> std::vector<std::string_view> {
+inline auto splitStringView(std::string_view str,
+                            char delimeter) -> std::vector<std::string_view> {
   std::vector<std::string_view> ret;
   while (str.contains(delimeter)) {
     auto pos = str.find(delimeter);
