@@ -3,7 +3,7 @@ name: Tests
 on:
   push:
     branches:
-      - master
+      - main
   pull_request: {}
   schedule:
     - cron: '0 23 * * SUN-THU'
@@ -18,13 +18,21 @@ jobs:
 
       - name: Install llvm
         run: |
-          brew isntall llvm
+          brew install llvm
 
       - name: Install cmake HEAD
         run: |
-          brew isntall cmake --HEAD
+          brew install cmake --HEAD
 
       - name: Cmake and Compile
         run: |
-          cmake -B build -S . -DARGO_TEST_ENABLE=true
+          cmake -B build -S . -DARGO_TESTS_ENABLE=true
           cmake --build build
+
+      - name: Test Debug
+        run: |
+          ./build/test-argo-debug
+
+      - name: Test Release
+        run: |
+          ./build/test-argo-release

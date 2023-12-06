@@ -4,7 +4,7 @@ tasks:
   cmake:
     cmds:
       # - cmake -B build -S . -GNinja -DARGO_BENCHMARKS_ENABLE=true
-      - cmake -B build -S . -GNinja -DCMAKE_INSTALL_PREFIX=/Users/gen/.local
+      - cmake -B build -S . -GNinja -DARGO_TESTS_ENABLE=true -DCMAKE_INSTALL_PREFIX=/Users/gen/.local
   compile:
     cmds:
       - cmake --build build
