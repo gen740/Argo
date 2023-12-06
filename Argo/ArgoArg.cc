@@ -165,7 +165,7 @@ concept ArgType = requires(T& x) {
 struct ArgTag {};
 
 template <class T>
-consteval std::string get_type_name_base_type() {
+constexpr std::string get_type_name_base_type() {
   if constexpr (std::is_same_v<T, bool>) {
     return "BOOL";
   } else if constexpr (std::is_integral_v<T>) {
