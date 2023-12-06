@@ -1509,11 +1509,15 @@ class Parser {
       if constexpr (std::string_view(Name) == std::string_view(PArg::name)) {
         return PArg::value;
       } else {
+        static_assert(SearchIndex<Args, Name>::value != -1,
+                      "Argument does not exist");
         return std::remove_cvref_t<
             decltype(std::get<SearchIndex<Args, Name>::value>(
                 std::declval<Args>()))>::value;
       }
     } else {
+      static_assert(SearchIndex<Args, Name>::value != -1,
+                    "Argument does not exist");
       return std::remove_cvref_t<
           decltype(std::get<SearchIndex<Args, Name>::value>(
               std::declval<Args>()))>::value;

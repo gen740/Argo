@@ -19,6 +19,7 @@ TEST(ArgoTest, ExampleCode) {
   EXPECT_EQ(parser.getArg<"arg1">(), 42);
   EXPECT_FLOAT_EQ(parser.getArg<"arg2">(), 12.34);
   EXPECT_EQ(parser.getArg<"arg3">(), "Hello,World");
+  EXPECT_EQ(parser.getArg<"arg4">(), "Hello,World");
 
   EXPECT_TRUE((std::is_same_v<decltype(parser.getArg<"arg1">()), int>));
   EXPECT_TRUE((std::is_same_v<decltype(parser.getArg<"arg2">()), float>));
