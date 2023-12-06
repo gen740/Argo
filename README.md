@@ -52,7 +52,7 @@ import std;
 // suppose ./main --arg1 42 --arg3 "Hello,World"
 auto main(int argc, char* argv[]) -> int {
 
-    auto parser = Argo::Parser("Program name")  //
+    auto parser = Argo::Parser()  //
                     .addArg<"arg1", int>()
                     .addArg<"arg2", float>(Argo::explicitDefault(12.34))
                     .addArg<"arg3", std::string>();

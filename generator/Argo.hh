@@ -4,6 +4,7 @@
 
 #include <array>
 #include <charconv>
+#include <cassert>
 #include <concepts>
 #include <cstring>
 #include <format>
