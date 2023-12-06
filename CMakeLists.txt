@@ -22,17 +22,19 @@ if(${CMAKE_SOURCE_DIR} STREQUAL ${CMAKE_CURRENT_LIST_DIR})
 
 endif()
 
-add_library(Argo)
+add_library(Argo STATIC)
 
-file(GLOB ARGO_LIBRARY_SOURCES ${CMAKE_CURRENT_LIST_DIR}/module/*.cc)
+file(GLOB ARGO_LIBRARY_SOURCES ${CMAKE_CURRENT_LIST_DIR}/Argo/*.cc)
+
 target_sources(Argo PUBLIC FILE_SET CXX_MODULES FILES ${ARGO_LIBRARY_SOURCES})
+target_compile_features(Argo PUBLIC cxx_std_23)
+export(TARGETS Argo FILE Argo-Config.cmake)
+
 unset(ARGO_LIBRARY_SOURCES)
 
 if(${CMAKE_SOURCE_DIR} STREQUAL ${CMAKE_CURRENT_LIST_DIR})
-
   add_executable(main ${CMAKE_CURRENT_LIST_DIR}/main.cc)
   target_link_libraries(main Argo)
-
   if(${ARGO_TESTS_ENABLE})
     set(CMAKE_CXX_FLAGS_RELEASE "")
     set(CMAKE_CXX_FLAGS_DEBUG "")
@@ -92,7 +94,6 @@ if(${CMAKE_SOURCE_DIR} STREQUAL ${CMAKE_CURRENT_LIST_DIR})
       set_target_properties(${debug_target_name} PROPERTIES CXX_STANDARD 23)
       target_compile_options(${debug_target_name} PRIVATE -Wno-writable-strings
                                                           -DDEBUG_BUILD)
-
       # Release Target
       set(release_target_name "bench-${target_name}-release")
       add_executable(${release_target_name} ${target})

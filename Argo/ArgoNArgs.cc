@@ -10,7 +10,7 @@ constexpr char NULLCHAR = '\0';
 
 /*!
  * (default)?  : If value specified use it else use default -> ValueType
- *          int: Exactly (n > 1)                            -> vector<ValueType>
+ *          int: Exactly (n > 1)                     -> std::array<ValueType, N>
  *          *  : Any number of argument if zero use default -> vector<ValueType>
  *          +  : Any number of argument except zero         -> vector<ValueType>
  */

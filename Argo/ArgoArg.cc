@@ -136,18 +136,6 @@ struct ArgName : ArgNameTag {
 template <std::size_t N>
 ArgName(const char (&)[N]) -> ArgName<N - 1>;
 
-template <class T>
-concept ArgType = requires(T& x) {
-  std::derived_from<decltype(T::name), ArgNameTag>;
-  std::is_same_v<decltype(T::isVariadic), char>;
-  std::is_same_v<decltype(T::nargs), NArgs>;
-  typename T::baseType;
-  typename T::type;
-  not std::is_same_v<decltype(T::value), void>;
-  std::is_same_v<decltype(T::assigned), bool>;
-  std::is_same_v<decltype(T::description), std::string_view>;
-};
-
 template <typename BaseType, ArgName Name, bool Required, ParserID ID>
 struct ArgBase {
   static constexpr auto name = Name;
@@ -158,11 +146,29 @@ struct ArgBase {
   using baseType = BaseType;
 };
 
+template <class T>
+concept ArgType = requires(T& x) {
+  typename T::baseType;
+  typename T::type;
+
+  not std::is_same_v<decltype(T::value), void>;
+
+  std::derived_from<decltype(T::name), ArgNameTag>;
+  std::is_same_v<decltype(T::isVariadic), char>;
+  std::is_same_v<decltype(T::nargs), NArgs>;
+  std::is_same_v<decltype(T::assigned), bool>;
+  std::is_same_v<decltype(T::description), std::string_view>;
+  std::is_same_v<decltype(T::typeName), std::string>;
+  std::is_same_v<decltype(T::required), bool>;
+};
+
 struct ArgTag {};
 
 template <class T>
 consteval std::string get_type_name_base_type() {
-  if constexpr (std::is_integral_v<T>) {
+  if constexpr (std::is_same_v<T, bool>) {
+    return "BOOL";
+  } else if constexpr (std::is_integral_v<T>) {
     return "NUMBER";
   } else if constexpr (std::is_floating_point_v<T>) {
     return "FLOAT";
@@ -170,8 +176,6 @@ consteval std::string get_type_name_base_type() {
                        std::is_same_v<T, std::string> or
                        std::is_same_v<T, std::string_view>) {
     return "STRING";
-  } else if constexpr (std::is_same_v<T, bool>) {
-    return "BOOL";
   } else {
     return "UNKNOWN";
   }
@@ -283,12 +287,30 @@ struct Arg : ArgTag,
 struct FlagArgTag {};
 
 template <ArgName Name, ParserID ID>
-struct FlagArg : FlagArgTag, ArgBase<bool, Name, true, ID> {
+struct FlagArg : FlagArgTag, ArgBase<bool, Name, false, ID> {
   static constexpr bool isVariadic = false;
   using type = bool;
 
   inline static type value = {};
   inline static type defaultValue = {};
+
+  inline static constexpr NArgs nargs = NArgs(-1);
+  inline static std::function<void()> callback = nullptr;
+  inline static std::string typeName = "";
+};
+
+struct HelpArgTag {};
+
+template <ArgName Name, ParserID ID>
+struct HelpArg : HelpArgTag, FlagArgTag, ArgBase<bool, Name, true, ID> {
+  static constexpr bool isVariadic = false;
+  using type = bool;
+  inline static type value = {};
+  inline static type defaultValue = {};
+
+  inline static bool assigned = false;
+  inline static std::string_view description = "Print help information";
+  inline static bool required = false;
 
   inline static constexpr NArgs nargs = NArgs(-1);
   inline static std::function<void()> callback = nullptr;

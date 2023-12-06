@@ -1,0 +1,30 @@
+name: Tests
+
+on:
+  push:
+    branches:
+      - master
+  pull_request: {}
+  schedule:
+    - cron: '0 23 * * SUN-THU'
+  workflow_dispatch:
+
+jobs:
+  tests:
+    runs-on: macos-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - name: Install llvm
+        run: |
+          brew isntall llvm
+
+      - name: Install cmake HEAD
+        run: |
+          brew isntall cmake --HEAD
+
+      - name: Cmake and Compile
+        run: |
+          cmake -B build -S . -DARGO_TEST_ENABLE=true
+          cmake --build build

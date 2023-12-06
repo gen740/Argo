@@ -43,11 +43,11 @@ struct ParserInfo {
   std::optional<std::string_view> usage = std::nullopt;
   std::optional<std::string_view> subcommand_help = std::nullopt;
   std::optional<std::string_view> options_help = std::nullopt;
+  std::optional<std::string_view> positional_argument_help = std::nullopt;
 };
 
-export template <ParserID ID = 0, class Args = std::tuple<>,
-                 class PositionalArg = void,
-                 class SubParserTuple = std::tuple<>, bool HelpEnabled = false>
+export template <ParserID ID = 0, class Args = std::tuple<>, class PArg = void,
+                 class HArg = void, class SubParserTuple = std::tuple<>>
 class Parser {
  private:
   bool parsed_ = false;
@@ -78,8 +78,6 @@ class Parser {
   Parser(const Parser&) = delete;
   Parser(Parser&&) = delete;
 
-  using Arguments = Args;
-  using PositionalArgument = PositionalArg;
   SubParserTuple subParsers;
 
   constexpr explicit Parser(SubParserTuple tuple) : subParsers(tuple) {}
@@ -156,17 +154,16 @@ class Parser {
         return false;
       }
     }();
-    if constexpr (!std::is_same_v<PositionalArgument, void>) {
-      static_assert(!(std::string_view(Name) ==
-                      std::string_view(PositionalArgument::name)),
+    if constexpr (!std::is_same_v<PArg, void>) {
+      static_assert(!(std::string_view(Name) == std::string_view(PArg::name)),
                     "Duplicated name");
     }
     static_assert(
         (Name.shortName == NULLCHAR) ||
-            (SearchIndexFromShortName<Arguments, Name.shortName>::value == -1),
+            (SearchIndexFromShortName<Args, Name.shortName>::value == -1),
         "Duplicated short name");
-    static_assert(                                        //
-        Argo::SearchIndex<Arguments, Name>::value == -1,  //
+    static_assert(                                   //
+        Argo::SearchIndex<Args, Name>::value == -1,  //
         "Duplicated name");
     static_assert(                     //
         (nargs.nargs > 0               //
@@ -190,89 +187,67 @@ class Parser {
             auto arg2 = Unspecified(), class... T>
   auto addArg(T... args) {
     auto arg = createArg<Type, Name, arg1, arg2>(std::forward<T>(args)...);
-    return Parser<
-        ID,
-        decltype(std::tuple_cat(
-            std::declval<Arguments>(),
-            std::declval<std::tuple<typename decltype(arg)::type>>())),
-        PositionalArgument,
-        SubParserTuple,
-        HelpEnabled>(std::move(this->info_), subParsers);
+    return Parser<ID,
+                  tuple_append_t<Args, typename decltype(arg)::type>,
+                  PArg,
+                  HArg,
+                  SubParserTuple>(std::move(this->info_), subParsers);
   }
 
   template <ArgName Name, class Type, auto arg1 = Unspecified(),
             auto arg2 = Unspecified(), class... T>
   auto addPositionalArg(T... args) {
-    static_assert(std::is_same_v<PositionalArg, void>,
+    static_assert(std::is_same_v<PArg, void>,
                   "Positional argument cannot set more than one");
     static_assert(Name.shortName == NULLCHAR,
                   "Positional argment cannot have short name");
     auto arg = createArg<Type, Name, arg1, arg2>(std::forward<T>(args)...);
-    return Parser<ID,
-                  Arguments,
-                  typename decltype(arg)::type,
-                  SubParserTuple,
-                  HelpEnabled>(std::move(this->info_), subParsers);
+    return Parser<ID, Args, typename decltype(arg)::type, HArg, SubParserTuple>(
+        std::move(this->info_), subParsers);
   }
 
   template <ArgName Name, class... T>
   auto addFlag(T... args) {
-    if constexpr (!std::is_same_v<PositionalArgument, void>) {
-      static_assert(!(std::string_view(Name) ==
-                      std::string_view(PositionalArgument::name)),
+    if constexpr (!std::is_same_v<PArg, void>) {
+      static_assert(!(std::string_view(Name) == std::string_view(PArg::name)),
                     "Duplicated name");
     }
     static_assert(
         (Name.shortName == NULLCHAR) ||
-            (SearchIndexFromShortName<Arguments, Name.shortName>::value == -1),
+            (SearchIndexFromShortName<Args, Name.shortName>::value == -1),
         "Duplicated short name");
-    static_assert(Argo::SearchIndex<Arguments, Name>::value == -1,
+    static_assert(Argo::SearchIndex<Args, Name>::value == -1,
                   "Duplicated name");
     FlagArgInitializer<Name, ID>::init(std::forward<T>(args)...);
     return Parser<ID,
-                  decltype(std::tuple_cat(
-                      std::declval<Arguments>(),
-                      std::declval<std::tuple<FlagArg<Name, ID>>>())),
-                  PositionalArgument,
-                  SubParserTuple,
-                  HelpEnabled>(std::move(this->info_), subParsers);
+                  tuple_append_t<Args, FlagArg<Name, ID>>,
+                  PArg,
+                  HArg,
+                  SubParserTuple>(std::move(this->info_), subParsers);
   }
 
   template <ArgName Name = "help,h">
   auto addHelp() {
-    static_assert(
-        (SearchIndexFromShortName<Arguments, Name.shortName>::value == -1),
-        "Duplicated short name");
-    static_assert(Argo::SearchIndex<Arguments, Name>::value == -1,
+    static_assert((SearchIndexFromShortName<Args, Name.shortName>::value == -1),
+                  "Duplicated short name");
+    static_assert(Argo::SearchIndex<Args, Name>::value == -1,
                   "Duplicated name");
-    FlagArgInitializer<Name, ID>::init(
-        Argo::description("Print help information"));
-    return Parser<ID,
-                  decltype(std::tuple_cat(
-                      std::declval<Arguments>(),
-                      std::declval<std::tuple<FlagArg<Name, ID>>>())),
-                  PositionalArgument,
-                  SubParserTuple,
-                  true>(std::move(this->info_), subParsers);
+    return Parser<ID, Args, PArg, HelpArg<Name, ID>, SubParserTuple>(
+        std::move(this->info_), subParsers);
   }
 
   template <ArgName Name = "help,h">
   auto addHelp(std::string_view help) {
-    static_assert(
-        (SearchIndexFromShortName<Arguments, Name.shortName>::value == -1),
-        "Duplicated short name");
-    static_assert(Argo::SearchIndex<Arguments, Name>::value == -1,
+    static_assert((SearchIndexFromShortName<Args, Name.shortName>::value == -1),
+                  "Duplicated short name");
+    static_assert(Argo::SearchIndex<Args, Name>::value == -1,
                   "Duplicated name");
+    static_assert(!Name.containsInvalidChar(), "Name has invalid char");
+    static_assert(Name.hasValidNameLength(),
+                  "Short name can't be more than one charactor");
     this->info_->help = help;
-    FlagArgInitializer<Name, ID>::init(
-        Argo::description("Print help information"));
-    return Parser<ID,
-                  decltype(std::tuple_cat(
-                      std::declval<Arguments>(),
-                      std::declval<std::tuple<FlagArg<Name, ID>>>())),
-                  PositionalArgument,
-                  SubParserTuple,
-                  true>(std::move(this->info_), subParsers);
+    return Parser<ID, Args, PArg, HelpArg<Name, ID>, SubParserTuple>(
+        std::move(this->info_), subParsers);
   }
 
   template <ArgName Name>
@@ -280,19 +255,18 @@ class Parser {
     if (!this->parsed_) {
       throw ParseError("Parser did not parse argument, call parse first");
     }
-    if constexpr (!std::is_same_v<PositionalArgument, void>) {
-      if constexpr (std::string_view(Name) ==
-                    std::string_view(PositionalArgument::name)) {
-        return PositionalArgument::value;
+    if constexpr (!std::is_same_v<PArg, void>) {
+      if constexpr (std::string_view(Name) == std::string_view(PArg::name)) {
+        return PArg::value;
       } else {
         return std::remove_cvref_t<
-            decltype(std::get<SearchIndex<Arguments, Name>::value>(
-                std::declval<Arguments>()))>::value;
+            decltype(std::get<SearchIndex<Args, Name>::value>(
+                std::declval<Args>()))>::value;
       }
     } else {
       return std::remove_cvref_t<
-          decltype(std::get<SearchIndex<Arguments, Name>::value>(
-              std::declval<Arguments>()))>::value;
+          decltype(std::get<SearchIndex<Args, Name>::value>(
+              std::declval<Args>()))>::value;
     }
   }
 
@@ -312,19 +286,18 @@ class Parser {
     if (!this->parsed_) {
       throw ParseError("Parser did not parse argument, call parse first");
     }
-    if constexpr (!std::is_same_v<PositionalArgument, void>) {
-      if constexpr (std::string_view(Name) ==
-                    std::string_view(PositionalArgument::name)) {
-        return PositionalArgument::assigned;
+    if constexpr (!std::is_same_v<PArg, void>) {
+      if constexpr (std::string_view(Name) == std::string_view(PArg::name)) {
+        return PArg::assigned;
       } else {
         return std::remove_cvref_t<
-            decltype(std::get<SearchIndex<Arguments, Name>::value>(
-                std::declval<Arguments>()))>::assigned;
+            decltype(std::get<SearchIndex<Args, Name>::value>(
+                std::declval<Args>()))>::assigned;
       }
     } else {
       return std::remove_cvref_t<
-          decltype(std::get<SearchIndex<Arguments, Name>::value>(
-              std::declval<Arguments>()))>::assigned;
+          decltype(std::get<SearchIndex<Args, Name>::value>(
+              std::declval<Args>()))>::assigned;
     }
   }
 
@@ -336,11 +309,8 @@ class Parser {
     auto s = std::make_tuple(
         SubParser<Name, T>{std::ref(sub_parser), description.description});
     auto sub_parsers = std::tuple_cat(subParsers, s);
-    return Parser<ID,
-                  Arguments,
-                  PositionalArgument,
-                  decltype(sub_parsers),
-                  HelpEnabled>(std::move(this->info_), sub_parsers);
+    return Parser<ID, Args, PArg, HArg, decltype(sub_parsers)>(
+        std::move(this->info_), sub_parsers);
   }
 
   auto resetArgs() -> void;
@@ -351,6 +321,10 @@ class Parser {
 
   auto addSubcommandHelp(std::string_view subcommand_help) {
     this->info_->subcommand_help = subcommand_help;
+  }
+
+  auto addPositionalArgumentHelp(std::string_view positional_argument_help) {
+    this->info_->positional_argument_help = positional_argument_help;
   }
 
   auto addOptionsHelp(std::string_view options_help) {

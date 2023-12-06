@@ -6,6 +6,7 @@ module;
 
 #include <array>
 #include <charconv>
+#include <concepts>
 #include <cstring>
 #include <exception>
 #include <format>
@@ -117,7 +118,9 @@ using ::std::type_identity_t;      // NOLINT(misc-unused-using-decls)
 using ::std::void_t;               // NOLINT(misc-unused-using-decls)
 
 // concept
+using ::std::common_with;   // NOLINT(misc-unused-using-decls)
 using ::std::derived_from;  // NOLINT(misc-unused-using-decls)
+using ::std::same_as;       // NOLINT(misc-unused-using-decls)
 
 // exception/stdexcept
 using ::std::exception;         // NOLINT(misc-unused-using-decls)

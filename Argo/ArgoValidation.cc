@@ -6,9 +6,9 @@ import :Exceptions;
 import :TypeTraits;
 import :std_module;
 
-export namespace Argo::Validation {
+namespace Argo::Validation {
 
-struct ValidationBase {
+export struct ValidationBase {
   template <class T>
   auto operator()(const T& value, std::span<std::string_view> values,
                   std::string_view option_name) -> void {
@@ -92,7 +92,7 @@ struct InvertValidation : ValidationBase {
 template <std::derived_from<ValidationBase> Rhs>
 InvertValidation(Rhs) -> InvertValidation<Rhs>;
 
-template <class T>
+export template <class T>
 struct Range final : public ValidationBase {
  private:
   T min_;

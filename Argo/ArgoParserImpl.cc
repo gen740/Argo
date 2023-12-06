@@ -4,6 +4,7 @@ module;
 
 export module Argo:ParserImpl;
 
+import :TypeTraits;
 import :MetaAssigner;
 import :Parser;
 import :MetaLookup;
@@ -29,49 +30,46 @@ auto splitStringView(std::string_view str,
   return ret;
 }
 
-template <ParserID ID, class Args, class PositionalArg, class SubParsers,
-          bool HelpEnabled>
-auto Parser<ID, Args, PositionalArg, SubParsers, HelpEnabled>::resetArgs()
-    -> void {
-  ValueReset<Arguments>();
+template <ParserID ID, class Args, class PArg, class HArg, class SubParsers>
+auto Parser<ID, Args, PArg, HArg, SubParsers>::resetArgs() -> void {
+  ValueReset<Args>();
 }
 
-template <ParserID ID, class Args, class PositionalArg, class SubParsers,
-          bool HelpEnabled>
-auto Parser<ID, Args, PositionalArg, SubParsers, HelpEnabled>::setArg(
+template <ParserID ID, class Args, class PArg, class HArg, class SubParsers>
+auto Parser<ID, Args, PArg, HArg, SubParsers>::setArg(
     std::string_view key, std::span<std::string_view> val) const -> void {
-  if constexpr (HelpEnabled) {
-    if (key == "help") {
+  if constexpr (!std::is_same_v<HArg, void>) {
+    if (key == HArg::name) {
       std::println("{}", formatHelp());
       std::exit(0);
     }
   }
-  Assigner<Arguments, PositionalArgument>::assign(key, val);
+  Assigner<Args, PArg>::assign(key, val);
 }
 
-template <ParserID ID, class Args, class PositionalArg, class SubParsers,
-          bool HelpEnabled>
-auto Parser<ID, Args, PositionalArg, SubParsers, HelpEnabled>::setArg(
+template <ParserID ID, class Args, class PArg, class HArg, class SubParsers>
+auto Parser<ID, Args, PArg, HArg, SubParsers>::setArg(
     std::span<char> key, std::span<std::string_view> val) const -> void {
-  if constexpr (HelpEnabled) {
+  if constexpr (!std::is_same_v<HArg, void>) {
     for (const auto& i : key) {
-      if (i == 'h') {
-        std::println("{}", formatHelp());
-        std::exit(0);
+      if constexpr (HArg::name.shortName != '\0') {
+        if (i == HArg::name.shortName) {
+          std::println("{}", formatHelp());
+          std::exit(0);
+        }
       }
     }
   }
-  Assigner<Arguments, PositionalArgument>::assign(key, val);
+  Assigner<Args, PArg>::assign(key, val);
 }
 
-template <ParserID ID, class Args, class PositionalArg, class SubParsers,
-          bool HelpEnabled>
-auto Parser<ID, Args, PositionalArg, SubParsers, HelpEnabled>::parse(
-    int argc, char* argv[]) -> void {
+template <ParserID ID, class Args, class PArg, class HArg, class SubParsers>
+auto Parser<ID, Args, PArg, HArg, SubParsers>::parse(int argc,
+                                                     char* argv[]) -> void {
   if (this->parsed_) [[unlikely]] {
     throw ParseError("Cannot parse twice");
   }
-  auto assigned_keys = AssignChecker<Arguments>::check();
+  auto assigned_keys = AssignChecker<Args>::check();
   if (!assigned_keys.empty()) [[unlikely]] {
     throw ParseError(std::format("keys {} already assigned", assigned_keys));
   }
@@ -112,7 +110,7 @@ auto Parser<ID, Args, PositionalArg, SubParsers, HelpEnabled>::parse(
           short_keys.clear();
           values.clear();
         } else if (!values.empty()) {
-          if constexpr (!std::is_same_v<PositionalArgument, void>) {
+          if constexpr (!std::is_same_v<PArg, void>) {
             this->setArg(key, values);
             values.clear();
           }
@@ -138,7 +136,7 @@ auto Parser<ID, Args, PositionalArg, SubParsers, HelpEnabled>::parse(
         short_keys.clear();
         values.clear();
       } else if (!values.empty()) {
-        if constexpr (!std::is_same_v<PositionalArgument, void>) {
+        if constexpr (!std::is_same_v<PArg, void>) {
           this->setArg(key, values);
           values.clear();
         }
@@ -153,7 +151,7 @@ auto Parser<ID, Args, PositionalArg, SubParsers, HelpEnabled>::parse(
         continue;
       }
     } else {
-      if constexpr (std::is_same_v<PositionalArgument, void>) {
+      if constexpr (std::is_same_v<PArg, void>) {
         if (key.empty() && short_keys.empty()) {
           throw InvalidArgument(std::format("No keys specified"));
         }
@@ -166,7 +164,7 @@ auto Parser<ID, Args, PositionalArg, SubParsers, HelpEnabled>::parse(
         } else if (!short_keys.empty()) {
           this->setArg(short_keys, values);
         } else {
-          if constexpr (std::is_same_v<PositionalArgument, void>) {
+          if constexpr (std::is_same_v<PArg, void>) {
             throw InvalidArgument(std::format("No keys specified"));
           } else {
             this->setArg(key, values);
@@ -175,7 +173,7 @@ auto Parser<ID, Args, PositionalArg, SubParsers, HelpEnabled>::parse(
       }
     }
   }
-  auto required_keys = RequiredChecker<Arguments>::check();
+  auto required_keys = RequiredChecker<Args>::check();
   if (!required_keys.empty()) {
     throw InvalidArgument(std::format("Requried {}", required_keys));
   }
@@ -259,21 +257,18 @@ auto createSubcommandSection(const auto& ansi, const auto& sub_commands) {
     ret.push_back('\n');
     auto description = splitStringView(command.description, '\n');
 
-    ret.append(std::format(  //
-        "  {}{} {}{} {}",    //
-        ansi.getBold(),
-        command.name,                                                //
-        std::string(max_command_length - command.name.size(), ' '),  //
-        ansi.getReset(),
-        description[0]  //
-        ));
+    ret.append(
+        std::format("  {}{} {}{} {}",
+                    ansi.getBold(),
+                    command.name,
+                    std::string(max_command_length - command.name.size(), ' '),
+                    ansi.getReset(),
+                    description[0]));
     for (std::size_t i = 1; i < description.size(); i++) {
       ret.push_back('\n');
-      ret.append(std::format(                    //
-          "    {}{}",                            //
-          std::string(max_command_length, ' '),  //
-          description[i]                         //
-          ));
+      ret.append(std::format("    {}{}",  //
+                             std::string(max_command_length, ' '),
+                             description[i]));
     }
 
     // erase trailing spaces
@@ -287,37 +282,31 @@ auto createSubcommandSection(const auto& ansi, const auto& sub_commands) {
 
 auto createOptionsSection(const auto& ansi, const auto& help_info) {
   std::string ret;
-  std::size_t max_flag_length = 0;
+  std::size_t max_name_len = 0;
   for (const auto& option : help_info) {
-    if (max_flag_length < option.name.size() + option.typeName.size()) {
-      max_flag_length = option.name.size() + option.typeName.size();
+    if (max_name_len < option.name.size() + option.typeName.size()) {
+      max_name_len = option.name.size() + option.typeName.size();
     }
   }
   for (const auto& option : help_info) {
     ret.push_back('\n');
     auto description = splitStringView(option.description, '\n');
 
-    ret.append(std::format(        //
-        "  {}{} --{} {}{}{}  {}",  //
-        (option.shortName == NULLCHAR)
-            ? "   "
-            : std::format("-{},", option.shortName),  //
-        ansi.getBold(),                               //
-        option.name,                                  //
-        ansi.getReset(),                              //
-        option.typeName,                              //
-        std::string(
-            max_flag_length - option.name.size() - option.typeName.size(),
-            ' '),       //
-        description[0]  //
-        ));
+    ret.append(std::format(
+        "  {}{} --{} {}{}{}  {}",
+        (option.shortName == NULLCHAR) ? "   "
+                                       : std::format("-{},", option.shortName),
+        ansi.getBold(),
+        option.name,
+        ansi.getReset(),
+        option.typeName,
+        std::string(max_name_len - option.name.size() - option.typeName.size(),
+                    ' '),
+        description[0]));
     for (std::size_t i = 1; i < description.size(); i++) {
       ret.push_back('\n');
-      ret.append(std::format(                 //
-          "      {}     {}",                  //
-          std::string(max_flag_length, ' '),  //
-          description[i]                      //
-          ));
+      ret.append(std::format(
+          "      {}     {}", std::string(max_name_len, ' '), description[i]));
     }
 
     auto pos = ret.find_last_not_of(' ');
@@ -326,17 +315,37 @@ auto createOptionsSection(const auto& ansi, const auto& help_info) {
   return ret;
 }
 
-template <ParserID ID, class Args, class PositionalArg, class SubParsers,
-          bool HelpEnabled>
-auto Parser<ID, Args, PositionalArg, SubParsers, HelpEnabled>::formatHelp(
-    bool no_color) const -> std::string {
+template <ArgType PArg>
+auto createPositionalArgumentSection(const auto& ansi) {
   std::string ret;
 
-  AnsiEscapeCode ansi{::isatty(1) and !no_color};
+  ret.push_back('\n');
+  auto desc = splitStringView(PArg::description, '\n');
+  ret.append(std::format("  {}{}{}  {}",
+                         ansi.getBold(),
+                         std::string_view(PArg::name),
+                         ansi.getReset(),
+                         desc[0]));
+
+  for (std::size_t i = 1; i < desc.size(); i++) {
+    ret.push_back('\n');
+    ret.append(std::format("{}{}", std::string(8, ' '), desc[i]));
+  }
+
+  ret.push_back('\n');
+  return ret;
+}
+
+template <ParserID ID, class Args, class PArg, class HArg, class SubParsers>
+auto Parser<ID, Args, PArg, HArg, SubParsers>::formatHelp(bool no_color) const
+    -> std::string {
+  std::string ret;
+
+  AnsiEscapeCode ansi(::isatty(1) and !no_color);
 
   assert(this->info_);  // this->info_ cannot be nullptr
 
-  auto help_info = HelpGenerator<Arguments>::generate();
+  auto help_info = HelpGenerator<tuple_append_t<Args, HArg>>::generate();
   auto sub_commands = SubParserInfo(subParsers);
 
   if (this->info_->help) {
@@ -365,6 +374,14 @@ auto Parser<ID, Args, PositionalArg, SubParsers, HelpEnabled>::formatHelp(
       ret.append(ansi.getBoldUnderline() + "Subcommands:" + ansi.getReset());
       ret.append(this->info_->subcommand_help.value_or(
           createSubcommandSection(ansi, sub_commands)));
+    }
+
+    if constexpr (!std::is_same_v<PArg, void>) {
+      ret.push_back('\n');
+      ret.append(ansi.getBoldUnderline() +
+                 "Positional Argument:" + ansi.getReset());
+      ret.append(this->info_->positional_argument_help.value_or(
+          createPositionalArgumentSection<PArg>(ansi)));
     }
 
     // Options section

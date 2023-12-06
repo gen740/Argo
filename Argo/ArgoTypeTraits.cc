@@ -6,14 +6,6 @@ import :std_module;
 
 export namespace Argo {
 
-template <auto Value>
-struct IdentityHolder {
-  static constexpr auto value = Value;
-};
-
-template <class T>
-concept Arithmetic = requires { std::is_arithmetic_v<T>; };
-
 template <class T>
 struct is_tuple : std::false_type {};
 
@@ -79,5 +71,18 @@ struct array_base<std::array<T, N>> {
 
 template <class T>
 using array_base_t = array_base<T>::type;
+
+template <class T, class... U>
+struct tuple_append {
+  using type = std::tuple<U..., T>;
+};
+
+template <class T, class... U>
+struct tuple_append<std::tuple<U...>, T> {
+  using type = std::tuple<U..., T>;
+};
+
+template <class... T>
+using tuple_append_t = typename tuple_append<T...>::type;
 
 };  // namespace Argo
