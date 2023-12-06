@@ -16,23 +16,20 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v3
 
-
-      # - name: update homebrew
-      #   run: |
-      #     brew update
-
-      - name: Set up Homebrew
-        id: set-up-homebrew
-        uses: Homebrew/actions/setup-homebrew@master
+      - name: update homebrew
+        run: |
+          brew update
+          berw unlink python@3.11
+          brew upgrade --force
 
       - name: Install llvm
         run: |
-          brew install llvm
+          brew install llvm --force
 
       - name: Install cmake HEAD
         run: |
           brew unlink cmake
-          brew install cmake --HEAD
+          brew install cmake --HEAD --force
 
       - name: Cmake and Compile
         run: |
