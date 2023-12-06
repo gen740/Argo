@@ -19,7 +19,8 @@ TEST(ArgoTest, ExceptionThrow) {
 }
 
 TEST(ArgoTest, EqualAssign) {
-  auto [argc, argv] = createArgcArgv("./main", "--arg1=42", "--arg2=Hello,World");
+  auto [argc, argv] =
+      createArgcArgv("./main", "--arg1=42", "--arg2=Hello,World");
 
   auto argo = Argo::Parser<"Equal assign">();
   auto parser = argo                        //
@@ -33,10 +34,15 @@ TEST(ArgoTest, EqualAssign) {
 }
 
 TEST(ArgoTest, FlagArgument) {
-  auto [argc, argv] = createArgcArgv(       //
-      "./main",                             //
-      "--arg1", "--arg2=true", "--arg3=1",  //
-      "--arg4", "true", "--arg5", "1"       //
+  auto [argc, argv] = createArgcArgv(  //
+      "./main",                        //
+      "--arg1",
+      "--arg2=true",
+      "--arg3=1",  //
+      "--arg4",
+      "true",
+      "--arg5",
+      "1"  //
   );
 
   auto argo = Argo::Parser<"Flag arguments">();
@@ -58,9 +64,12 @@ TEST(ArgoTest, FlagArgument) {
 TEST(ArgoTest, ShortArgument) {
   auto [argc, argv] = createArgcArgv(  //
       "./main",                        //
-      "-a", "Hello,World",             //
-      "--arg2", "42",                  //
-      "-c", "3.1415"                   //
+      "-a",
+      "Hello,World",  //
+      "--arg2",
+      "42",  //
+      "-c",
+      "3.1415"  //
   );
 
   auto argo = Argo::Parser<"Short argument">();
@@ -77,7 +86,9 @@ TEST(ArgoTest, ShortArgument) {
 
 TEST(ArgoTest, CombiningFlags) {
   auto [argc, argv] = createArgcArgv(  //
-      "./main", "-abd", "-e"           //
+      "./main",
+      "-abd",
+      "-e"  //
   );
 
   auto argo = Argo::Parser<"Combined flags">();
@@ -97,8 +108,10 @@ TEST(ArgoTest, CombiningFlags) {
 }
 
 TEST(ArgoTest, CombiningFlagsWithOptionalArg) {
-  auto [argc, argv] = createArgcArgv(   //
-      "./main", "-abdc", "Hello,World"  //
+  auto [argc, argv] = createArgcArgv(  //
+      "./main",
+      "-abdc",
+      "Hello,World"  //
   );
 
   auto argo = Argo::Parser<"flag with optional args">();
@@ -118,7 +131,9 @@ TEST(ArgoTest, CombiningFlagsWithOptionalArg) {
 TEST(ArgoTest, Validation) {
   {
     auto [argc, argv] = createArgcArgv(  //
-        "./main", "--arg", "42"          //
+        "./main",
+        "--arg",
+        "42"  //
     );
 
     auto argo = Argo::Parser<"Validation 1">();
@@ -131,7 +146,9 @@ TEST(ArgoTest, Validation) {
   }
   {
     auto [argc, argv] = createArgcArgv(  //
-        "./main", "--arg", "121"         //
+        "./main",
+        "--arg",
+        "121"  //
     );
 
     auto argo = Argo::Parser<"Validation 2">();
@@ -148,7 +165,8 @@ TEST(ArgoTest, Validation) {
   //
   //     auto argo = Argo::Parser<"Validation 3">();
   //     auto parser = argo  //
-  //                       .addArg<"arg", int>(new Argo::Validation::Callback<int>(
+  //                       .addArg<"arg", int>(new
+  //                       Argo::Validation::Callback<int>(
   //                           [](auto value) { return value % 2 == 0; }))
   //                       .addFlag<"arg2">();
   //     EXPECT_THROW(parser.parse(argc, argv), Argo::ValidationError);
@@ -161,7 +179,8 @@ TEST(ArgoTest, Validation) {
   //
   //     auto argo = Argo::Parser<"Validation 4">();
   //     auto parser = argo  //
-  //                       .addArg<"arg", int>(new Argo::Validation::Callback<int>(
+  //                       .addArg<"arg", int>(new
+  //                       Argo::Validation::Callback<int>(
   //                           [](auto value) { return value % 2 == 0; }))
   //                       .addFlag<"arg2">();
   //     parser.parse(argc, argv);
@@ -170,12 +189,23 @@ TEST(ArgoTest, Validation) {
 
 TEST(ArgoTest, Narg) {
   {
-    auto [argc, argv] = createArgcArgv(        //
-        "./main",                              //
-        "--arg1", "1", "2", "3",               //
-        "--arg2",                              //
-        "--arg3", "6.0", "7.2", "8.4", "9.6",  //
-        "--arg4", "11", "12", "8", "9"         //
+    auto [argc, argv] = createArgcArgv(  //
+        "./main",                        //
+        "--arg1",
+        "1",
+        "2",
+        "3",       //
+        "--arg2",  //
+        "--arg3",
+        "6.0",
+        "7.2",
+        "8.4",
+        "9.6",  //
+        "--arg4",
+        "11",
+        "12",
+        "8",
+        "9"  //
     );
 
     auto argo = Argo::Parser<"Narg 1">();
@@ -190,12 +220,14 @@ TEST(ArgoTest, Narg) {
 
     EXPECT_THAT(parser.getArg<"arg1">(), testing::ElementsAre(1, 2, 3));
     EXPECT_EQ(parser.getArg<"arg2">(), "Bar");
-    EXPECT_THAT(parser.getArg<"arg3">(), testing::ElementsAre(6.0, 7.2, 8.4, 9.6));
+    EXPECT_THAT(parser.getArg<"arg3">(),
+                testing::ElementsAre(6.0, 7.2, 8.4, 9.6));
   }
   {
     auto [argc, argv] = createArgcArgv(  //
         "./main",                        //
-        "--arg1", "1"                    //
+        "--arg1",
+        "1"  //
     );
     auto argo = Argo::Parser<"Narg 2">();
 
@@ -223,7 +255,8 @@ TEST(ArgoTest, NargException) {
   {
     auto [argc, argv] = createArgcArgv(  //
         "./main",                        //
-        "--arg1", "--arg2"               //
+        "--arg1",
+        "--arg2"  //
     );
 
     auto argo = Argo::Parser<"Narg exception 2">();
@@ -242,7 +275,8 @@ TEST(ArgoTest, NargException) {
 //     auto parser = argo  //
 //                       .addArg<"arg0,k", int>()
 //                       .addArg<"arg1,a", int, Argo::nargs('+')>()
-//                       .addArg<"arg2", int, Argo::nargs('+')>(Argo::description("This is arg2"));
+//                       .addArg<"arg2", int,
+//                       Argo::nargs('+')>(Argo::description("This is arg2"));
 //
 //     auto expect_help = R"(Options:
 //   -k, --arg0
@@ -257,7 +291,10 @@ TEST(ArgoTest, Required) {
   {
     auto [argc, argv] = createArgcArgv(  //
         "./main",                        //
-        "--arg1", "1", "--arg2", "2"     //
+        "--arg1",
+        "1",
+        "--arg2",
+        "2"  //
     );
 
     auto argo = Argo::Parser<"Required argument">("Sample Program");
@@ -276,7 +313,9 @@ TEST(ArgoTest, Positional) {
   {
     auto [argc, argv] = createArgcArgv(  //
         "./main",                        //
-        "1", "2", "3"                    //
+        "1",
+        "2",
+        "3"  //
     );
 
     auto argo = Argo::Parser<"Positional arguments">("Sample Program");
@@ -288,8 +327,12 @@ TEST(ArgoTest, Positional) {
   }
   {
     auto [argc, argv] = createArgcArgv(  //
-        "./main", "1", "2", "3",         //
-        "--arg2", "42.195"               //
+        "./main",
+        "1",
+        "2",
+        "3",  //
+        "--arg2",
+        "42.195"  //
     );
 
     auto argo = Argo::Parser<"positional argument2">("Sample Program");
@@ -305,8 +348,12 @@ TEST(ArgoTest, Positional) {
 
   {
     auto [argc, argv] = createArgcArgv(  //
-        "./main", "--arg2", "42.195",    //
-        "1", "2", "3"                    //
+        "./main",
+        "--arg2",
+        "42.195",  //
+        "1",
+        "2",
+        "3"  //
     );
 
     auto argo = Argo::Parser<"positional argument3">("Sample Program");
@@ -322,8 +369,13 @@ TEST(ArgoTest, Positional) {
 
   {
     auto [argc, argv] = createArgcArgv(  //
-        "./main", "--arg2", "42", "96",  //
-        "1", "2", "3"                    //
+        "./main",
+        "--arg2",
+        "42",
+        "96",  //
+        "1",
+        "2",
+        "3"  //
     );
 
     auto argo = Argo::Parser<"positonal argument 4">("Sample Program");
@@ -339,8 +391,11 @@ TEST(ArgoTest, Positional) {
 
   {
     auto [argc, argv] = createArgcArgv(  //
-        "./main", "--arg2",              //
-        "1", "2", "3"                    //
+        "./main",
+        "--arg2",  //
+        "1",
+        "2",
+        "3"  //
     );
 
     auto argo = Argo::Parser<"positonal argument 5">("Sample Program");
@@ -357,7 +412,10 @@ TEST(ArgoTest, Positional) {
   {
     auto [argc, argv] = createArgcArgv(  //
         "./main",                        //
-        "1", "2", "3", "-b"              //
+        "1",
+        "2",
+        "3",
+        "-b"  //
     );
 
     auto argo = Argo::Parser<"positonal argument 6">("Sample Program");
@@ -374,7 +432,11 @@ TEST(ArgoTest, Positional) {
   {                                      // error
     auto [argc, argv] = createArgcArgv(  //
         "./main",                        //
-        "1", "2", "3", "-bc", "234.86"   //
+        "1",
+        "2",
+        "3",
+        "-bc",
+        "234.86"  //
     );
 
     auto argo = Argo::Parser<"positonal argument 7">("Sample Program");
@@ -393,9 +455,12 @@ TEST(ArgoTest, Positional) {
 
 TEST(ArgoTest, IsAssigned) {
   {
-    auto [argc, argv] = createArgcArgv(     //
-        "./main",                           //
-        "--arg1", "42", "--arg2", "--arg4"  //
+    auto [argc, argv] = createArgcArgv(  //
+        "./main",                        //
+        "--arg1",
+        "42",
+        "--arg2",
+        "--arg4"  //
     );
 
     auto argo = Argo::Parser<"Is assigned">("Sample Program");
@@ -416,8 +481,10 @@ TEST(ArgoTest, IsAssigned) {
 
 TEST(ArgoTest, CallBack) {
   {
-    auto [argc, argv] = createArgcArgv("./main",      //
-                                       "1", "2", "3"  //
+    auto [argc, argv] = createArgcArgv("./main",  //
+                                       "1",
+                                       "2",
+                                       "3"  //
     );
 
     auto argo = Argo::Parser<150>("Sample Program");

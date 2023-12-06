@@ -1234,6 +1234,7 @@ struct SubParser {
 };
 
 template <class SubParsers>
+  requires(is_tuple_v<SubParsers>)
 auto MetaParse(SubParsers sub_parsers, int index, int argc,
                char** argv) -> bool {
   return std::apply(
@@ -1247,6 +1248,7 @@ auto MetaParse(SubParsers sub_parsers, int index, int argc,
 };
 
 template <class SubParsers>
+  requires(is_tuple_v<SubParsers>)
 constexpr auto ParserIndex(SubParsers sub_parsers,  //
                            std::string_view key) -> std::int64_t {
   return std::apply(
@@ -1295,7 +1297,8 @@ struct ParserInfo {
 };
 
 template <ParserID ID = 0, class Args = std::tuple<>, class PArg = void,
-                 class HArg = void, class SubParserTuple = std::tuple<>>
+                 class HArg = void, class SubParsers = std::tuple<>>
+  requires(is_tuple_v<Args> && is_tuple_v<SubParsers>)
 class Parser {
  private:
   bool parsed_ = false;
@@ -1326,12 +1329,11 @@ class Parser {
   Parser(const Parser&) = delete;
   Parser(Parser&&) = delete;
 
-  SubParserTuple subParsers;
+  SubParsers subParsers;
 
-  constexpr explicit Parser(SubParserTuple tuple) : subParsers(tuple) {}
+  constexpr explicit Parser(SubParsers tuple) : subParsers(tuple) {}
 
-  constexpr explicit Parser(std::unique_ptr<ParserInfo> info,
-                            SubParserTuple tuple)
+  constexpr explicit Parser(std::unique_ptr<ParserInfo> info, SubParsers tuple)
       : info_(std::move(info)), subParsers(tuple){};
 
   template <class Type, ArgName Name, auto arg1 = Unspecified(),
@@ -1439,7 +1441,7 @@ class Parser {
                   tuple_append_t<Args, typename decltype(arg)::type>,
                   PArg,
                   HArg,
-                  SubParserTuple>(std::move(this->info_), subParsers);
+                  SubParsers>(std::move(this->info_), subParsers);
   }
 
   template <ArgName Name, class Type, auto arg1 = Unspecified(),
@@ -1450,7 +1452,7 @@ class Parser {
     static_assert(Name.shortName == '\0',
                   "Positional argment cannot have short name");
     auto arg = createArg<Type, Name, arg1, arg2>(std::forward<T>(args)...);
-    return Parser<ID, Args, typename decltype(arg)::type, HArg, SubParserTuple>(
+    return Parser<ID, Args, typename decltype(arg)::type, HArg, SubParsers>(
         std::move(this->info_), subParsers);
   }
 
@@ -1471,7 +1473,7 @@ class Parser {
                   tuple_append_t<Args, FlagArg<Name, ID>>,
                   PArg,
                   HArg,
-                  SubParserTuple>(std::move(this->info_), subParsers);
+                  SubParsers>(std::move(this->info_), subParsers);
   }
 
   template <ArgName Name = "help,h">
@@ -1480,7 +1482,7 @@ class Parser {
                   "Duplicated short name");
     static_assert(Argo::SearchIndex<Args, Name>::value == -1,
                   "Duplicated name");
-    return Parser<ID, Args, PArg, HelpArg<Name, ID>, SubParserTuple>(
+    return Parser<ID, Args, PArg, HelpArg<Name, ID>, SubParsers>(
         std::move(this->info_), subParsers);
   }
 
@@ -1494,7 +1496,7 @@ class Parser {
     static_assert(Name.hasValidNameLength(),
                   "Short name can't be more than one charactor");
     this->info_->help = help;
-    return Parser<ID, Args, PArg, HelpArg<Name, ID>, SubParserTuple>(
+    return Parser<ID, Args, PArg, HelpArg<Name, ID>, SubParsers>(
         std::move(this->info_), subParsers);
   }
 
@@ -1520,12 +1522,12 @@ class Parser {
 
   template <ArgName Name>
   auto& getParser() {
-    if constexpr (std::is_same_v<SubParserTuple, std::tuple<>>) {
+    if constexpr (std::is_same_v<SubParsers, std::tuple<>>) {
       static_assert(false, "Parser has no sub parser");
     }
-    static_assert(!(SearchIndex<SubParserTuple, Name>::value == -1),
+    static_assert(!(SearchIndex<SubParsers, Name>::value == -1),
                   "Could not find subparser");
-    return std::get<SearchIndex<SubParserTuple, Name>::value>(subParsers)
+    return std::get<SearchIndex<SubParsers, Name>::value>(subParsers)
         .parser.get();
   }
 
@@ -1612,11 +1614,13 @@ inline auto splitStringView(std::string_view str,
 }
 
 template <ParserID ID, class Args, class PArg, class HArg, class SubParsers>
+  requires(is_tuple_v<Args> && is_tuple_v<SubParsers>)
 auto Parser<ID, Args, PArg, HArg, SubParsers>::resetArgs() -> void {
   ValueReset<Args>();
 }
 
 template <ParserID ID, class Args, class PArg, class HArg, class SubParsers>
+  requires(is_tuple_v<Args> && is_tuple_v<SubParsers>)
 auto Parser<ID, Args, PArg, HArg, SubParsers>::setArg(
     std::string_view key, std::span<std::string_view> val) const -> void {
   if constexpr (!std::is_same_v<HArg, void>) {
@@ -1629,6 +1633,7 @@ auto Parser<ID, Args, PArg, HArg, SubParsers>::setArg(
 }
 
 template <ParserID ID, class Args, class PArg, class HArg, class SubParsers>
+  requires(is_tuple_v<Args> && is_tuple_v<SubParsers>)
 auto Parser<ID, Args, PArg, HArg, SubParsers>::setArg(
     std::span<char> key, std::span<std::string_view> val) const -> void {
   if constexpr (!std::is_same_v<HArg, void>) {
@@ -1645,6 +1650,7 @@ auto Parser<ID, Args, PArg, HArg, SubParsers>::setArg(
 }
 
 template <ParserID ID, class Args, class PArg, class HArg, class SubParsers>
+  requires(is_tuple_v<Args> && is_tuple_v<SubParsers>)
 auto Parser<ID, Args, PArg, HArg, SubParsers>::parse(int argc,
                                                      char* argv[]) -> void {
   if (this->parsed_) [[unlikely]] {
@@ -1789,9 +1795,9 @@ struct AnsiEscapeCode {
   }
 };
 
-auto createUsageSection(const auto& program_name,
-                        [[maybe_unused]] const auto& help_info,
-                        const auto& sub_commands) {
+inline auto createUsageSection(const auto& program_name,
+                               [[maybe_unused]] const auto& help_info,
+                               const auto& sub_commands) {
   std::string ret;
   ret.append(program_name);
 
@@ -1826,7 +1832,8 @@ auto createUsageSection(const auto& program_name,
   return ret;
 }
 
-auto createSubcommandSection(const auto& ansi, const auto& sub_commands) {
+inline auto createSubcommandSection(const auto& ansi,
+                                    const auto& sub_commands) {
   std::string ret;
   std::size_t max_command_length = 0;
   for (const auto& command : sub_commands) {
@@ -1861,7 +1868,7 @@ auto createSubcommandSection(const auto& ansi, const auto& sub_commands) {
   return ret;
 }
 
-auto createOptionsSection(const auto& ansi, const auto& help_info) {
+inline auto createOptionsSection(const auto& ansi, const auto& help_info) {
   std::string ret;
   std::size_t max_name_len = 0;
   for (const auto& option : help_info) {
@@ -1918,6 +1925,7 @@ auto createPositionalArgumentSection(const auto& ansi) {
 }
 
 template <ParserID ID, class Args, class PArg, class HArg, class SubParsers>
+  requires(is_tuple_v<Args> && is_tuple_v<SubParsers>)
 auto Parser<ID, Args, PArg, HArg, SubParsers>::formatHelp(bool no_color) const
     -> std::string {
   std::string ret;

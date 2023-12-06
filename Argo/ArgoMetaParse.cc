@@ -3,6 +3,7 @@ module;
 export module Argo:MetaParse;
 import :std_module;
 import :Arg;
+import :TypeTraits;
 
 // generator start here
 
@@ -16,6 +17,7 @@ struct SubParser {
 };
 
 template <class SubParsers>
+  requires(is_tuple_v<SubParsers>)
 auto MetaParse(SubParsers sub_parsers, int index, int argc,
                char** argv) -> bool {
   return std::apply(
@@ -29,6 +31,7 @@ auto MetaParse(SubParsers sub_parsers, int index, int argc,
 };
 
 template <class SubParsers>
+  requires(is_tuple_v<SubParsers>)
 constexpr auto ParserIndex(SubParsers sub_parsers,  //
                            std::string_view key) -> std::int64_t {
   return std::apply(

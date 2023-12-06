@@ -3,14 +3,11 @@ version: '3'
 tasks:
   cmake:
     cmds:
-      # - cmake -B build -S . -GNinja -DARGO_BENCHMARKS_ENABLE=true
-      - cmake -B build -S . -GNinja -DARGO_TESTS_ENABLE=true -DCMAKE_INSTALL_PREFIX=/Users/gen/.local
+      - cmake -B build -S . -GNinja -DARGO_TESTS_ENABLE=true
   compile:
     cmds:
       - cmake --build build
   execute:
     cmds:
-      # - ./build/main --arg1=42 --arg2="Hello,World"
       - ./build/test-argo-release
-      # - ./build/bench-parser-release
     silent: true

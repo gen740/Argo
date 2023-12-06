@@ -6,7 +6,8 @@ import Argo;
 #include "TestHelper.h"
 
 TEST(ArgoTest, ExampleCode) {
-  auto [argc, argv] = createArgcArgv("./main", "--arg1", "42", "--arg3", "Hello,World");
+  auto [argc, argv] =
+      createArgcArgv("./main", "--arg1", "42", "--arg3", "Hello,World");
 
   auto parser = Argo::Parser<0>("Program name")  //
                     .addArg<"arg1", int>()
@@ -22,4 +23,4 @@ TEST(ArgoTest, ExampleCode) {
   EXPECT_TRUE((std::is_same_v<decltype(parser.getArg<"arg1">()), int>));
   EXPECT_TRUE((std::is_same_v<decltype(parser.getArg<"arg2">()), float>));
   EXPECT_TRUE((std::is_same_v<decltype(parser.getArg<"arg3">()), std::string>));
-}
+};

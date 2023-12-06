@@ -47,7 +47,8 @@ struct ParserInfo {
 };
 
 export template <ParserID ID = 0, class Args = std::tuple<>, class PArg = void,
-                 class HArg = void, class SubParserTuple = std::tuple<>>
+                 class HArg = void, class SubParsers = std::tuple<>>
+  requires(is_tuple_v<Args> && is_tuple_v<SubParsers>)
 class Parser {
  private:
   bool parsed_ = false;
@@ -78,12 +79,11 @@ class Parser {
   Parser(const Parser&) = delete;
   Parser(Parser&&) = delete;
 
-  SubParserTuple subParsers;
+  SubParsers subParsers;
 
-  constexpr explicit Parser(SubParserTuple tuple) : subParsers(tuple) {}
+  constexpr explicit Parser(SubParsers tuple) : subParsers(tuple) {}
 
-  constexpr explicit Parser(std::unique_ptr<ParserInfo> info,
-                            SubParserTuple tuple)
+  constexpr explicit Parser(std::unique_ptr<ParserInfo> info, SubParsers tuple)
       : info_(std::move(info)), subParsers(tuple){};
 
   template <class Type, ArgName Name, auto arg1 = Unspecified(),
@@ -191,7 +191,7 @@ class Parser {
                   tuple_append_t<Args, typename decltype(arg)::type>,
                   PArg,
                   HArg,
-                  SubParserTuple>(std::move(this->info_), subParsers);
+                  SubParsers>(std::move(this->info_), subParsers);
   }
 
   template <ArgName Name, class Type, auto arg1 = Unspecified(),
@@ -202,7 +202,7 @@ class Parser {
     static_assert(Name.shortName == '\0',
                   "Positional argment cannot have short name");
     auto arg = createArg<Type, Name, arg1, arg2>(std::forward<T>(args)...);
-    return Parser<ID, Args, typename decltype(arg)::type, HArg, SubParserTuple>(
+    return Parser<ID, Args, typename decltype(arg)::type, HArg, SubParsers>(
         std::move(this->info_), subParsers);
   }
 
@@ -223,7 +223,7 @@ class Parser {
                   tuple_append_t<Args, FlagArg<Name, ID>>,
                   PArg,
                   HArg,
-                  SubParserTuple>(std::move(this->info_), subParsers);
+                  SubParsers>(std::move(this->info_), subParsers);
   }
 
   template <ArgName Name = "help,h">
@@ -232,7 +232,7 @@ class Parser {
                   "Duplicated short name");
     static_assert(Argo::SearchIndex<Args, Name>::value == -1,
                   "Duplicated name");
-    return Parser<ID, Args, PArg, HelpArg<Name, ID>, SubParserTuple>(
+    return Parser<ID, Args, PArg, HelpArg<Name, ID>, SubParsers>(
         std::move(this->info_), subParsers);
   }
 
@@ -246,7 +246,7 @@ class Parser {
     static_assert(Name.hasValidNameLength(),
                   "Short name can't be more than one charactor");
     this->info_->help = help;
-    return Parser<ID, Args, PArg, HelpArg<Name, ID>, SubParserTuple>(
+    return Parser<ID, Args, PArg, HelpArg<Name, ID>, SubParsers>(
         std::move(this->info_), subParsers);
   }
 
@@ -272,12 +272,12 @@ class Parser {
 
   template <ArgName Name>
   auto& getParser() {
-    if constexpr (std::is_same_v<SubParserTuple, std::tuple<>>) {
+    if constexpr (std::is_same_v<SubParsers, std::tuple<>>) {
       static_assert(false, "Parser has no sub parser");
     }
-    static_assert(!(SearchIndex<SubParserTuple, Name>::value == -1),
+    static_assert(!(SearchIndex<SubParsers, Name>::value == -1),
                   "Could not find subparser");
-    return std::get<SearchIndex<SubParserTuple, Name>::value>(subParsers)
+    return std::get<SearchIndex<SubParsers, Name>::value>(subParsers)
         .parser.get();
   }
 
