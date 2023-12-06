@@ -8,6 +8,8 @@ import :NArgs;
 import :Arg;
 import :std_module;
 
+// generator start here
+
 export namespace Argo {
 
 /*!
@@ -59,3 +61,5 @@ struct AssignChecker<std::tuple<Args...>> {
 };
 
 }  // namespace Argo
+
+// generator end here

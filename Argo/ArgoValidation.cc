@@ -6,6 +6,8 @@ import :Exceptions;
 import :TypeTraits;
 import :std_module;
 
+// generator start here
+
 namespace Argo::Validation {
 
 export struct ValidationBase {
@@ -136,24 +138,22 @@ Range(T min, T max) -> Range<T>;
 
 }  // namespace Argo::Validation
 
-export {
-  template <std::derived_from<Argo::Validation::ValidationBase> Lhs,
-            std::derived_from<Argo::Validation::ValidationBase>
-                Rhs>
-  auto operator&(Lhs lhs, Rhs rhs) {
-    return Argo::Validation::AndValidation(lhs, rhs);
-  }
-  template <std::derived_from<Argo::Validation::ValidationBase> Lhs,
-            std::derived_from<Argo::Validation::ValidationBase>
-                Rhs>
-  auto operator|(Lhs lhs, Rhs rhs) {
-    return Argo::Validation::OrValidation(lhs, rhs);
-  }
-
-  template <std::derived_from<Argo::Validation::ValidationBase> Lhs,
-            std::derived_from<Argo::Validation::ValidationBase>
-                Rhs>
-  auto operator!(Rhs rhs) {
-    return Argo::Validation::InvertValidation(rhs);
-  }
+export template <std::derived_from<Argo::Validation::ValidationBase> Lhs,
+                 std::derived_from<Argo::Validation::ValidationBase> Rhs>
+auto operator&(Lhs lhs, Rhs rhs) {
+  return Argo::Validation::AndValidation(lhs, rhs);
 }
+
+export template <std::derived_from<Argo::Validation::ValidationBase> Lhs,
+                 std::derived_from<Argo::Validation::ValidationBase> Rhs>
+auto operator|(Lhs lhs, Rhs rhs) {
+  return Argo::Validation::OrValidation(lhs, rhs);
+}
+
+export template <std::derived_from<Argo::Validation::ValidationBase> Lhs,
+                 std::derived_from<Argo::Validation::ValidationBase> Rhs>
+auto operator!(Rhs rhs) {
+  return Argo::Validation::InvertValidation(rhs);
+}
+
+// generator end here

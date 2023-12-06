@@ -4,6 +4,8 @@ export module Argo:TypeTraits;
 import :Exceptions;
 import :std_module;
 
+// generator start here
+
 export namespace Argo {
 
 template <class T>
@@ -86,3 +88,5 @@ template <class... T>
 using tuple_append_t = typename tuple_append<T...>::type;
 
 };  // namespace Argo
+
+// generator end here

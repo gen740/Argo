@@ -7,6 +7,8 @@ import :Validation;
 import :TypeTraits;
 import :std_module;
 
+// generator start here
+
 export namespace Argo {
 
 template <std::size_t N>
@@ -318,3 +320,5 @@ struct HelpArg : HelpArgTag, FlagArgTag, ArgBase<bool, Name, true, ID> {
 };
 
 }  // namespace Argo
+
+// generator end here

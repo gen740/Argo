@@ -4,9 +4,9 @@ export module Argo:NArgs;
 
 import :std_module;
 
-export namespace Argo {
+// generator start here
 
-constexpr char NULLCHAR = '\0';
+export namespace Argo {
 
 /*!
  * (default)?  : If value specified use it else use default -> ValueType
@@ -16,7 +16,7 @@ constexpr char NULLCHAR = '\0';
  */
 struct NArgs {
   int nargs = -1;
-  char nargs_char = NULLCHAR;
+  char nargs_char = '\0';
 
   constexpr explicit NArgs(char arg) : nargs_char(arg) {}
 
@@ -32,3 +32,5 @@ struct NArgs {
 };
 
 };  // namespace Argo
+
+// generator end here

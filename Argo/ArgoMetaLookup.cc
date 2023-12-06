@@ -6,6 +6,8 @@ import :Exceptions;
 import :std_module;
 import :Arg;
 
+// generator start here
+
 export namespace Argo {
 
 template <class Arguments>
@@ -72,3 +74,5 @@ struct SearchIndexFromShortName<std::tuple<Head, Tails...>, T, Index> {
 };
 
 };  // namespace Argo
+
+// generator end here

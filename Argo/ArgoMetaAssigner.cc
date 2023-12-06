@@ -9,6 +9,8 @@ import :MetaLookup;
 import :Arg;
 import :std_module;
 
+// generator start here
+
 export namespace Argo {
 
 /*!
@@ -312,3 +314,5 @@ auto ValueReset() {
 }
 
 };  // namespace Argo
+
+// generator end here

@@ -3,6 +3,8 @@ module;
 export module Argo:HelpGenerator;
 import :std_module;
 
+// generator start here
+
 export namespace Argo {
 
 struct ArgInfo {
@@ -53,3 +55,5 @@ auto SubParserInfo(T subparsers) {
 };
 
 }  // namespace Argo
+
+// generator end here

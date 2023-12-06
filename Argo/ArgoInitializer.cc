@@ -8,6 +8,8 @@ import :Arg;
 
 import :std_module;
 
+// generator start here
+
 namespace Argo {
 
 struct ExplicitDefaultValueTag {};
@@ -111,3 +113,5 @@ struct FlagArgInitializer {
 };
 
 };  // namespace Argo
+
+// generator end here

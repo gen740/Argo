@@ -8,7 +8,6 @@ module;
 #include <charconv>
 #include <concepts>
 #include <cstring>
-#include <exception>
 #include <format>
 #include <functional>
 #include <memory>

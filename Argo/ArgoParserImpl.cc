@@ -16,6 +16,8 @@ import :std_module;
 import :Exceptions;
 import :MetaChecker;
 
+// generator start here
+
 namespace Argo {
 
 auto splitStringView(std::string_view str,
@@ -294,8 +296,8 @@ auto createOptionsSection(const auto& ansi, const auto& help_info) {
 
     ret.append(std::format(
         "  {}{} --{} {}{}{}  {}",
-        (option.shortName == NULLCHAR) ? "   "
-                                       : std::format("-{},", option.shortName),
+        (option.shortName == '\0') ? "   "
+                                   : std::format("-{},", option.shortName),
         ansi.getBold(),
         option.name,
         ansi.getReset(),
@@ -397,3 +399,5 @@ auto Parser<ID, Args, PArg, HArg, SubParsers>::formatHelp(bool no_color) const
 }
 
 }  // namespace Argo
+
+// generator end here

@@ -4,6 +4,8 @@ export module Argo:Exceptions;
 
 import :std_module;
 
+// generator start here
+
 export namespace Argo {
 
 class ParserInternalError : public std::runtime_error {
@@ -48,3 +50,5 @@ class ValidationError : public InvalidArgument {
 };
 
 }  // namespace Argo
+
+// generator end here

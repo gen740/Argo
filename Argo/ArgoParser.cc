@@ -11,6 +11,8 @@ import :Arg;
 import :NArgs;
 import :std_module;
 
+// generator start here
+
 namespace Argo {
 
 struct Unspecified {};
@@ -26,14 +28,12 @@ export using RequiredFlag::optional;  // NOLINT(misc-unused-using-decls)
 /*!
  * Helper function to create nargs
  */
-export {
-  consteval auto nargs(char narg) -> NArgs {
-    return NArgs(narg);
-  }
+export consteval auto nargs(char narg) -> NArgs {
+  return NArgs(narg);
+}
 
-  consteval auto nargs(int narg) -> NArgs {
-    return NArgs(narg);
-  }
+export consteval auto nargs(int narg) -> NArgs {
+  return NArgs(narg);
 }
 
 struct ParserInfo {
@@ -159,7 +159,7 @@ class Parser {
                     "Duplicated name");
     }
     static_assert(
-        (Name.shortName == NULLCHAR) ||
+        (Name.shortName == '\0') ||
             (SearchIndexFromShortName<Args, Name.shortName>::value == -1),
         "Duplicated short name");
     static_assert(                                   //
@@ -199,7 +199,7 @@ class Parser {
   auto addPositionalArg(T... args) {
     static_assert(std::is_same_v<PArg, void>,
                   "Positional argument cannot set more than one");
-    static_assert(Name.shortName == NULLCHAR,
+    static_assert(Name.shortName == '\0',
                   "Positional argment cannot have short name");
     auto arg = createArg<Type, Name, arg1, arg2>(std::forward<T>(args)...);
     return Parser<ID, Args, typename decltype(arg)::type, HArg, SubParserTuple>(
@@ -213,7 +213,7 @@ class Parser {
                     "Duplicated name");
     }
     static_assert(
-        (Name.shortName == NULLCHAR) ||
+        (Name.shortName == '\0') ||
             (SearchIndexFromShortName<Args, Name.shortName>::value == -1),
         "Duplicated short name");
     static_assert(Argo::SearchIndex<Args, Name>::value == -1,
@@ -347,3 +347,5 @@ class Parser {
 };
 
 }  // namespace Argo
+
+// generator end here

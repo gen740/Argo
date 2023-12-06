@@ -4,6 +4,8 @@ export module Argo:MetaParse;
 import :std_module;
 import :Arg;
 
+// generator start here
+
 export namespace Argo {
 
 template <ArgName Name, class Parser>
@@ -39,3 +41,5 @@ constexpr auto ParserIndex(SubParsers sub_parsers,  //
 };
 
 }  // namespace Argo
+
+// generator end here
