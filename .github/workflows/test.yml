@@ -16,15 +16,9 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v3
 
-      - name: update homebrew
-        run: |
-          brew update
-          berw unlink python@3.11
-          brew upgrade --force
-
       - name: Install llvm
         run: |
-          brew install llvm --force
+          brew install llvm
 
       - name: Install cmake HEAD
         run: |
