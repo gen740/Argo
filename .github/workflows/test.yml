@@ -27,7 +27,7 @@ jobs:
 
       - name: Cmake and Compile
         run: |
-          cmake -B build -S . -DARGO_TESTS_ENABLE=true
+          cmake -B build -S . -DARGO_TESTS_ENABLE=true -GNinja
           cmake --build build
         env:
           CC: /usr/local/opt/llvm/bin/clang
