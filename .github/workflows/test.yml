@@ -17,9 +17,13 @@ jobs:
         uses: actions/checkout@v3
 
 
-      - name: update homebrew
-        run: |
-          brew update
+      # - name: update homebrew
+      #   run: |
+      #     brew update
+
+      - name: Set up Homebrew
+        id: set-up-homebrew
+        uses: Homebrew/actions/setup-homebrew@master
 
       - name: Install llvm
         run: |
@@ -34,6 +38,9 @@ jobs:
         run: |
           cmake -B build -S . -DARGO_TESTS_ENABLE=true
           cmake --build build
+        env:
+          CC: /usr/local/opt/llvm/bin/clang
+          CXX: /usr/local/opt/llvm/bin/clang++
 
       - name: Test Debug
         run: |
