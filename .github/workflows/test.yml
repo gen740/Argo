@@ -16,12 +16,18 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v3
 
+
+      - name: update homebrew
+        run: |
+          brew update
+
       - name: Install llvm
         run: |
           brew install llvm
 
       - name: Install cmake HEAD
         run: |
+          brew unlink cmake
           brew install cmake --HEAD
 
       - name: Cmake and Compile
