@@ -5,12 +5,13 @@ export module Argo:MetaLookup;
 import :Exceptions;
 import :std_module;
 import :Arg;
+import :ArgName;
 
 // generator start here
 
-export namespace Argo {
+namespace Argo {
 
-template <class Arguments>
+export template <class Arguments>
 struct GetNameFromShortName {
   template <class Head, class... Tails>
   struct GetNameFromShortNameImpl {
@@ -38,15 +39,15 @@ struct GetNameFromShortName {
 /*!
  * Index Search meta function
  */
-template <class Tuple, ArgName T, int Index = 0>
+export template <class Tuple, ArgName T, int Index = 0>
 struct SearchIndex;
 
-template <ArgName T, std::size_t Index>
+export template <ArgName T, std::size_t Index>
 struct SearchIndex<std::tuple<>, T, Index> {
   static constexpr int value = -1;
 };
 
-template <ArgName T, std::size_t Index, class Head, class... Tails>
+export template <ArgName T, std::size_t Index, class Head, class... Tails>
 struct SearchIndex<std::tuple<Head, Tails...>, T, Index> {
   static constexpr int value =
       (Head::name == T)
@@ -57,15 +58,15 @@ struct SearchIndex<std::tuple<Head, Tails...>, T, Index> {
 /*!
  * Index Search meta function
  */
-template <class Tuple, char T, int Index = 0>
+export template <class Tuple, char T, int Index = 0>
 struct SearchIndexFromShortName;
 
-template <char T, std::size_t Index>
+export template <char T, std::size_t Index>
 struct SearchIndexFromShortName<std::tuple<>, T, Index> {
   static constexpr int value = -1;
 };
 
-template <char T, std::size_t Index, class Head, class... Tails>
+export template <char T, std::size_t Index, class Head, class... Tails>
 struct SearchIndexFromShortName<std::tuple<Head, Tails...>, T, Index> {
   static constexpr int value =
       Head::name.shortName == T

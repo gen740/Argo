@@ -2,16 +2,16 @@ module;
 
 export module Argo:Arg;
 
-import :NArgs;
+import :ArgName;
 import :Validation;
 import :TypeTraits;
 import :std_module;
 
 // generator start here
 
-export namespace Argo {
+namespace Argo {
 
-template <std::size_t N>
+export template <std::size_t N>
 struct ParserID {
   int idInt = 0;
   char idName[N];
@@ -27,119 +27,33 @@ struct ParserID {
   };
 };
 
-ParserID(int) -> ParserID<0>;
+export ParserID(int) -> ParserID<0>;
 
-template <std::size_t N>
+export template <std::size_t N>
 ParserID(const char (&)[N]) -> ParserID<N - 1>;
 
-struct ArgNameTag {};
+/*!
+ * (default)?  : If value specified use it else use default -> ValueType
+ *          int: Exactly (n > 1)                     -> std::array<ValueType, N>
+ *          *  : Any number of argument if zero use default -> vector<ValueType>
+ *          +  : Any number of argument except zero         -> vector<ValueType>
+ */
+export struct NArgs {
+  int nargs = -1;
+  char nargs_char = '\0';
 
-template <std::size_t N>
-struct ArgName : ArgNameTag {
-  char name[N] = {};
-  char shortName = '\0';
-  std::size_t nameLen = N;
+  constexpr explicit NArgs(char arg) : nargs_char(arg) {}
 
-  explicit ArgName() = default;
+  constexpr explicit NArgs(int arg) : nargs(arg) {}
 
-  // NOLINTNEXTLINE(google-explicit-constructor)
-  constexpr ArgName(const char (&lhs)[N + 1]) {
-    for (std::size_t i = 0; i < N; i++) {
-      if (lhs[i] == ',') {
-        nameLen = i;
-        shortName = lhs[i + 1];
-        return;
-      }
-      this->name[i] = lhs[i];
-    }
-  };
-
-  constexpr char operator[](std::size_t idx) const {
-    return this->name[idx];
+  [[nodiscard]] constexpr int getNargs() const {
+    return nargs;
   }
 
-  constexpr char& operator[](std::size_t idx) {
-    return this->name[idx];
-  }
-
-  constexpr auto begin() const {
-    return &this->name[0];
-  }
-
-  constexpr auto end() const {
-    return &this->name[this->nameLen];
-  }
-
-  constexpr auto size() const {
-    return N;
-  }
-
-  friend auto begin(ArgName lhs) {
-    return lhs.begin();
-  }
-
-  friend auto end(ArgName lhs) {
-    return lhs.end();
-  }
-
-  template <std::size_t M>
-  constexpr auto operator==(ArgName<M> lhs) -> bool {
-    if constexpr (M != N) {
-      return false;
-    } else {
-      for (std::size_t i = 0; i < N; i++) {
-        if ((*this)[i] != lhs[i]) {
-          return false;
-        }
-      }
-      return true;
-    }
-  }
-
-  template <std::size_t M>
-  constexpr auto operator==(ArgName<M> lhs) const -> bool {
-    auto NV = this->nameLen;
-    auto MV = lhs.nameLen;
-
-    if (MV != NV) {
-      return false;
-    }
-    for (std::size_t i = 0; i < NV; i++) {
-      if ((*this)[i] != lhs[i]) {
-        return false;
-      }
-    }
-    return true;
-  }
-
-  // NOLINTNEXTLINE(google-explicit-constructor)
-  constexpr operator std::string_view() const {
-    return std::string_view(this->begin(), this->end());
-  }
-
-  [[nodiscard]] constexpr auto containsInvalidChar() const -> bool {
-    auto invalid_chars = std::string_view(" \\\"'<>&|$[]");
-    if (invalid_chars.contains(this->shortName)) {
-      return true;
-    }
-    for (std::size_t i = 0; i < this->nameLen; i++) {
-      if (invalid_chars.contains(this->name[i])) {
-        return true;
-      }
-    }
-    return false;
-  }
-
-  [[nodiscard]] constexpr auto hasValidNameLength() const -> bool {
-    if (this->shortName == '\0') {
-      return true;
-    }
-    return (N - this->nameLen) == 2;
+  [[nodiscard]] constexpr char getNargsChar() const {
+    return nargs_char;
   }
 };
-
-template <std::size_t N>
-ArgName(const char (&)[N]) -> ArgName<N - 1>;
 
 template <typename BaseType, ArgName Name, bool Required, ParserID ID>
 struct ArgBase {
@@ -151,7 +65,7 @@ struct ArgBase {
   using baseType = BaseType;
 };
 
-template <class T>
+export template <class T>
 concept ArgType = requires(T& x) {
   typename T::baseType;
   typename T::type;
@@ -167,7 +81,7 @@ concept ArgType = requires(T& x) {
   std::is_same_v<decltype(T::required), bool>;
 };
 
-struct ArgTag {};
+export struct ArgTag {};
 
 template <class T>
 constexpr std::string get_type_name_base_type() {
@@ -241,7 +155,8 @@ constexpr std::string get_type_name() {
 /*!
  * Arg type this holds argument value
  */
-template <class Type, ArgName Name, NArgs TNArgs, bool Required, ParserID ID>
+export template <class Type, ArgName Name, NArgs TNArgs, bool Required,
+                 ParserID ID>
 struct Arg : ArgTag,
              ArgBase<                          //
                  std::conditional_t<           //
@@ -289,9 +204,9 @@ struct Arg : ArgTag,
   inline static bool required = Required;
 };
 
-struct FlagArgTag {};
+export struct FlagArgTag {};
 
-template <ArgName Name, ParserID ID>
+export template <ArgName Name, ParserID ID>
 struct FlagArg : FlagArgTag, ArgBase<bool, Name, false, ID> {
   static constexpr bool isVariadic = false;
   using type = bool;
@@ -304,9 +219,9 @@ struct FlagArg : FlagArgTag, ArgBase<bool, Name, false, ID> {
   inline static std::string typeName;
 };
 
-struct HelpArgTag {};
+export struct HelpArgTag {};
 
-template <ArgName Name, ParserID ID>
+export template <ArgName Name, ParserID ID>
 struct HelpArg : HelpArgTag, FlagArgTag, ArgBase<bool, Name, true, ID> {
   static constexpr bool isVariadic = false;
   using type = bool;

@@ -11,7 +11,7 @@ import :std_module;
 
 // generator start here
 
-export namespace Argo {
+namespace Argo {
 
 /*!
  * Helper class of assigning value
@@ -53,11 +53,11 @@ constexpr auto tupleAssign(std::tuple<T...>& t, std::span<std::string_view> v,
    ...);
 }
 
-template <class PArg>
+export template <class PArgs>
 struct PArgAssigner {};
 
-template <class... PArg>
-struct PArgAssigner<std::tuple<PArg...>> {
+export template <class... PArgs>
+struct PArgAssigner<std::tuple<PArgs...>> {
   static auto assign(std::span<std::string_view> values) {
     return ([]<ArgType Arg>(auto& values) {
       if (Arg::assigned) {
@@ -110,23 +110,23 @@ struct PArgAssigner<std::tuple<PArg...>> {
         values = values.subspan(Arg::nargs.getNargs());
         return values.empty();
       }
-    }.template operator()<PArg>(values) ||
+    }.template operator()<PArgs>(values) ||
             ...);
   }
 };
 
-template <class Arguments, class PArg>
+export template <class Arguments, class PArgs>
 struct Assigner {
   template <ArgType Head>
   static constexpr auto assignOneArg(
       std::string_view key, std::span<std::string_view> values) -> bool {
     if constexpr (std::derived_from<Head, FlagArgTag>) {
       if (!values.empty()) {
-        if constexpr (std::is_same_v<PArg, std::tuple<>>) {
+        if constexpr (std::is_same_v<PArgs, std::tuple<>>) {
           throw Argo::InvalidArgument(
               std::format("Flag {} can not take value", key));
         } else {
-          PArgAssigner<PArg>::assign(values);
+          PArgAssigner<PArgs>::assign(values);
         }
       }
       Head::value = true;
@@ -153,13 +153,13 @@ struct Assigner {
           }
           return true;
         }
-        if constexpr (std::is_same_v<PArg, std::tuple<>>) {
+        if constexpr (std::is_same_v<PArgs, std::tuple<>>) {
           throw Argo::InvalidArgument(
               std::format("Argument {} cannot take more than one value got {}",
                           key, values.size()));
         } else {
           assignOneArg<Head>(key, values.subspan(0, 1));
-          return PArgAssigner<PArg>::assign(values.subspan(1));
+          return PArgAssigner<PArgs>::assign(values.subspan(1));
         }
       } else if constexpr (Head::nargs.getNargsChar() == '*') {
         if (values.empty()) {
@@ -201,13 +201,13 @@ struct Assigner {
               "Argument {} should take exactly one value but zero", key));
         }
         if (values.size() > 1) {
-          if constexpr (std::is_same_v<PArg, std::tuple<>>) {
+          if constexpr (std::is_same_v<PArgs, std::tuple<>>) {
             throw Argo::InvalidArgument(
                 std::format("Argument {} should take exactly one value but {}",
                             key, values.size()));
           } else {
             assignOneArg<Head>(key, values.subspan(0, 1));
-            return PArgAssigner<PArg>::assign(values.subspan(1));
+            return PArgAssigner<PArgs>::assign(values.subspan(1));
           }
         }
         Head::value = caster<typename Head::baseType>(values[0]);
@@ -251,13 +251,13 @@ struct Assigner {
               std::format("Argument {} should take exactly {} value but {}",
                           key, Head::nargs.getNargs(), values.size()));
         }
-        if constexpr (std::is_same_v<PArg, std::tuple<>>) {
+        if constexpr (std::is_same_v<PArgs, std::tuple<>>) {
           throw Argo::InvalidArgument(
               std::format("Argument {} should take exactly {} value but {}",
                           key, Head::nargs.getNargs(), values.size()));
         } else {
           assignOneArg<Head>(key, values.subspan(0, Head::nargs.getNargs()));
-          return PArgAssigner<PArg>::assign(
+          return PArgAssigner<PArgs>::assign(
               values.subspan(Head::nargs.getNargs()));
         }
       }
@@ -299,8 +299,8 @@ struct Assigner {
   static auto assign(std::string_view key,
                      std::span<std::string_view> values) -> void {
     if (key.empty()) {
-      if constexpr (!std::is_same_v<PArg, std::tuple<>>) {
-        if (!PArgAssigner<PArg>::assign(values)) {
+      if constexpr (!std::is_same_v<PArgs, std::tuple<>>) {
+        if (!PArgAssigner<PArgs>::assign(values)) {
           throw InvalidArgument(std::format("Duplicated positional argument"));
         }
         return;
@@ -321,7 +321,7 @@ struct Assigner {
   };
 };
 
-template <class Args>
+export template <class Args>
 auto ValueReset() {
   []<std::size_t... Is>(std::index_sequence<Is...>) {
     (..., []<ArgType T>() {

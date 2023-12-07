@@ -3,7 +3,7 @@ module;
 export module Argo:Initializer;
 
 import :Validation;
-import :NArgs;
+import :ArgName;
 import :Arg;
 
 import :std_module;
@@ -30,25 +30,22 @@ struct Description {
   std::string_view description;
 };
 
-}  // namespace Argo
-
-export namespace Argo {
-
-constexpr auto description(std::string_view desc) -> Description {
+export constexpr auto description(std::string_view desc) -> Description {
   return {.description = desc};
 }
 
-template <class T>
+export template <class T>
 constexpr auto explicitDefault(T value) -> ExlicitDefaultValue<T> {
   return {.explicit_default_value = value};
 }
 
-template <class T>
+export template <class T>
 constexpr auto implicitDefault(T value) -> ImplicitDefaultValue<T> {
   return {.implicit_default_value = value};
 }
 
-template <class Type, ArgName Name, NArgs nargs, bool Required, ParserID ID>
+export template <class Type, ArgName Name, NArgs nargs, bool Required,
+                 ParserID ID>
 struct ArgInitializer {
   template <class Head, class... Tails>
   static auto init(Head head, Tails... tails) {
@@ -57,10 +54,9 @@ struct ArgInitializer {
       Arg::description = head.description;
     } else if constexpr (std::derived_from<std::remove_cvref_t<Head>,
                                            Validation::ValidationBase>) {
-      static_assert(std::is_invocable_v<decltype(head),
-                                        typename Arg::type,
-                                        std::span<std::string_view>,
-                                        std::string_view>);
+      static_assert(
+          std::is_invocable_v<decltype(head), typename Arg::type,
+                              std::span<std::string_view>, std::string_view>);
       Arg::validator = head;
     } else if constexpr (std::derived_from<std::remove_cvref_t<Head>,
                                            ImplicitDefaultValueTag>) {
@@ -68,8 +64,7 @@ struct ArgInitializer {
     } else if constexpr (std::derived_from<std::remove_cvref_t<Head>,
                                            ExplicitDefaultValueTag>) {
       Arg::value = static_cast<Type>(head.explicit_default_value);
-    } else if constexpr (std::is_invocable_v<Head,
-                                             typename Arg::type&,
+    } else if constexpr (std::is_invocable_v<Head, typename Arg::type&,
                                              std::span<std::string_view>>) {
       Arg::callback = head;
     } else {
@@ -83,7 +78,7 @@ struct ArgInitializer {
   static auto init() {}
 };
 
-template <ArgName Name, ParserID ID>
+export template <ArgName Name, ParserID ID>
 struct FlagArgInitializer {
   template <class Head, class... Tails>
   static auto init(Head head, Tails... tails) {

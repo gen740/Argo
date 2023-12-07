@@ -6,9 +6,9 @@ import :std_module;
 
 // generator start here
 
-export namespace Argo {
+namespace Argo {
 
-class ParserInternalError : public std::runtime_error {
+export class ParserInternalError : public std::runtime_error {
  public:
   explicit ParserInternalError(const std::string& msg)
       : std::runtime_error(msg) {}
@@ -18,7 +18,7 @@ class ParserInternalError : public std::runtime_error {
   }
 };
 
-class ParseError : public std::runtime_error {
+export class ParseError : public std::runtime_error {
  public:
   explicit ParseError(const std::string& msg) : std::runtime_error(msg) {}
 
@@ -30,7 +30,7 @@ class ParseError : public std::runtime_error {
 /*!
  * InvalidArgument exception class
  */
-class InvalidArgument : public std::invalid_argument {
+export class InvalidArgument : public std::invalid_argument {
  public:
   explicit InvalidArgument(const std::string& msg)
       : std::invalid_argument(msg) {}
@@ -40,7 +40,7 @@ class InvalidArgument : public std::invalid_argument {
   }
 };
 
-class ValidationError : public InvalidArgument {
+export class ValidationError : public InvalidArgument {
  public:
   explicit ValidationError(const std::string& msg) : InvalidArgument(msg) {}
 

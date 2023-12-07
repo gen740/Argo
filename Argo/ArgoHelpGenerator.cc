@@ -5,7 +5,7 @@ import :std_module;
 
 // generator start here
 
-export namespace Argo {
+namespace Argo {
 
 struct ArgInfo {
   std::string_view name;
@@ -15,10 +15,10 @@ struct ArgInfo {
   std::string typeName;
 };
 
-template <class Args>
+export template <class Args>
 struct HelpGenerator {};
 
-template <class... Args>
+export template <class... Args>
 struct HelpGenerator<std::tuple<Args...>> {
   static auto generate() -> std::vector<ArgInfo> {
     std::vector<ArgInfo> ret;
@@ -26,9 +26,7 @@ struct HelpGenerator<std::tuple<Args...>> {
         [&ret]<class T>() {
           ret.emplace_back(
               std::string_view(Args::name).substr(0, Args::name.nameLen),
-              Args::name.shortName,
-              Args::description,
-              Args::required,
+              Args::name.shortName, Args::description, Args::required,
               Args::typeName);
         }.template operator()<Args>(),
         ...);
@@ -41,7 +39,7 @@ struct SubCommandInfo {
   std::string_view description;
 };
 
-template <class T>
+export template <class T>
 auto SubParserInfo(T subparsers) {
   std::vector<SubCommandInfo> ret{};
   if constexpr (!std::is_same_v<T, std::tuple<>>) {

@@ -4,33 +4,33 @@ export module Argo:MetaParse;
 import :std_module;
 import :Arg;
 import :TypeTraits;
+import :ArgName;
 
 // generator start here
 
-export namespace Argo {
+namespace Argo {
 
-template <ArgName Name, class Parser>
+export template <ArgName Name, class Parser>
 struct SubParser {
   static constexpr auto name = Name;
   std::reference_wrapper<Parser> parser;
   std::string_view description;
 };
 
-template <class SubParsers>
+export template <class SubParsers>
   requires(is_tuple_v<SubParsers>)
 auto MetaParse(SubParsers sub_parsers, int index, int argc,
                char** argv) -> bool {
   return std::apply(
       [&](auto&&... s) {
         std::int64_t idx = -1;
-        return (
-            ... ||
-            (idx++, idx == index && (s.parser.get().parse(argc, argv), true)));
+        return (... || (idx++, idx == index &&
+                                   (s.parser.get().parse(argc, argv), true)));
       },
       sub_parsers);
 };
 
-template <class SubParsers>
+export template <class SubParsers>
   requires(is_tuple_v<SubParsers>)
 constexpr auto ParserIndex(SubParsers sub_parsers,  //
                            std::string_view key) -> std::int64_t {

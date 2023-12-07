@@ -4,22 +4,21 @@ export module Argo:MetaChecker;
 
 import :Exceptions;
 import :Initializer;
-import :NArgs;
 import :Arg;
 import :std_module;
 
 // generator start here
 
-export namespace Argo {
+namespace Argo {
 
 /*!
  * Checking if the given argument is required key, cycle through all the
  * tuple argument.
  */
-template <class Args>
+export template <class Args>
 struct RequiredChecker {};
 
-template <ArgType... Args>
+export template <ArgType... Args>
 struct RequiredChecker<std::tuple<Args...>> {
   static auto check() -> std::vector<std::string_view> {
     auto required_keys = std::vector<std::string_view>();
@@ -40,10 +39,10 @@ struct RequiredChecker<std::tuple<Args...>> {
  * Checking if the given argument is assigned, cycle through all the
  * tuple argument.
  */
-template <class Args>
+export template <class Args>
 struct AssignChecker {};
 
-template <ArgType... Args>
+export template <ArgType... Args>
 struct AssignChecker<std::tuple<Args...>> {
   static auto check() -> std::vector<std::string_view> {
     auto assigned_keys = std::vector<std::string_view>();
