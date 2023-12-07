@@ -291,6 +291,10 @@ FetchContent_MakeAvailable(Argo)
 target_link_libraries(YOUR_TARGET PRIVATE Argo)
 ```
 
+### Single Header (experimental)
+You can use this library as a single header file.
+Just copy and paste `include/Argo.hh` into your library.
+
 ## Roadmap
 - [x] Boolean Flag support
 - [x] Support for short option
