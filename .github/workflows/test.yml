@@ -29,6 +29,11 @@ jobs:
           brew install llvm
         continue-on-error: true
 
+      - name: Install cmake
+        run: |
+          brew install cmake
+        continue-on-error: true
+
       - name: Install googletest
         run: |
           brew install googletest
