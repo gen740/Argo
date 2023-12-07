@@ -13,18 +13,17 @@ jobs:
   tests:
     runs-on: macos-latest
     steps:
-      - name: Checkout
-        uses: actions/checkout@v3
-
       - name: Upgrade homebrew
         run: |
           brew update
-          brew unlink node@18 || echo "nod@18 no such keg"
           brew unlink python@3.11 || echo "python@3.11 no such keg"
-          brew install node@18 --force
-          rm /usr/local/bin/2to3
+          brew unlink node@18 || echo "nod@18 no such keg"
           brew install python@3.11 --force
+          brew install node@18 --force
           brew upgrade
+
+      - name: Checkout
+        uses: actions/checkout@v3
 
       - name: Install llvm
         run: |
