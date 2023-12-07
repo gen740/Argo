@@ -22,8 +22,8 @@ export enum class RequiredFlag : bool {
   required = true,
 };
 
-export using RequiredFlag::required;  // NOLINT(misc-unused-using-decls)
-export using RequiredFlag::optional;  // NOLINT(misc-unused-using-decls)
+export using RequiredFlag::required;
+export using RequiredFlag::optional;
 
 /*!
  * Helper function to create nargs
@@ -46,8 +46,9 @@ struct ParserInfo {
   std::optional<std::string_view> positional_argument_help = std::nullopt;
 };
 
-export template <ParserID ID = 0, class Args = std::tuple<>, class PArg = void,
-                 class HArg = void, class SubParsers = std::tuple<>>
+export template <ParserID ID = 0, class Args = std::tuple<>,
+                 class PArg = std::tuple<>, class HArg = void,
+                 class SubParsers = std::tuple<>>
   requires(is_tuple_v<Args> && is_tuple_v<SubParsers>)
 class Parser {
  private:
@@ -126,13 +127,13 @@ class Parser {
         return arg2;
       } else {
         if constexpr (is_array_v<Type>) {
-          return NArgs(static_cast<int>(array_len_v<Type>));
+          return NArgs{static_cast<int>(array_len_v<Type>)};
         }
         if constexpr (is_vector_v<Type>) {
-          return NArgs('*');
+          return NArgs{'*'};
         }
         if constexpr (is_tuple_v<Type>) {
-          return NArgs(static_cast<int>(std::tuple_size_v<Type>));
+          return NArgs{static_cast<int>(std::tuple_size_v<Type>)};
         }
         return NArgs('?');
       }
@@ -154,7 +155,7 @@ class Parser {
         return false;
       }
     }();
-    if constexpr (!std::is_same_v<PArg, void>) {
+    if constexpr (!std::is_same_v<PArg, std::tuple<>>) {
       static_assert(!(std::string_view(Name) == std::string_view(PArg::name)),
                     "Duplicated name");
     }
@@ -197,7 +198,7 @@ class Parser {
   template <ArgName Name, class Type, auto arg1 = Unspecified(),
             auto arg2 = Unspecified(), class... T>
   auto addPositionalArg(T... args) {
-    static_assert(std::is_same_v<PArg, void>,
+    static_assert(std::is_same_v<PArg, std::tuple<>>,
                   "Positional argument cannot set more than one");
     static_assert(Name.shortName == '\0',
                   "Positional argment cannot have short name");
@@ -208,7 +209,7 @@ class Parser {
 
   template <ArgName Name, class... T>
   auto addFlag(T... args) {
-    if constexpr (!std::is_same_v<PArg, void>) {
+    if constexpr (!std::is_same_v<PArg, std::tuple<>>) {
       static_assert(!(std::string_view(Name) == std::string_view(PArg::name)),
                     "Duplicated name");
     }
@@ -255,7 +256,7 @@ class Parser {
     if (!this->parsed_) {
       throw ParseError("Parser did not parse argument, call parse first");
     }
-    if constexpr (!std::is_same_v<PArg, void>) {
+    if constexpr (!std::is_same_v<PArg, std::tuple<>>) {
       if constexpr (std::string_view(Name) == std::string_view(PArg::name)) {
         return PArg::value;
       } else {
@@ -290,7 +291,7 @@ class Parser {
     if (!this->parsed_) {
       throw ParseError("Parser did not parse argument, call parse first");
     }
-    if constexpr (!std::is_same_v<PArg, void>) {
+    if constexpr (!std::is_same_v<PArg, std::tuple<>>) {
       if constexpr (std::string_view(Name) == std::string_view(PArg::name)) {
         return PArg::assigned;
       } else {
@@ -343,9 +344,9 @@ class Parser {
 
  public:
   auto parse(int argc, char* argv[]) -> void;
-  std::string formatHelp(bool no_color = false) const;
+  [[nodiscard]] std::string formatHelp(bool no_color = false) const;
 
-  operator bool() const {
+  explicit operator bool() const {
     return this->parsed_;
   }
 };

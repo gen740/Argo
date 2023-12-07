@@ -53,25 +53,24 @@ constexpr auto tupleAssign(std::tuple<T...>& t, std::span<std::string_view> v,
    ...);
 }
 
-template <class Arguments, class PositionalArgument>
+template <class Arguments, class PArg>
 struct Assigner {
   template <ArgType Head>
   static constexpr auto assignOneArg(
       std::string_view key, std::span<std::string_view> values) -> bool {
     if constexpr (std::derived_from<Head, FlagArgTag>) {
       if (!values.empty()) {
-        if constexpr (std::is_same_v<PositionalArgument, void>) {
+        if constexpr (std::is_same_v<PArg, std::tuple<>>) {
           throw Argo::InvalidArgument(
               std::format("Flag {} can not take value", key));
         } else {
-          if (PositionalArgument::assigned) {
+          if (PArg::assigned) {
             throw Argo::InvalidArgument(
                 std::format("Flag {} can not take value", key));
           }
           Head::value = true;
           Head::assigned = true;
-          assignOneArg<PositionalArgument>(
-              std::string_view(PositionalArgument::name), values);
+          assignOneArg<PArg>(std::string_view(PArg::name), values);
           return true;
         }
       }
@@ -99,21 +98,20 @@ struct Assigner {
           }
           return true;
         }
-        if constexpr (std::is_same_v<PositionalArgument, void>) {
+        if constexpr (std::is_same_v<PArg, std::tuple<>>) {
           throw Argo::InvalidArgument(
               std::format("Argument {} cannot take more than one value got {}",
                           key,
                           values.size()));
         } else {
-          if (PositionalArgument::assigned) {
+          if (PArg::assigned) {
             throw Argo::InvalidArgument(std::format(
                 "Argument {} cannot take more than one value got {}",
                 key,
                 values.size()));
           }
           assignOneArg<Head>(key, values.subspan(0, 1));
-          assignOneArg<PositionalArgument>(
-              std::string_view(PositionalArgument::name), values.subspan(1));
+          assignOneArg<PArg>(std::string_view(PArg::name), values.subspan(1));
           return true;
         }
       } else if constexpr (Head::nargs.getNargsChar() == '*') {
@@ -156,21 +154,20 @@ struct Assigner {
               "Argument {} should take exactly one value but zero", key));
         }
         if (values.size() > 1) {
-          if constexpr (std::is_same_v<PositionalArgument, void>) {
+          if constexpr (std::is_same_v<PArg, std::tuple<>>) {
             throw Argo::InvalidArgument(
                 std::format("Argument {} should take exactly one value but {}",
                             key,
                             values.size()));
           } else {
-            if (PositionalArgument::assigned) {
+            if (PArg::assigned) {
               throw Argo::InvalidArgument(std::format(
                   "Argument {} should take exactly one value but {}",
                   key,
                   values.size()));
             }
             assignOneArg<Head>(key, values.subspan(0, 1));
-            assignOneArg<PositionalArgument>(
-                std::string_view(PositionalArgument::name), values.subspan(1));
+            assignOneArg<PArg>(std::string_view(PArg::name), values.subspan(1));
             return true;
           }
         }
@@ -217,27 +214,25 @@ struct Assigner {
                           key,
                           Head::nargs.getNargs(),
                           values.size()));
+        }
+        if constexpr (std::is_same_v<PArg, std::tuple<>>) {
+          throw Argo::InvalidArgument(
+              std::format("Argument {} should take exactly {} value but {}",
+                          key,
+                          Head::nargs.getNargs(),
+                          values.size()));
         } else {
-          if constexpr (std::is_same_v<PositionalArgument, void>) {
+          if (PArg::assigned) {
             throw Argo::InvalidArgument(
                 std::format("Argument {} should take exactly {} value but {}",
                             key,
                             Head::nargs.getNargs(),
                             values.size()));
-          } else {
-            if (PositionalArgument::assigned) {
-              throw Argo::InvalidArgument(
-                  std::format("Argument {} should take exactly {} value but {}",
-                              key,
-                              Head::nargs.getNargs(),
-                              values.size()));
-            }
-            assignOneArg<Head>(key, values.subspan(0, Head::nargs.getNargs()));
-            assignOneArg<PositionalArgument>(
-                std::string_view(PositionalArgument::name),
-                values.subspan(Head::nargs.getNargs()));
-            return true;
           }
+          assignOneArg<Head>(key, values.subspan(0, Head::nargs.getNargs()));
+          assignOneArg<PArg>(std::string_view(PArg::name),
+                             values.subspan(Head::nargs.getNargs()));
+          return true;
         }
       }
     }
@@ -277,12 +272,11 @@ struct Assigner {
 
   static auto assign(std::string_view key, std::span<std::string_view> values) {
     if (key.empty()) {
-      if constexpr (!std::is_same_v<PositionalArgument, void>) {
-        if (PositionalArgument::assigned) {
+      if constexpr (!std::is_same_v<PArg, std::tuple<>>) {
+        if (PArg::assigned) {
           throw InvalidArgument(std::format("Duplicated positional argument"));
         }
-        assignOneArg<PositionalArgument>(
-            std::string_view(PositionalArgument::name), values);
+        assignOneArg<PArg>(std::string_view(PArg::name), values);
         return;
       } else {
         throw Argo::InvalidArgument(

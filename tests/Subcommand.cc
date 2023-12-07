@@ -9,7 +9,9 @@ TEST(ArgoTest, SubCommands) {
   {
     auto [argc, argv] = createArgcArgv(  //
         "./main",                        //
-        "cmd1", "--arg1", "42"           // int
+        "cmd1",
+        "--arg1",
+        "42"  // int
     );
 
     auto parser1 = Argo::Parser<"SubCommands1_cmd1">()  //
@@ -38,7 +40,10 @@ TEST(ArgoTest, SubCommands) {
   {
     auto [argc, argv] = createArgcArgv(  //
         "./main",                        //
-        "cmd1", "cmd3", "--arg1", "42"   // int
+        "cmd1",
+        "cmd3",
+        "--arg1",
+        "42"  // int
     );
 
     auto parser1 = Argo::Parser<"SubCommands2_cmd1">()  //
@@ -69,6 +74,12 @@ TEST(ArgoTest, SubCommands) {
 
     EXPECT_EQ(parser1.getArg<"arg1">(), 42);
     EXPECT_EQ(parser1.getArg<"arg2">(), 123);
+
+    if (parser1) {
+      EXPECT_TRUE(parser1);
+    } else {
+      EXPECT_TRUE(false);
+    }
 
     EXPECT_TRUE(parser1);
     EXPECT_FALSE(parser2);

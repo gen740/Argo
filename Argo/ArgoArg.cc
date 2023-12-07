@@ -16,8 +16,10 @@ struct ParserID {
   int idInt = 0;
   char idName[N];
 
+  // NOLINTNEXTLINE(google-explicit-constructor)
   constexpr ParserID(int id) : idInt(id){};
 
+  // NOLINTNEXTLINE(google-explicit-constructor)
   constexpr ParserID(const char (&id)[N + 1]) {
     for (std::size_t i = 0; i < N; i++) {
       this->idName[i] = id[i];
@@ -40,6 +42,7 @@ struct ArgName : ArgNameTag {
 
   explicit ArgName() = default;
 
+  // NOLINTNEXTLINE(google-explicit-constructor)
   constexpr ArgName(const char (&lhs)[N + 1]) {
     for (std::size_t i = 0; i < N; i++) {
       if (lhs[i] == ',') {
@@ -100,21 +103,21 @@ struct ArgName : ArgNameTag {
 
     if (MV != NV) {
       return false;
-    } else {
-      for (std::size_t i = 0; i < NV; i++) {
-        if ((*this)[i] != lhs[i]) {
-          return false;
-        }
-      }
-      return true;
     }
+    for (std::size_t i = 0; i < NV; i++) {
+      if ((*this)[i] != lhs[i]) {
+        return false;
+      }
+    }
+    return true;
   }
 
+  // NOLINTNEXTLINE(google-explicit-constructor)
   constexpr operator std::string_view() const {
     return std::string_view(this->begin(), this->end());
   }
 
-  constexpr auto containsInvalidChar() const -> bool {
+  [[nodiscard]] constexpr auto containsInvalidChar() const -> bool {
     auto invalid_chars = std::string_view(" \\\"'<>&|$[]");
     if (invalid_chars.contains(this->shortName)) {
       return true;
@@ -127,7 +130,7 @@ struct ArgName : ArgNameTag {
     return false;
   }
 
-  constexpr auto hasValidNameLength() const -> bool {
+  [[nodiscard]] constexpr auto hasValidNameLength() const -> bool {
     if (this->shortName == '\0') {
       return true;
     }
@@ -207,7 +210,7 @@ constexpr std::string get_type_name() {
       throw std::runtime_error("Error");
     }
     for (std::size_t i = 0; i < TNArgs.nargs; i++) {
-      ret = ret + base_type_name;
+      ret += base_type_name;
       ret.push_back(',');
     }
     ret.pop_back();
@@ -298,7 +301,7 @@ struct FlagArg : FlagArgTag, ArgBase<bool, Name, false, ID> {
 
   inline static constexpr NArgs nargs = NArgs(-1);
   inline static std::function<void()> callback = nullptr;
-  inline static std::string typeName = "";
+  inline static std::string typeName;
 };
 
 struct HelpArgTag {};
@@ -316,7 +319,7 @@ struct HelpArg : HelpArgTag, FlagArgTag, ArgBase<bool, Name, true, ID> {
 
   inline static constexpr NArgs nargs = NArgs(-1);
   inline static std::function<void()> callback = nullptr;
-  inline static std::string typeName = "";
+  inline static std::string typeName;
 };
 
 }  // namespace Argo

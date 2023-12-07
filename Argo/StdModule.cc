@@ -21,123 +21,124 @@ module;
 #include <utility>
 #include <vector>
 
-#pragma clang diagnostic push
 export module Argo:std_module;
 
+// NOLINTBEGIN(bugprone-reserved-identifier)
 export {
-  using ::__stderrp;  // NOLINT(misc-unused-using-decls)
-  using ::isatty;     // NOLINT(misc-unused-using-decls)
+  using ::__stderrp;
+  using ::isatty;
 }
 
 export namespace std {
-using ::std::exit;  // NOLINT(misc-unused-using-decls)
+using ::std::exit;
 
 // utility
-using ::std::get;          // NOLINT(misc-unused-using-decls)
-using ::std::operator==;   // NOLINT(misc-unused-using-decls)
-using ::std::operator+;    // NOLINT(misc-unused-using-decls)
-using ::std::begin;        // NOLINT(misc-unused-using-decls)
-using ::std::end;          // NOLINT(misc-unused-using-decls)
-using ::std::exchange;     // NOLINT(misc-unused-using-decls)
-using ::std::forward;      // NOLINT(misc-unused-using-decls)
-using ::std::move;         // NOLINT(misc-unused-using-decls)
-using ::std::unreachable;  // NOLINT(misc-unused-using-decls)
+using ::std::get;
+using ::std::operator==;
+using ::std::operator+;
+using ::std::begin;
+using ::std::end;
+using ::std::exchange;
+using ::std::forward;
+using ::std::move;
+using ::std::unreachable;
 
 // cstdint
-using ::std::int64_t;  // NOLINT(misc-unused-using-decls)
-using ::std::size_t;   // NOLINT(misc-unused-using-decls)
+using ::std::int64_t;
+using ::std::size_t;
 
 // string
-using ::std::stod;                          // NOLINT(misc-unused-using-decls)
-using ::std::stof;                          // NOLINT(misc-unused-using-decls)
-using ::std::stoi;                          // NOLINT(misc-unused-using-decls)
-using ::std::string;                        // NOLINT(misc-unused-using-decls)
-using ::std::string_literals::operator""s;  // NOLINT(misc-unused-using-decls)
+using ::std::stod;
+using ::std::stof;
+using ::std::stoi;
+using ::std::string;
+using ::std::string_literals::operator""s;
 
 // string_view
-using ::std::string_view;  // NOLINT(misc-unused-using-decls)
-using ::std::string_view_literals::
-operator""sv;  // NOLINT(misc-unused-using-decls)
+using ::std::string_view;
+using ::std::string_view_literals::operator""sv;
 
 // charconv
-using ::std::chars_format;  // NOLINT(misc-unused-using-decls)
-using ::std::from_chars;    // NOLINT(misc-unused-using-decls)
+using ::std::chars_format;
+using ::std::from_chars;
 
 // cstring
-using ::std::strcmp;  // NOLINT(misc-unused-using-decls)
-using ::std::strlen;  // NOLINT(misc-unused-using-decls)
+using ::std::strcmp;
+using ::std::strlen;
 
 // print
-using ::std::format;   // NOLINT(misc-unused-using-decls)
-using ::std::print;    // NOLINT(misc-unused-using-decls)
-using ::std::println;  // NOLINT(misc-unused-using-decls)
+using ::std::format;
+using ::std::print;
+using ::std::println;
 
 // array
-using ::std::array;   // NOLINT(misc-unused-using-decls)
-using ::std::vector;  // NOLINT(misc-unused-using-decls)
+using ::std::array;
+using ::std::vector;
 
 // span
-using ::std::span;  // NOLINT(misc-unused-using-decls)
+using ::std::span;
 
 // tuple
-using ::std::apply;            // NOLINT(misc-unused-using-decls)
-using ::std::make_tuple;       // NOLINT(misc-unused-using-decls)
-using ::std::tuple;            // NOLINT(misc-unused-using-decls)
-using ::std::tuple_cat;        // NOLINT(misc-unused-using-decls)
-using ::std::tuple_element;    // NOLINT(misc-unused-using-decls)
-using ::std::tuple_element_t;  // NOLINT(misc-unused-using-decls)
-using ::std::tuple_size;       // NOLINT(misc-unused-using-decls)
-using ::std::tuple_size_v;     // NOLINT(misc-unused-using-decls)
+using ::std::apply;
+using ::std::make_tuple;
+using ::std::tuple;
+using ::std::tuple_cat;
+using ::std::tuple_element;
+using ::std::tuple_element_t;
+using ::std::tuple_size;
+using ::std::tuple_size_v;
 
 // type_traits
-using ::std::conditional;          // NOLINT(misc-unused-using-decls)
-using ::std::conditional_t;        // NOLINT(misc-unused-using-decls)
-using ::std::declval;              // NOLINT(misc-unused-using-decls)
-using ::std::enable_if;            // NOLINT(misc-unused-using-decls)
-using ::std::enable_if_t;          // NOLINT(misc-unused-using-decls)
-using ::std::false_type;           // NOLINT(misc-unused-using-decls)
-using ::std::index_sequence;       // NOLINT(misc-unused-using-decls)
-using ::std::is_arithmetic_v;      // NOLINT(misc-unused-using-decls)
-using ::std::is_convertible;       // NOLINT(misc-unused-using-decls)
-using ::std::is_convertible_v;     // NOLINT(misc-unused-using-decls)
-using ::std::is_floating_point_v;  // NOLINT(misc-unused-using-decls)
-using ::std::is_integral_v;        // NOLINT(misc-unused-using-decls)
-using ::std::is_invocable;         // NOLINT(misc-unused-using-decls)
-using ::std::is_invocable_v;       // NOLINT(misc-unused-using-decls)
-using ::std::is_same_v;            // NOLINT(misc-unused-using-decls)
-using ::std::make_index_sequence;  // NOLINT(misc-unused-using-decls)
-using ::std::remove_cv_t;          // NOLINT(misc-unused-using-decls)
-using ::std::remove_cvref;         // NOLINT(misc-unused-using-decls)
-using ::std::remove_cvref_t;       // NOLINT(misc-unused-using-decls)
-using ::std::remove_pointer;       // NOLINT(misc-unused-using-decls)
-using ::std::remove_pointer_t;     // NOLINT(misc-unused-using-decls)
-using ::std::true_type;            // NOLINT(misc-unused-using-decls)
-using ::std::type_identity;        // NOLINT(misc-unused-using-decls)
-using ::std::type_identity_t;      // NOLINT(misc-unused-using-decls)
-using ::std::void_t;               // NOLINT(misc-unused-using-decls)
+using ::std::conditional;
+using ::std::conditional_t;
+using ::std::declval;
+using ::std::enable_if;
+using ::std::enable_if_t;
+using ::std::false_type;
+using ::std::index_sequence;
+using ::std::is_arithmetic_v;
+using ::std::is_convertible;
+using ::std::is_convertible_v;
+using ::std::is_floating_point_v;
+using ::std::is_integral_v;
+using ::std::is_invocable;
+using ::std::is_invocable_v;
+using ::std::is_same_v;
+using ::std::make_index_sequence;
+using ::std::remove_cv_t;
+using ::std::remove_cvref;
+using ::std::remove_cvref_t;
+using ::std::remove_pointer;
+using ::std::remove_pointer_t;
+using ::std::true_type;
+using ::std::type_identity;
+using ::std::type_identity_t;
+using ::std::void_t;
 
 // concept
-using ::std::common_with;   // NOLINT(misc-unused-using-decls)
-using ::std::derived_from;  // NOLINT(misc-unused-using-decls)
-using ::std::same_as;       // NOLINT(misc-unused-using-decls)
+using ::std::common_with;
+using ::std::derived_from;
+using ::std::same_as;
 
 // exception/stdexcept
-using ::std::exception;         // NOLINT(misc-unused-using-decls)
-using ::std::invalid_argument;  // NOLINT(misc-unused-using-decls)
-using ::std::runtime_error;     // NOLINT(misc-unused-using-decls)
+using ::std::exception;
+using ::std::invalid_argument;
+using ::std::runtime_error;
 
 // memory
-using ::std::make_unique;  // NOLINT(misc-unused-using-decls)
-using ::std::unique_ptr;   // NOLINT(misc-unused-using-decls)
+using ::std::make_unique;
+using ::std::unique_ptr;
 
 // functional
-using ::std::function;           // NOLINT(misc-unused-using-decls)
-using ::std::ref;                // NOLINT(misc-unused-using-decls)
-using ::std::reference_wrapper;  // NOLINT(misc-unused-using-decls)
+using ::std::function;
+using ::std::ref;
+using ::std::reference_wrapper;
 
 // optional
-using ::std::nullopt;    // NOLINT(misc-unused-using-decls)
-using ::std::nullopt_t;  // NOLINT(misc-unused-using-decls)
-using ::std::optional;   // NOLINT(misc-unused-using-decls)
+using ::std::nullopt;
+using ::std::nullopt_t;
+using ::std::optional;
+
+// NOLINTEND(bugprone-reserved-identifier)
 
 }  // namespace std

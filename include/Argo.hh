@@ -3,8 +3,8 @@
 #include <unistd.h>
 
 #include <array>
-#include <charconv>
 #include <cassert>
+#include <charconv>
 #include <concepts>
 #include <cstring>
 #include <format>
@@ -19,7 +19,6 @@
 #include <tuple>
 #include <utility>
 #include <vector>
-
 
 namespace Argo {
 
@@ -47,7 +46,6 @@ struct NArgs {
 };
 
 };  // namespace Argo
-
 
 namespace Argo {
 
@@ -93,7 +91,6 @@ class ValidationError : public InvalidArgument {
 };
 
 }  // namespace Argo
-
 
 namespace Argo {
 
@@ -177,7 +174,6 @@ template <class... T>
 using tuple_append_t = typename tuple_append<T...>::type;
 
 };  // namespace Argo
-
 
 namespace Argo::Validation {
 
@@ -310,23 +306,22 @@ Range(T min, T max) -> Range<T>;
 }  // namespace Argo::Validation
 
 template <std::derived_from<Argo::Validation::ValidationBase> Lhs,
-                 std::derived_from<Argo::Validation::ValidationBase> Rhs>
+          std::derived_from<Argo::Validation::ValidationBase> Rhs>
 auto operator&(Lhs lhs, Rhs rhs) {
   return Argo::Validation::AndValidation(lhs, rhs);
 }
 
 template <std::derived_from<Argo::Validation::ValidationBase> Lhs,
-                 std::derived_from<Argo::Validation::ValidationBase> Rhs>
+          std::derived_from<Argo::Validation::ValidationBase> Rhs>
 auto operator|(Lhs lhs, Rhs rhs) {
   return Argo::Validation::OrValidation(lhs, rhs);
 }
 
 template <std::derived_from<Argo::Validation::ValidationBase> Lhs,
-                 std::derived_from<Argo::Validation::ValidationBase> Rhs>
+          std::derived_from<Argo::Validation::ValidationBase> Rhs>
 auto operator!(Rhs rhs) {
   return Argo::Validation::InvertValidation(rhs);
 }
-
 
 namespace Argo {
 
@@ -640,7 +635,6 @@ struct HelpArg : HelpArgTag, FlagArgTag, ArgBase<bool, Name, true, ID> {
 
 }  // namespace Argo
 
-
 namespace Argo {
 
 struct ExplicitDefaultValueTag {};
@@ -745,7 +739,6 @@ struct FlagArgInitializer {
 
 };  // namespace Argo
 
-
 namespace Argo {
 
 struct ArgInfo {
@@ -796,7 +789,6 @@ auto SubParserInfo(T subparsers) {
 };
 
 }  // namespace Argo
-
 
 namespace Argo {
 
@@ -864,7 +856,6 @@ struct SearchIndexFromShortName<std::tuple<Head, Tails...>, T, Index> {
 };
 
 };  // namespace Argo
-
 
 namespace Argo {
 
@@ -1170,7 +1161,6 @@ auto ValueReset() {
 
 };  // namespace Argo
 
-
 namespace Argo {
 
 /*!
@@ -1223,7 +1213,6 @@ struct AssignChecker<std::tuple<Args...>> {
 
 }  // namespace Argo
 
-
 namespace Argo {
 
 template <ArgName Name, class Parser>
@@ -1262,7 +1251,6 @@ constexpr auto ParserIndex(SubParsers sub_parsers,  //
 
 }  // namespace Argo
 
-
 namespace Argo {
 
 struct Unspecified {};
@@ -1272,8 +1260,8 @@ enum class RequiredFlag : bool {
   required = true,
 };
 
-using RequiredFlag::required;  // NOLINT(misc-unused-using-decls)
 using RequiredFlag::optional;  // NOLINT(misc-unused-using-decls)
+using RequiredFlag::required;  // NOLINT(misc-unused-using-decls)
 
 /*!
  * Helper function to create nargs
@@ -1296,8 +1284,8 @@ struct ParserInfo {
   std::optional<std::string_view> positional_argument_help = std::nullopt;
 };
 
-template <ParserID ID = 0, class Args = std::tuple<>, class PArg = void,
-                 class HArg = void, class SubParsers = std::tuple<>>
+template <ParserID ID = 0, class Args = std::tuple<>, class PArg = std::tuple<>,
+          class HArg = void, class SubParsers = std::tuple<>>
   requires(is_tuple_v<Args> && is_tuple_v<SubParsers>)
 class Parser {
  private:
@@ -1404,7 +1392,7 @@ class Parser {
         return false;
       }
     }();
-    if constexpr (!std::is_same_v<PArg, void>) {
+    if constexpr (!std::is_same_v<PArg, std::tuple<>>) {
       static_assert(!(std::string_view(Name) == std::string_view(PArg::name)),
                     "Duplicated name");
     }
@@ -1447,7 +1435,7 @@ class Parser {
   template <ArgName Name, class Type, auto arg1 = Unspecified(),
             auto arg2 = Unspecified(), class... T>
   auto addPositionalArg(T... args) {
-    static_assert(std::is_same_v<PArg, void>,
+    static_assert(std::is_same_v<PArg, std::tuple<>>,
                   "Positional argument cannot set more than one");
     static_assert(Name.shortName == '\0',
                   "Positional argment cannot have short name");
@@ -1458,7 +1446,7 @@ class Parser {
 
   template <ArgName Name, class... T>
   auto addFlag(T... args) {
-    if constexpr (!std::is_same_v<PArg, void>) {
+    if constexpr (!std::is_same_v<PArg, std::tuple<>>) {
       static_assert(!(std::string_view(Name) == std::string_view(PArg::name)),
                     "Duplicated name");
     }
@@ -1505,7 +1493,7 @@ class Parser {
     if (!this->parsed_) {
       throw ParseError("Parser did not parse argument, call parse first");
     }
-    if constexpr (!std::is_same_v<PArg, void>) {
+    if constexpr (!std::is_same_v<PArg, std::tuple<>>) {
       if constexpr (std::string_view(Name) == std::string_view(PArg::name)) {
         return PArg::value;
       } else {
@@ -1540,7 +1528,7 @@ class Parser {
     if (!this->parsed_) {
       throw ParseError("Parser did not parse argument, call parse first");
     }
-    if constexpr (!std::is_same_v<PArg, void>) {
+    if constexpr (!std::is_same_v<PArg, std::tuple<>>) {
       if constexpr (std::string_view(Name) == std::string_view(PArg::name)) {
         return PArg::assigned;
       } else {
@@ -1601,7 +1589,6 @@ class Parser {
 };
 
 }  // namespace Argo
-
 
 namespace Argo {
 
@@ -1701,7 +1688,7 @@ auto Parser<ID, Args, PArg, HArg, SubParsers>::parse(int argc,
           short_keys.clear();
           values.clear();
         } else if (!values.empty()) {
-          if constexpr (!std::is_same_v<PArg, void>) {
+          if constexpr (!std::is_same_v<PArg, std::tuple<>>) {
             this->setArg(key, values);
             values.clear();
           }
@@ -1727,7 +1714,7 @@ auto Parser<ID, Args, PArg, HArg, SubParsers>::parse(int argc,
         short_keys.clear();
         values.clear();
       } else if (!values.empty()) {
-        if constexpr (!std::is_same_v<PArg, void>) {
+        if constexpr (!std::is_same_v<PArg, std::tuple<>>) {
           this->setArg(key, values);
           values.clear();
         }
@@ -1742,7 +1729,7 @@ auto Parser<ID, Args, PArg, HArg, SubParsers>::parse(int argc,
         continue;
       }
     } else {
-      if constexpr (std::is_same_v<PArg, void>) {
+      if constexpr (std::is_same_v<PArg, std::tuple<>>) {
         if (key.empty() && short_keys.empty()) {
           throw InvalidArgument(std::format("No keys specified"));
         }
@@ -1755,7 +1742,7 @@ auto Parser<ID, Args, PArg, HArg, SubParsers>::parse(int argc,
         } else if (!short_keys.empty()) {
           this->setArg(short_keys, values);
         } else {
-          if constexpr (std::is_same_v<PArg, void>) {
+          if constexpr (std::is_same_v<PArg, std::tuple<>>) {
             throw InvalidArgument(std::format("No keys specified"));
           } else {
             this->setArg(key, values);
@@ -1969,7 +1956,7 @@ auto Parser<ID, Args, PArg, HArg, SubParsers>::formatHelp(bool no_color) const
           createSubcommandSection(ansi, sub_commands)));
     }
 
-    if constexpr (!std::is_same_v<PArg, void>) {
+    if constexpr (!std::is_same_v<PArg, std::tuple<>>) {
       ret.push_back('\n');
       ret.append(ansi.getBoldUnderline() +
                  "Positional Argument:" + ansi.getReset());
@@ -1990,4 +1977,3 @@ auto Parser<ID, Args, PArg, HArg, SubParsers>::formatHelp(bool no_color) const
 }
 
 }  // namespace Argo
-

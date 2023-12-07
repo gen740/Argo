@@ -3,7 +3,6 @@ cmake_minimum_required(VERSION 3.28)
 project(Argo CXX)
 
 set(CMAKE_CXX_STANDARD 23)
-add_compile_options(-isystem /Users/gen/.local/modules/c++/v1)
 
 if(${CMAKE_SOURCE_DIR} STREQUAL ${CMAKE_CURRENT_LIST_DIR})
   # Setting Build Type
@@ -13,12 +12,15 @@ if(${CMAKE_SOURCE_DIR} STREQUAL ${CMAKE_CURRENT_LIST_DIR})
   # set release flag
   set(CMAKE_CXX_FLAGS_RELEASE "-O3 -ffast-math")
   set(CMAKE_CXX_FLAGS_DEBUG "-g -O0")
+  set(CMAKE_CXX_EXTENSIONS OFF)
   set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
   message(STATUS "Build Type: ${CMAKE_BUILD_TYPE}")
 
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra -Werror")
   set(CMAKE_CXX_FLAGS
-      "-Wall -Wextra -Werror -Wnon-virtual-dtor -Wfloat-equal -Winline")
+      "${CMAKE_CXX_FLAGS} -Wnon-virtual-dtor -Wfloat-equal -Winline")
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fdiagnostics-color=always")
 
 endif()
 
@@ -28,13 +30,13 @@ file(GLOB ARGO_LIBRARY_SOURCES ${CMAKE_CURRENT_LIST_DIR}/Argo/*.cc)
 
 target_sources(Argo PUBLIC FILE_SET CXX_MODULES FILES ${ARGO_LIBRARY_SOURCES})
 target_compile_features(Argo PUBLIC cxx_std_23)
-export(TARGETS Argo FILE Argo-Config.cmake)
 
 unset(ARGO_LIBRARY_SOURCES)
 
 if(${CMAKE_SOURCE_DIR} STREQUAL ${CMAKE_CURRENT_LIST_DIR})
   add_executable(main ${CMAKE_CURRENT_LIST_DIR}/main.cc)
   target_link_libraries(main Argo)
+
   if(${ARGO_TESTS_ENABLE})
     set(CMAKE_CXX_FLAGS_RELEASE "")
     set(CMAKE_CXX_FLAGS_DEBUG "")
@@ -48,7 +50,7 @@ if(${CMAKE_SOURCE_DIR} STREQUAL ${CMAKE_CURRENT_LIST_DIR})
                           Argo)
     set_target_properties(test-argo-debug PROPERTIES CXX_STANDARD 23)
     target_compile_options(test-argo-debug PRIVATE -Wno-writable-strings
-                                                   -DDEBUG_BUILD -O0)
+                                                   -DDEBUG_BUILD -O1 -g)
 
     # Release Target
     add_executable(test-argo-release ${ARGO_TEST_SOURCES})

@@ -9,7 +9,10 @@ TEST(ArgoTest, STLTypes) {
   {
     auto [argc, argv] = createArgcArgv(  //
         "./main",                        //
-        "--arg1", "42", "43", "44"       // int
+        "--arg1",
+        "42",
+        "43",
+        "44"  // int
     );
     auto argo = Argo::Parser<"STLTypes_array">();
     auto parser = argo.addArg<"arg1", std::array<int, 3>>();
@@ -17,9 +20,13 @@ TEST(ArgoTest, STLTypes) {
     EXPECT_THAT(parser.getArg<"arg1">(), testing::ElementsAre(42, 43, 44));
   }
   {
-    auto [argc, argv] = createArgcArgv(   //
-        "./main",                         //
-        "--arg1", "42", "43", "44", "45"  // int
+    auto [argc, argv] = createArgcArgv(  //
+        "./main",                        //
+        "--arg1",
+        "42",
+        "43",
+        "44",
+        "45"  // int
     );
     auto argo = Argo::Parser<"STLTypes_vector">();
     auto parser = argo.addArg<"arg1", std::vector<int>, Argo::nargs(4)>();
@@ -28,9 +35,12 @@ TEST(ArgoTest, STLTypes) {
   }
 
   {
-    auto [argc, argv] = createArgcArgv(         //
-        "./main",                               //
-        "--arg1", "42", "43.24", "Hello,World"  // int
+    auto [argc, argv] = createArgcArgv(  //
+        "./main",                        //
+        "--arg1",
+        "42",
+        "43.24",
+        "Hello,World"  // int
     );
     auto argo = Argo::Parser<"STLTypes_tuple">();
     auto parser = argo.addArg<"arg1", std::tuple<int, double, std::string>>();

@@ -41,7 +41,6 @@ ImplementationFileExtensions:
   - cpp
   - cxx
 HeaderFilterRegex: ''
-AnalyzeTemporaryDtors: false
 FormatStyle: file
 CheckOptions:
   readability-identifier-naming.ClassMethodCase: 'camelBack'

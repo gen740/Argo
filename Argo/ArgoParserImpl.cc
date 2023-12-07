@@ -116,7 +116,7 @@ auto Parser<ID, Args, PArg, HArg, SubParsers>::parse(int argc,
           short_keys.clear();
           values.clear();
         } else if (!values.empty()) {
-          if constexpr (!std::is_same_v<PArg, void>) {
+          if constexpr (!std::is_same_v<PArg, std::tuple<>>) {
             this->setArg(key, values);
             values.clear();
           }
@@ -142,7 +142,7 @@ auto Parser<ID, Args, PArg, HArg, SubParsers>::parse(int argc,
         short_keys.clear();
         values.clear();
       } else if (!values.empty()) {
-        if constexpr (!std::is_same_v<PArg, void>) {
+        if constexpr (!std::is_same_v<PArg, std::tuple<>>) {
           this->setArg(key, values);
           values.clear();
         }
@@ -157,7 +157,7 @@ auto Parser<ID, Args, PArg, HArg, SubParsers>::parse(int argc,
         continue;
       }
     } else {
-      if constexpr (std::is_same_v<PArg, void>) {
+      if constexpr (std::is_same_v<PArg, std::tuple<>>) {
         if (key.empty() && short_keys.empty()) {
           throw InvalidArgument(std::format("No keys specified"));
         }
@@ -170,7 +170,7 @@ auto Parser<ID, Args, PArg, HArg, SubParsers>::parse(int argc,
         } else if (!short_keys.empty()) {
           this->setArg(short_keys, values);
         } else {
-          if constexpr (std::is_same_v<PArg, void>) {
+          if constexpr (std::is_same_v<PArg, std::tuple<>>) {
             throw InvalidArgument(std::format("No keys specified"));
           } else {
             this->setArg(key, values);
@@ -197,19 +197,19 @@ struct AnsiEscapeCode {
   std::string underline = "\x1B[4m";
   std::string reset = "\x1B[0m";
 
-  auto getBold() const {
+  [[nodiscard]] auto getBold() const {
     return isEnabled ? bold : "";
   }
 
-  auto getUnderline() const {
+  [[nodiscard]] auto getUnderline() const {
     return isEnabled ? underline : "";
   }
 
-  auto getReset() const {
+  [[nodiscard]] auto getReset() const {
     return isEnabled ? reset : "";
   }
 
-  auto getBoldUnderline() const {
+  [[nodiscard]] auto getBoldUnderline() const {
     return isEnabled ? bold + underline : "";
   }
 };
@@ -349,7 +349,7 @@ auto Parser<ID, Args, PArg, HArg, SubParsers>::formatHelp(bool no_color) const
     -> std::string {
   std::string ret;
 
-  AnsiEscapeCode ansi(::isatty(1) and !no_color);
+  AnsiEscapeCode ansi((::isatty(1) != 0) and !no_color);
 
   assert(this->info_);  // this->info_ cannot be nullptr
 
@@ -384,7 +384,7 @@ auto Parser<ID, Args, PArg, HArg, SubParsers>::formatHelp(bool no_color) const
           createSubcommandSection(ansi, sub_commands)));
     }
 
-    if constexpr (!std::is_same_v<PArg, void>) {
+    if constexpr (!std::is_same_v<PArg, std::tuple<>>) {
       ret.push_back('\n');
       ret.append(ansi.getBoldUnderline() +
                  "Positional Argument:" + ansi.getReset());

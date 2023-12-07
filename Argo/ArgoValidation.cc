@@ -82,7 +82,7 @@ struct InvertValidation : ValidationBase {
   Rhs rhs_;
 
  public:
-  InvertValidation(Rhs rhs) : rhs_(rhs){};
+  explicit InvertValidation(Rhs rhs) : rhs_(rhs){};
 
   template <class U>
   auto isValid(const U& value,
