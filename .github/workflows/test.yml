@@ -22,6 +22,7 @@ jobs:
           brew unlink node@18 || echo "nod@18 no such keg"
           brew unlink python@3.11 || echo "python@3.11 no such keg"
           brew install node@18 --force
+          rm /usr/local/bin/2to3
           brew install python@3.11 --force
           brew upgrade
 
