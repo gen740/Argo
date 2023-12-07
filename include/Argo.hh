@@ -6,7 +6,6 @@
 #include <charconv>
 #include <cassert>
 #include <concepts>
-#include <cstring>
 #include <format>
 #include <functional>
 #include <memory>
@@ -19,34 +18,6 @@
 #include <tuple>
 #include <utility>
 #include <vector>
-
-
-namespace Argo {
-
-/*!
- * (default)?  : If value specified use it else use default -> ValueType
- *          int: Exactly (n > 1)                     -> std::array<ValueType, N>
- *          *  : Any number of argument if zero use default -> vector<ValueType>
- *          +  : Any number of argument except zero         -> vector<ValueType>
- */
-struct NArgs {
-  int nargs = -1;
-  char nargs_char = '\0';
-
-  constexpr explicit NArgs(char arg) : nargs_char(arg) {}
-
-  constexpr explicit NArgs(int arg) : nargs(arg) {}
-
-  [[nodiscard]] constexpr int getNargs() const {
-    return nargs;
-  }
-
-  [[nodiscard]] constexpr char getNargsChar() const {
-    return nargs_char;
-  }
-};
-
-};  // namespace Argo
 
 
 namespace Argo {
@@ -447,9 +418,6 @@ ArgName(const char (&)[N]) -> ArgName<N - 1>;
 
 namespace Argo {
 
-/*!
- * ParserID which distinguishes parsers from each other
- */
 template <std::size_t N>
 struct ParserID {
   int idInt = 0;
@@ -471,6 +439,39 @@ ParserID(int) -> ParserID<0>;
 template <std::size_t N>
 ParserID(const char (&)[N]) -> ParserID<N - 1>;
 
+/*!
+ * (default)?  : If value specified use it else use default -> ValueType
+ *          int: Exactly (n > 1)                     -> std::array<ValueType, N>
+ *          *  : Any number of argument if zero use default -> vector<ValueType>
+ *          +  : Any number of argument except zero         -> vector<ValueType>
+ */
+struct NArgs {
+  int nargs = -1;
+  char nargs_char = '\0';
+
+  constexpr explicit NArgs(char arg) : nargs_char(arg) {}
+
+  constexpr explicit NArgs(int arg) : nargs(arg) {}
+
+  [[nodiscard]] constexpr int getNargs() const {
+    return nargs;
+  }
+
+  [[nodiscard]] constexpr char getNargsChar() const {
+    return nargs_char;
+  }
+};
+
+template <typename BaseType, ArgName Name, bool Required, ParserID ID>
+struct ArgBase {
+  static constexpr auto name = Name;
+  static constexpr auto id = ID;
+  inline static bool assigned = false;
+  inline static std::string_view description;
+  inline static bool required = Required;
+  using baseType = BaseType;
+};
+
 template <class T>
 concept ArgType = requires(T& x) {
   typename T::baseType;
@@ -486,6 +487,8 @@ concept ArgType = requires(T& x) {
   std::is_same_v<decltype(T::typeName), std::string>;
   std::is_same_v<decltype(T::required), bool>;
 };
+
+struct ArgTag {};
 
 template <class T>
 constexpr std::string get_type_name_base_type() {
@@ -556,40 +559,25 @@ constexpr std::string get_type_name() {
   }
 }
 
-template <typename BaseType, ArgName Name, bool Required, ParserID ID>
-struct ArgBase {
-  static constexpr auto name = Name;
-  static constexpr auto id = ID;
-  inline static bool assigned = false;
-  inline static std::string_view description;
-  inline static bool required = Required;
-  using baseType = BaseType;
-};
-
-template <class T>
-auto getBaseType() {
-  if constexpr (is_array_v<T>) {
-    return std::remove_cvref_t<array_base_t<T>>();
-  } else if constexpr (is_vector_v<T>) {
-    return std::remove_cvref_t<vector_base_t<T>>();
-  } else {
-    return std::remove_cvref_t<T>();
-  }
-}
-
-struct ArgTag {};
-
 /*!
  * Arg type this holds argument value
  */
 template <class Type, ArgName Name, NArgs TNArgs, bool Required,
                  ParserID ID>
 struct Arg : ArgTag,
-             ArgBase<                            //
-                 decltype(getBaseType<Type>()),  //
-                 Name,                           //
-                 Required,                       //
-                 ID                              //
+             ArgBase<                          //
+                 std::conditional_t<           //
+                     is_array_v<Type>,         //
+                     array_base_t<Type>,       //
+                     std::conditional_t<       //
+                         is_vector_v<Type>,    //
+                         vector_base_t<Type>,  //
+                         Type                  //
+                         >                     //
+                     >,                        //
+                 Name,                         //
+                 Required,                     //
+                 ID                            //
                  > {
   static constexpr bool isVariadic = (TNArgs.nargs > 1) ||
                                      (TNArgs.nargs_char == '+') ||
@@ -679,10 +667,6 @@ struct Description {
   std::string_view description;
 };
 
-}  // namespace Argo
-
-namespace Argo {
-
 constexpr auto description(std::string_view desc) -> Description {
   return {.description = desc};
 }
@@ -697,7 +681,8 @@ constexpr auto implicitDefault(T value) -> ImplicitDefaultValue<T> {
   return {.implicit_default_value = value};
 }
 
-template <class Type, ArgName Name, NArgs nargs, bool Required, ParserID ID>
+template <class Type, ArgName Name, NArgs nargs, bool Required,
+                 ParserID ID>
 struct ArgInitializer {
   template <class Head, class... Tails>
   static auto init(Head head, Tails... tails) {
@@ -706,10 +691,9 @@ struct ArgInitializer {
       Arg::description = head.description;
     } else if constexpr (std::derived_from<std::remove_cvref_t<Head>,
                                            Validation::ValidationBase>) {
-      static_assert(std::is_invocable_v<decltype(head),
-                                        typename Arg::type,
-                                        std::span<std::string_view>,
-                                        std::string_view>);
+      static_assert(
+          std::is_invocable_v<decltype(head), typename Arg::type,
+                              std::span<std::string_view>, std::string_view>);
       Arg::validator = head;
     } else if constexpr (std::derived_from<std::remove_cvref_t<Head>,
                                            ImplicitDefaultValueTag>) {
@@ -717,8 +701,7 @@ struct ArgInitializer {
     } else if constexpr (std::derived_from<std::remove_cvref_t<Head>,
                                            ExplicitDefaultValueTag>) {
       Arg::value = static_cast<Type>(head.explicit_default_value);
-    } else if constexpr (std::is_invocable_v<Head,
-                                             typename Arg::type&,
+    } else if constexpr (std::is_invocable_v<Head, typename Arg::type&,
                                              std::span<std::string_view>>) {
       Arg::callback = head;
     } else {
@@ -785,9 +768,7 @@ struct HelpGenerator<std::tuple<Args...>> {
         [&ret]<class T>() {
           ret.emplace_back(
               std::string_view(Args::name).substr(0, Args::name.nameLen),
-              Args::name.shortName,
-              Args::description,
-              Args::required,
+              Args::name.shortName, Args::description, Args::required,
               Args::typeName);
         }.template operator()<Args>(),
         ...);

@@ -11,7 +11,7 @@ import :std_module;
 
 namespace Argo {
 
-export template <std::size_t N>
+export template <size_t N>
 struct ParserID {
   int idInt = 0;
   char idName[N];
@@ -21,7 +21,7 @@ struct ParserID {
 
   // NOLINTNEXTLINE(google-explicit-constructor)
   constexpr ParserID(const char (&id)[N + 1]) {
-    for (std::size_t i = 0; i < N; i++) {
+    for (size_t i = 0; i < N; i++) {
       this->idName[i] = id[i];
     }
   };
@@ -29,7 +29,7 @@ struct ParserID {
 
 export ParserID(int) -> ParserID<0>;
 
-export template <std::size_t N>
+export template <size_t N>
 ParserID(const char (&)[N]) -> ParserID<N - 1>;
 
 /*!
@@ -111,7 +111,7 @@ constexpr std::string get_type_name() {
       base_type_name = get_type_name_base_type<vector_base_t<T>>();
     } else if constexpr (is_tuple_v<T>) {
       return std::string("<") +
-             []<std::size_t... Is>(std::index_sequence<Is...>) {
+             []<size_t... Is>(std::index_sequence<Is...>) {
                std::string ret =
                    ((get_type_name_base_type<std::tuple_element_t<Is, T>>() +
                      std::string(",")) +
@@ -123,7 +123,7 @@ constexpr std::string get_type_name() {
     } else {
       throw std::runtime_error("Error");
     }
-    for (std::size_t i = 0; i < TNArgs.nargs; i++) {
+    for (size_t i = 0; i < TNArgs.nargs; i++) {
       ret += base_type_name;
       ret.push_back(',');
     }
@@ -176,19 +176,19 @@ struct Arg : ArgTag,
                                      (TNArgs.nargs_char == '+') ||
                                      (TNArgs.nargs_char == '*');
   static constexpr bool isFixedLength = (TNArgs.nargs > 1);
-  using type =                                                           //
-      std::conditional_t<                                                //
-          !isVariadic                                                    //
-              || is_array_v<Type>                                        //
-              || is_tuple_v<Type>                                        //
-              || is_vector_v<Type>,                                      //
-          Type,                                                          //
-          std::conditional_t<                                            //
-              isFixedLength,                                             //
-              std::array<Type, static_cast<std::size_t>(TNArgs.nargs)>,  //
-              std::vector<Type>                                          //
-              >                                                          //
-          >;                                                             //
+  using type =                                                      //
+      std::conditional_t<                                           //
+          !isVariadic                                               //
+              || is_array_v<Type>                                   //
+              || is_tuple_v<Type>                                   //
+              || is_vector_v<Type>,                                 //
+          Type,                                                     //
+          std::conditional_t<                                       //
+              isFixedLength,                                        //
+              std::array<Type, static_cast<size_t>(TNArgs.nargs)>,  //
+              std::vector<Type>                                     //
+              >                                                     //
+          >;                                                        //
 
   inline static type value = {};
   inline static type defaultValue = {};

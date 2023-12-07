@@ -7,7 +7,6 @@ module;
 #include <array>
 #include <charconv>
 #include <concepts>
-#include <cstring>
 #include <format>
 #include <functional>
 #include <memory>
@@ -27,6 +26,8 @@ export module Argo:std_module;
 export {
   using ::__stderrp;
   using ::isatty;
+  using ::std::int64_t;
+  using ::std::size_t;
 }
 
 export namespace std {
@@ -52,23 +53,15 @@ using ::std::stod;
 using ::std::stof;
 using ::std::stoi;
 using ::std::string;
-using ::std::string_literals::operator""s;
 
 // string_view
 using ::std::string_view;
-using ::std::string_view_literals::operator""sv;
 
 // charconv
-using ::std::chars_format;
 using ::std::from_chars;
-
-// cstring
-using ::std::strcmp;
-using ::std::strlen;
 
 // print
 using ::std::format;
-using ::std::print;
 using ::std::println;
 
 // array
@@ -112,13 +105,9 @@ using ::std::remove_pointer;
 using ::std::remove_pointer_t;
 using ::std::true_type;
 using ::std::type_identity;
-using ::std::type_identity_t;
-using ::std::void_t;
 
 // concept
-using ::std::common_with;
 using ::std::derived_from;
-using ::std::same_as;
 
 // exception/stdexcept
 using ::std::exception;
@@ -136,7 +125,6 @@ using ::std::reference_wrapper;
 
 // optional
 using ::std::nullopt;
-using ::std::nullopt_t;
 using ::std::optional;
 
 // NOLINTEND(bugprone-reserved-identifier)

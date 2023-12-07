@@ -42,12 +42,12 @@ struct GetNameFromShortName {
 export template <class Tuple, ArgName T, int Index = 0>
 struct SearchIndex;
 
-export template <ArgName T, std::size_t Index>
+export template <ArgName T, size_t Index>
 struct SearchIndex<std::tuple<>, T, Index> {
   static constexpr int value = -1;
 };
 
-export template <ArgName T, std::size_t Index, class Head, class... Tails>
+export template <ArgName T, size_t Index, class Head, class... Tails>
 struct SearchIndex<std::tuple<Head, Tails...>, T, Index> {
   static constexpr int value =
       (Head::name == T)
@@ -61,12 +61,12 @@ struct SearchIndex<std::tuple<Head, Tails...>, T, Index> {
 export template <class Tuple, char T, int Index = 0>
 struct SearchIndexFromShortName;
 
-export template <char T, std::size_t Index>
+export template <char T, size_t Index>
 struct SearchIndexFromShortName<std::tuple<>, T, Index> {
   static constexpr int value = -1;
 };
 
-export template <char T, std::size_t Index, class Head, class... Tails>
+export template <char T, size_t Index, class Head, class... Tails>
 struct SearchIndexFromShortName<std::tuple<Head, Tails...>, T, Index> {
   static constexpr int value =
       Head::name.shortName == T

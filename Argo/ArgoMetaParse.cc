@@ -23,7 +23,7 @@ auto MetaParse(SubParsers sub_parsers, int index, int argc,
                char** argv) -> bool {
   return std::apply(
       [&](auto&&... s) {
-        std::int64_t idx = -1;
+        int64_t idx = -1;
         return (... || (idx++, idx == index &&
                                    (s.parser.get().parse(argc, argv), true)));
       },
@@ -33,10 +33,10 @@ auto MetaParse(SubParsers sub_parsers, int index, int argc,
 export template <class SubParsers>
   requires(is_tuple_v<SubParsers>)
 constexpr auto ParserIndex(SubParsers sub_parsers,  //
-                           std::string_view key) -> std::int64_t {
+                           std::string_view key) -> int64_t {
   return std::apply(
       [&](auto&&... s) {
-        std::int64_t index = -1;
+        int64_t index = -1;
         bool found = (... || (index++, s.name == key));
         return found ? index : -1;
       },

@@ -13,17 +13,17 @@ export struct ArgNameTag {};
 /*!
  * ArgName which holds argument name
  */
-export template <std::size_t N>
+export template <size_t N>
 struct ArgName : ArgNameTag {
   char name[N] = {};
   char shortName = '\0';
-  std::size_t nameLen = N;
+  size_t nameLen = N;
 
   explicit ArgName() = default;
 
   // NOLINTNEXTLINE(google-explicit-constructor)
   constexpr ArgName(const char (&lhs)[N + 1]) {
-    for (std::size_t i = 0; i < N; i++) {
+    for (size_t i = 0; i < N; i++) {
       if (lhs[i] == ',') {
         nameLen = i;
         shortName = lhs[i + 1];
@@ -33,11 +33,11 @@ struct ArgName : ArgNameTag {
     }
   };
 
-  constexpr char operator[](std::size_t idx) const {
+  constexpr char operator[](size_t idx) const {
     return this->name[idx];
   }
 
-  constexpr char& operator[](std::size_t idx) {
+  constexpr char& operator[](size_t idx) {
     return this->name[idx];
   }
 
@@ -61,12 +61,12 @@ struct ArgName : ArgNameTag {
     return lhs.end();
   }
 
-  template <std::size_t M>
+  template <size_t M>
   constexpr auto operator==(ArgName<M> lhs) -> bool {
     if constexpr (M != N) {
       return false;
     } else {
-      for (std::size_t i = 0; i < N; i++) {
+      for (size_t i = 0; i < N; i++) {
         if ((*this)[i] != lhs[i]) {
           return false;
         }
@@ -75,7 +75,7 @@ struct ArgName : ArgNameTag {
     }
   }
 
-  template <std::size_t M>
+  template <size_t M>
   constexpr auto operator==(ArgName<M> lhs) const -> bool {
     auto NV = this->nameLen;
     auto MV = lhs.nameLen;
@@ -83,7 +83,7 @@ struct ArgName : ArgNameTag {
     if (MV != NV) {
       return false;
     }
-    for (std::size_t i = 0; i < NV; i++) {
+    for (size_t i = 0; i < NV; i++) {
       if ((*this)[i] != lhs[i]) {
         return false;
       }
@@ -101,7 +101,7 @@ struct ArgName : ArgNameTag {
     if (invalid_chars.contains(this->shortName)) {
       return true;
     }
-    for (std::size_t i = 0; i < this->nameLen; i++) {
+    for (size_t i = 0; i < this->nameLen; i++) {
       if (invalid_chars.contains(this->name[i])) {
         return true;
       }
@@ -117,7 +117,7 @@ struct ArgName : ArgNameTag {
   }
 };
 
-export template <std::size_t N>
+export template <size_t N>
 ArgName(const char (&)[N]) -> ArgName<N - 1>;
 
 }  // namespace Argo

@@ -45,7 +45,7 @@ constexpr auto caster(std::string_view value) -> Type {
   }
 }
 
-template <class... T, std::size_t... N>
+template <class... T, size_t... N>
 constexpr auto tupleAssign(std::tuple<T...>& t, std::span<std::string_view> v,
                            std::index_sequence<N...> /* unused */) {
   ((std::get<N>(t) =
@@ -268,7 +268,7 @@ struct Assigner {
   template <class Args>
   static auto assignImpl(std::string_view key,
                          std::span<std::string_view> values) {
-    [&key, &values]<std::size_t... Is>(std::index_sequence<Is...> /*unused*/) {
+    [&key, &values]<size_t... Is>(std::index_sequence<Is...> /*unused*/) {
       if (!(... ||
             (std::string_view(std::tuple_element_t<Is, Args>::name) == key and
              assignOneArg<std::tuple_element_t<Is, Args>>(key, values)))) {
@@ -279,7 +279,7 @@ struct Assigner {
 
   template <class T>
   static auto assignFlagImpl(std::string_view key) -> void {
-    [&key]<std::size_t... Is>(std::index_sequence<Is...>) {
+    [&key]<size_t... Is>(std::index_sequence<Is...>) {
       if (!(... || [&key]<ArgType Head>() {
             if constexpr (std::derived_from<Head, FlagArgTag>) {
               if (std::string_view(Head::name) == key) {
@@ -313,7 +313,7 @@ struct Assigner {
   };
 
   static auto assign(std::span<char> key, std::span<std::string_view> values) {
-    for (std::size_t i = 0; i < key.size() - 1; i++) {
+    for (size_t i = 0; i < key.size() - 1; i++) {
       assignFlagImpl<Arguments>(GetNameFromShortName<Arguments>::eval(key[i]));
     }
     assignImpl<Arguments>(GetNameFromShortName<Arguments>::eval(key.back()),
@@ -323,7 +323,7 @@ struct Assigner {
 
 export template <class Args>
 auto ValueReset() {
-  []<std::size_t... Is>(std::index_sequence<Is...>) {
+  []<size_t... Is>(std::index_sequence<Is...>) {
     (..., []<ArgType T>() {
       if (T::assigned) {
         T::value = typename T::type();

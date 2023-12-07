@@ -42,7 +42,7 @@ using vector_base_t = vector_base<T>::type;
 template <class T>
 struct is_array : std::false_type {};
 
-template <class T, std::size_t N>
+template <class T, size_t N>
 struct is_array<std::array<T, N>> : std::true_type {};
 
 template <class T>
@@ -50,23 +50,23 @@ constexpr bool is_array_v = is_array<T>::value;
 
 template <class T>
 struct array_len {
-  static constexpr std::size_t value = 0;
+  static constexpr size_t value = 0;
 };
 
-template <class T, std::size_t N>
+template <class T, size_t N>
 struct array_len<std::array<T, N>> {
-  static constexpr std::size_t value = N;
+  static constexpr size_t value = N;
 };
 
 template <class T>
-constexpr std::size_t array_len_v = array_len<T>::value;
+constexpr size_t array_len_v = array_len<T>::value;
 
 template <class T>
 struct array_base {
   using type = T;
 };
 
-template <class T, std::size_t N>
+template <class T, size_t N>
 struct array_base<std::array<T, N>> {
   using type = T;
 };

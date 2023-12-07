@@ -79,8 +79,8 @@ auto Parser<ID, Args, PArgs, HArg, SubParsers>::parse(int argc,
     throw ParseError(std::format("keys {} already assigned", assigned_keys));
   }
 
-  std::int64_t subcmd_found_idx = -1;
-  std::int64_t cmd_end_pos = argc;
+  int64_t subcmd_found_idx = -1;
+  int64_t cmd_end_pos = argc;
   if constexpr (!std::is_same_v<SubParsers, std::tuple<>>) {
     for (int i = argc - 1; i > 0; i--) {
       subcmd_found_idx = ParserIndex(subParsers, argv[i]);
@@ -253,7 +253,7 @@ inline auto createUsageSection(const auto& program_name,
 inline auto createSubcommandSection(const auto& ansi,
                                     const auto& sub_commands) {
   std::string ret;
-  std::size_t max_command_length = 0;
+  size_t max_command_length = 0;
   for (const auto& command : sub_commands) {
     if (max_command_length < command.name.size()) {
       max_command_length = command.name.size();
@@ -267,7 +267,7 @@ inline auto createSubcommandSection(const auto& ansi,
         std::format("  {}{} {}{} {}", ansi.getBold(), command.name,
                     std::string(max_command_length - command.name.size(), ' '),
                     ansi.getReset(), description[0]));
-    for (std::size_t i = 1; i < description.size(); i++) {
+    for (size_t i = 1; i < description.size(); i++) {
       ret.push_back('\n');
       ret.append(std::format("    {}{}",  //
                              std::string(max_command_length, ' '),
@@ -285,7 +285,7 @@ inline auto createSubcommandSection(const auto& ansi,
 
 inline auto createOptionsSection(const auto& ansi, const auto& help_info) {
   std::string ret;
-  std::size_t max_name_len = 0;
+  size_t max_name_len = 0;
   for (const auto& option : help_info) {
     if (max_name_len < option.name.size() + option.typeName.size()) {
       max_name_len = option.name.size() + option.typeName.size();
@@ -303,7 +303,7 @@ inline auto createOptionsSection(const auto& ansi, const auto& help_info) {
         std::string(max_name_len - option.name.size() - option.typeName.size(),
                     ' '),
         description[0]));
-    for (std::size_t i = 1; i < description.size(); i++) {
+    for (size_t i = 1; i < description.size(); i++) {
       ret.push_back('\n');
       ret.append(std::format("      {}     {}", std::string(max_name_len, ' '),
                              description[i]));
@@ -325,7 +325,7 @@ auto createPositionalArgumentSection(const auto& ansi) {
                          std::string_view(PArgs::name), ansi.getReset(),
                          desc[0]));
 
-  for (std::size_t i = 1; i < desc.size(); i++) {
+  for (size_t i = 1; i < desc.size(); i++) {
     ret.push_back('\n');
     ret.append(std::format("{}{}", std::string(8, ' '), desc[i]));
   }
