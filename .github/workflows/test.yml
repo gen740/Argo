@@ -13,6 +13,9 @@ jobs:
   tests:
     runs-on: macos-latest
     steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+
       - name: Upgrade homebrew
         run: |
           brew update
@@ -21,20 +24,20 @@ jobs:
           brew upgrade
         continue-on-error: true
 
-      - name: Checkout
-        uses: actions/checkout@v3
-
       - name: Install llvm
         run: |
           brew install llvm
+        continue-on-error: true
 
       - name: Install googletest
         run: |
           brew install googletest
+        continue-on-error: true
 
       - name: Install ninja
         run: |
           brew install ninja
+        continue-on-error: true
 
       - name: Cmake and Compile
         run: |
