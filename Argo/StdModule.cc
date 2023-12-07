@@ -59,6 +59,7 @@ using ::std::string_view;
 
 // charconv
 using ::std::from_chars;
+using ::std::to_chars;
 
 // print
 using ::std::format;
