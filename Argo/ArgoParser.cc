@@ -88,7 +88,7 @@ class Parser {
       : info_(std::move(info)), subParsers(tuple){};
 
   template <class Type, ArgName Name, auto arg1 = Unspecified(),
-            auto arg2 = Unspecified(), class... T>
+            auto arg2 = Unspecified(), bool ISPArg, class... T>
   auto createArg(T... args) {
     static_assert(!Name.containsInvalidChar(), "Name has invalid char");
     static_assert(Name.hasValidNameLength(),
@@ -135,13 +135,16 @@ class Parser {
         if constexpr (is_tuple_v<Type>) {
           return NArgs{static_cast<int>(std::tuple_size_v<Type>)};
         }
+        if constexpr (ISPArg) {
+          return NArgs(1);
+        }
         return NArgs('?');
       }
     }();
 
-    static_assert(!(is_array_v<Type> and nargs.nargs == 1),
+    static_assert(!(is_array_v<Type> and nargs.getNargs() == 1),
                   "Array size must be more than one");
-    static_assert(!(is_tuple_v<Type> and nargs.nargs == 1),
+    static_assert(!(is_tuple_v<Type> and nargs.getNargs() == 1),
                   "Tuple size must be more than one");
 
     static constexpr auto required = []() {
@@ -156,8 +159,7 @@ class Parser {
       }
     }();
     if constexpr (!std::is_same_v<PArg, std::tuple<>>) {
-      static_assert(!(std::string_view(Name) == std::string_view(PArg::name)),
-                    "Duplicated name");
+      static_assert(SearchIndex<PArg, Name>::value == -1, "Duplicated name");
     }
     static_assert(
         (Name.shortName == '\0') ||
@@ -166,11 +168,11 @@ class Parser {
     static_assert(                                   //
         Argo::SearchIndex<Args, Name>::value == -1,  //
         "Duplicated name");
-    static_assert(                     //
-        (nargs.nargs > 0               //
-         || nargs.nargs_char == '?'    //
-         || nargs.nargs_char == '+'    //
-         || nargs.nargs_char == '*'),  //
+    static_assert(                         //
+        (nargs.getNargs() > 0              //
+         || nargs.getNargsChar() == '?'    //
+         || nargs.getNargsChar() == '+'    //
+         || nargs.getNargsChar() == '*'),  //
         "nargs must be '?', '+', '*' or int");
 
     ArgInitializer<Type, Name, nargs, required, ID>::init(
@@ -179,39 +181,47 @@ class Parser {
   }
 
   /*!
-   * Type: type of argument
    * Name: name of argument
-   * arg1: ShortName or NArgs or Unspecified
-   * arg2: NArgs or Unspecified
+   * Type: type of argument
+   * arg1: Required(bool) or NArgs or Unspecified
+   * arg2: Required(bool) or NArgs or Unspecified
    */
   template <ArgName Name, class Type, auto arg1 = Unspecified(),
             auto arg2 = Unspecified(), class... T>
   auto addArg(T... args) {
-    auto arg = createArg<Type, Name, arg1, arg2>(std::forward<T>(args)...);
-    return Parser<ID,
-                  tuple_append_t<Args, typename decltype(arg)::type>,
-                  PArg,
-                  HArg,
-                  SubParsers>(std::move(this->info_), subParsers);
+    auto arg =
+        createArg<Type, Name, arg1, arg2, false>(std::forward<T>(args)...);
+    return Parser<ID, tuple_append_t<Args, typename decltype(arg)::type>, PArg,
+                  HArg, SubParsers>(std::move(this->info_), subParsers);
   }
 
+  /*!
+   * Name: name of argument
+   * Type: type of argument
+   * arg1: Required(bool) or NArgs or Unspecified
+   * arg2: Required(bool) or NArgs or Unspecified
+   */
   template <ArgName Name, class Type, auto arg1 = Unspecified(),
             auto arg2 = Unspecified(), class... T>
   auto addPositionalArg(T... args) {
-    static_assert(std::is_same_v<PArg, std::tuple<>>,
-                  "Positional argument cannot set more than one");
     static_assert(Name.shortName == '\0',
                   "Positional argment cannot have short name");
-    auto arg = createArg<Type, Name, arg1, arg2>(std::forward<T>(args)...);
-    return Parser<ID, Args, typename decltype(arg)::type, HArg, SubParsers>(
-        std::move(this->info_), subParsers);
+    auto arg =
+        createArg<Type, Name, arg1, arg2, true>(std::forward<T>(args)...);
+
+    static_assert(decltype(arg)::type::nargs.getNargsChar() != '?',
+                  "Cannot assign narg: ? to the positional argument");
+    static_assert(decltype(arg)::type::nargs.getNargsChar() != '*',
+                  "Cannot assign narg: * to the positional argument");
+
+    return Parser<ID, Args, tuple_append_t<PArg, typename decltype(arg)::type>,
+                  HArg, SubParsers>(std::move(this->info_), subParsers);
   }
 
   template <ArgName Name, class... T>
   auto addFlag(T... args) {
     if constexpr (!std::is_same_v<PArg, std::tuple<>>) {
-      static_assert(!(std::string_view(Name) == std::string_view(PArg::name)),
-                    "Duplicated name");
+      static_assert(SearchIndex<PArg, Name>::value == -1, "Duplicated name");
     }
     static_assert(
         (Name.shortName == '\0') ||
@@ -220,10 +230,7 @@ class Parser {
     static_assert(Argo::SearchIndex<Args, Name>::value == -1,
                   "Duplicated name");
     FlagArgInitializer<Name, ID>::init(std::forward<T>(args)...);
-    return Parser<ID,
-                  tuple_append_t<Args, FlagArg<Name, ID>>,
-                  PArg,
-                  HArg,
+    return Parser<ID, tuple_append_t<Args, FlagArg<Name, ID>>, PArg, HArg,
                   SubParsers>(std::move(this->info_), subParsers);
   }
 
@@ -257,8 +264,9 @@ class Parser {
       throw ParseError("Parser did not parse argument, call parse first");
     }
     if constexpr (!std::is_same_v<PArg, std::tuple<>>) {
-      if constexpr (std::string_view(Name) == std::string_view(PArg::name)) {
-        return PArg::value;
+      if constexpr (SearchIndex<PArg, Name>::value != -1) {
+        return std::tuple_element_t<SearchIndex<PArg, Name>::value,
+                                    PArg>::value;
       } else {
         static_assert(SearchIndex<Args, Name>::value != -1,
                       "Argument does not exist");

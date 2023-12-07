@@ -3,5 +3,4 @@ MaxEmptyLinesToKeep: 1
 AllowShortBlocksOnASingleLine: Empty
 AllowShortFunctionsOnASingleLine: Empty
 SeparateDefinitionBlocks: Always
-BinPackArguments: false
 ColumnLimit: 80
