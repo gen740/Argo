@@ -8,4 +8,4 @@ export import :Parser;
 export import :Validation;
 export import :Initializer;
 
-import :std_modules;
+import :std_module;
