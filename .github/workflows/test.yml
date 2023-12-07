@@ -32,10 +32,8 @@ jobs:
         run: |
           brew install googletest
 
-      - name: Install cmake HEAD and ninja
+      - name: Install ninja
         run: |
-          brew unlink cmake
-          brew install cmake --HEAD --force
           brew install ninja
 
       - name: Cmake and Compile
