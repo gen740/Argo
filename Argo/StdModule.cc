@@ -62,6 +62,7 @@ using ::std::from_chars;
 
 // print
 using ::std::format;
+using ::std::formatter;
 using ::std::println;
 
 // array
