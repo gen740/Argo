@@ -36,12 +36,9 @@ TEST(ArgoTest, EqualAssign) {
 TEST(ArgoTest, FlagArgument) {
   auto [argc, argv] = createArgcArgv(  //
       "./main",                        //
-      "--arg1",
-      "--arg2=true",
+      "--arg1", "--arg2=true",
       "--arg3=1",  //
-      "--arg4",
-      "true",
-      "--arg5",
+      "--arg4", "true", "--arg5",
       "1"  //
   );
 
@@ -86,8 +83,7 @@ TEST(ArgoTest, ShortArgument) {
 
 TEST(ArgoTest, CombiningFlags) {
   auto [argc, argv] = createArgcArgv(  //
-      "./main",
-      "-abd",
+      "./main", "-abd",
       "-e"  //
   );
 
@@ -109,8 +105,7 @@ TEST(ArgoTest, CombiningFlags) {
 
 TEST(ArgoTest, CombiningFlagsWithOptionalArg) {
   auto [argc, argv] = createArgcArgv(  //
-      "./main",
-      "-abdc",
+      "./main", "-abdc",
       "Hello,World"  //
   );
 
@@ -131,8 +126,7 @@ TEST(ArgoTest, CombiningFlagsWithOptionalArg) {
 TEST(ArgoTest, Validation) {
   {
     auto [argc, argv] = createArgcArgv(  //
-        "./main",
-        "--arg",
+        "./main", "--arg",
         "42"  //
     );
 
@@ -146,8 +140,7 @@ TEST(ArgoTest, Validation) {
   }
   {
     auto [argc, argv] = createArgcArgv(  //
-        "./main",
-        "--arg",
+        "./main", "--arg",
         "121"  //
     );
 
@@ -191,20 +184,12 @@ TEST(ArgoTest, Narg) {
   {
     auto [argc, argv] = createArgcArgv(  //
         "./main",                        //
-        "--arg1",
-        "1",
-        "2",
+        "--arg1", "1", "2",
         "3",       //
         "--arg2",  //
-        "--arg3",
-        "6.0",
-        "7.2",
-        "8.4",
+        "--arg3", "6.0", "7.2", "8.4",
         "9.6",  //
-        "--arg4",
-        "11",
-        "12",
-        "8",
+        "--arg4", "11", "12", "8",
         "9"  //
     );
 
@@ -269,31 +254,33 @@ TEST(ArgoTest, NargException) {
   }
 }
 
-// TEST(ArgoTest, Help) {  // TODO(gen740): more help
-//   {
-//     auto argo = Argo::Parser<"Help 1">("program");
-//     auto parser = argo  //
-//                       .addArg<"arg0,k", int>()
-//                       .addArg<"arg1,a", int, Argo::nargs('+')>()
-//                       .addArg<"arg2", int,
-//                       Argo::nargs('+')>(Argo::description("This is arg2"));
-//
-//     auto expect_help = R"(Options:
-//   -k, --arg0
-//   -a, --arg1
-//       --arg2  This is arg2)";
-//
-//     EXPECT_EQ(parser.formatHelp(false), expect_help);
-//   }
-// }
+TEST(ArgoTest, Help) {  // TODO(gen740): more help
+  {
+    auto argo = Argo::Parser<"Help 1">("program");
+    auto parser = argo  //
+                      .addArg<"arg0,k", int>()
+                      .addArg<"arg1,a", int, Argo::nargs('+')>()
+                      .addArg<"arg2", int, Argo::nargs('+')>(
+                          Argo::description("This is arg2"));
+
+    const auto* expect_help = R"(
+USAGE:
+  program [options...]
+
+Options:
+  -k, --arg0 [<NUMBER>]
+  -a, --arg1 <NUMBER,...>
+      --arg2 <NUMBER,...>  This is arg2)";
+
+    EXPECT_EQ(parser.formatHelp(true), expect_help);
+  }
+}
 
 TEST(ArgoTest, Required) {
   {
     auto [argc, argv] = createArgcArgv(  //
         "./main",                        //
-        "--arg1",
-        "1",
-        "--arg2",
+        "--arg1", "1", "--arg2",
         "2"  //
     );
 
@@ -309,14 +296,11 @@ TEST(ArgoTest, Required) {
   }
 }
 
-
 TEST(ArgoTest, IsAssigned) {
   {
     auto [argc, argv] = createArgcArgv(  //
         "./main",                        //
-        "--arg1",
-        "42",
-        "--arg2",
+        "--arg1", "42", "--arg2",
         "--arg4"  //
     );
 

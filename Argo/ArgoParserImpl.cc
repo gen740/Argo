@@ -344,7 +344,12 @@ auto Parser<ID, Args, PArgs, HArg, SubParsers>::formatHelp(bool no_color) const
 
   assert(this->info_);  // this->info_ cannot be nullptr
 
-  auto help_info = HelpGenerator<tuple_append_t<Args, HArg>>::generate();
+  std::vector<ArgInfo> help_info;
+  if constexpr (std::is_same_v<HArg, void>) {
+    help_info = HelpGenerator<Args>::generate();
+  } else {
+    help_info = HelpGenerator<tuple_append_t<Args, HArg>>::generate();
+  }
   auto sub_commands = SubParserInfo(subParsers);
 
   if (this->info_->help) {
