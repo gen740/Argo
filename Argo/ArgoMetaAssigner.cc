@@ -59,7 +59,7 @@ struct PArgAssigner {};
 template <class... PArg>
 struct PArgAssigner<std::tuple<PArg...>> {
   static auto assign(std::span<std::string_view> values) {
-    return ([&values]<ArgType Arg>() {
+    return ([]<ArgType Arg>(auto& values) {
       if (Arg::assigned) {
         return false;
       }
@@ -110,7 +110,7 @@ struct PArgAssigner<std::tuple<PArg...>> {
         values = values.subspan(Arg::nargs.getNargs());
         return values.empty();
       }
-    }.template operator()<PArg>() ||
+    }.template operator()<PArg>(values) ||
             ...);
   }
 };

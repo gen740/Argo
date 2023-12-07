@@ -3,7 +3,7 @@ version: '3'
 tasks:
   cmake:
     cmds:
-      - cmake -B build -S . -GNinja -DARGO_TESTS_ENABLE=true
+      - cmake -B build -S . -DARGO_TESTS_ENABLE=true -GNinja
   compile:
     cmds:
       - cmake --build build
