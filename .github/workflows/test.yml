@@ -16,11 +16,10 @@ jobs:
       - name: Upgrade homebrew
         run: |
           brew update
-          brew unlink python@3.11 || echo "python@3.11 no such keg"
-          brew unlink node@18 || echo "nod@18 no such keg"
           brew install python@3.11 --force
           brew install node@18 --force
           brew upgrade
+        continue-on-error: true
 
       - name: Checkout
         uses: actions/checkout@v3
