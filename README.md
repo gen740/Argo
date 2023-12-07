@@ -147,7 +147,7 @@ one or more arguments, which will be stored in a `std::vector<Type>`.
 
 ---
 
-`required` ond `nargs` values are interchangable you can specify these value in the same time.
+`required` and `nargs` values are interchangable you can specify these value in the same time.
 
 ```cpp
 Argo::Parser().addArg<"arg1", Type, true, nargs('+')>();
