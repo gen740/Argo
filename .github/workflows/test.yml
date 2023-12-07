@@ -16,6 +16,13 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v3
 
+      - name: Upgrade homebrew
+        run: |
+          brew update
+          brew unlink node@18 || echo "nod@18 no such keg"
+          brew unlink python@3.11 || echo "python@3.11 no such keg"
+          brew upgrade
+
       - name: Install llvm
         run: |
           brew install llvm
