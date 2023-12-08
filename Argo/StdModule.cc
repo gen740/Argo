@@ -5,7 +5,6 @@ module;
 #include <unistd.h>
 
 #include <array>
-#include <charconv>
 #include <concepts>
 #include <format>
 #include <functional>
@@ -56,10 +55,6 @@ using ::std::string;
 
 // string_view
 using ::std::string_view;
-
-// charconv
-using ::std::from_chars;
-using ::std::to_chars;
 
 // print
 using ::std::format;

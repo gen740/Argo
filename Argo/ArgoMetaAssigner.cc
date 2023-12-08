@@ -33,9 +33,7 @@ constexpr auto caster(std::string_view value) -> Type {
     }
     throw ParserInternalError("Invalid argument expect bool");
   } else if constexpr (std::is_integral_v<Type>) {
-    Type tmpValue;
-    std::from_chars(std::begin(value), std::end(value), tmpValue);
-    return tmpValue;
+    return static_cast<Type>(std::stoi(std::string(value)));
   } else if constexpr (std::is_floating_point_v<Type>) {
     return static_cast<Type>(std::stod(std::string(value)));
   } else if constexpr (std::is_same_v<Type, const char*>) {

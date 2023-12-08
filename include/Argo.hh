@@ -6,6 +6,7 @@
 #include <charconv>
 #include <cassert>
 #include <concepts>
+#include <cstring>
 #include <format>
 #include <functional>
 #include <memory>
@@ -102,7 +103,7 @@ using vector_base_t = vector_base<T>::type;
 template <class T>
 struct is_array : std::false_type {};
 
-template <class T, std::size_t N>
+template <class T, size_t N>
 struct is_array<std::array<T, N>> : std::true_type {};
 
 template <class T>
@@ -110,23 +111,23 @@ constexpr bool is_array_v = is_array<T>::value;
 
 template <class T>
 struct array_len {
-  static constexpr std::size_t value = 0;
+  static constexpr size_t value = 0;
 };
 
-template <class T, std::size_t N>
+template <class T, size_t N>
 struct array_len<std::array<T, N>> {
-  static constexpr std::size_t value = N;
+  static constexpr size_t value = N;
 };
 
 template <class T>
-constexpr std::size_t array_len_v = array_len<T>::value;
+constexpr size_t array_len_v = array_len<T>::value;
 
 template <class T>
 struct array_base {
   using type = T;
 };
 
-template <class T, std::size_t N>
+template <class T, size_t N>
 struct array_base<std::array<T, N>> {
   using type = T;
 };
@@ -306,17 +307,17 @@ struct ArgNameTag {};
 /*!
  * ArgName which holds argument name
  */
-template <std::size_t N>
+template <size_t N>
 struct ArgName : ArgNameTag {
   char name[N] = {};
   char shortName = '\0';
-  std::size_t nameLen = N;
+  size_t nameLen = N;
 
   explicit ArgName() = default;
 
   // NOLINTNEXTLINE(google-explicit-constructor)
   constexpr ArgName(const char (&lhs)[N + 1]) {
-    for (std::size_t i = 0; i < N; i++) {
+    for (size_t i = 0; i < N; i++) {
       if (lhs[i] == ',') {
         nameLen = i;
         shortName = lhs[i + 1];
@@ -326,11 +327,11 @@ struct ArgName : ArgNameTag {
     }
   };
 
-  constexpr char operator[](std::size_t idx) const {
+  constexpr char operator[](size_t idx) const {
     return this->name[idx];
   }
 
-  constexpr char& operator[](std::size_t idx) {
+  constexpr char& operator[](size_t idx) {
     return this->name[idx];
   }
 
@@ -354,12 +355,12 @@ struct ArgName : ArgNameTag {
     return lhs.end();
   }
 
-  template <std::size_t M>
+  template <size_t M>
   constexpr auto operator==(ArgName<M> lhs) -> bool {
     if constexpr (M != N) {
       return false;
     } else {
-      for (std::size_t i = 0; i < N; i++) {
+      for (size_t i = 0; i < N; i++) {
         if ((*this)[i] != lhs[i]) {
           return false;
         }
@@ -368,7 +369,7 @@ struct ArgName : ArgNameTag {
     }
   }
 
-  template <std::size_t M>
+  template <size_t M>
   constexpr auto operator==(ArgName<M> lhs) const -> bool {
     auto NV = this->nameLen;
     auto MV = lhs.nameLen;
@@ -376,7 +377,7 @@ struct ArgName : ArgNameTag {
     if (MV != NV) {
       return false;
     }
-    for (std::size_t i = 0; i < NV; i++) {
+    for (size_t i = 0; i < NV; i++) {
       if ((*this)[i] != lhs[i]) {
         return false;
       }
@@ -394,7 +395,7 @@ struct ArgName : ArgNameTag {
     if (invalid_chars.contains(this->shortName)) {
       return true;
     }
-    for (std::size_t i = 0; i < this->nameLen; i++) {
+    for (size_t i = 0; i < this->nameLen; i++) {
       if (invalid_chars.contains(this->name[i])) {
         return true;
       }
@@ -410,7 +411,7 @@ struct ArgName : ArgNameTag {
   }
 };
 
-template <std::size_t N>
+template <size_t N>
 ArgName(const char (&)[N]) -> ArgName<N - 1>;
 
 }  // namespace Argo
@@ -418,7 +419,7 @@ ArgName(const char (&)[N]) -> ArgName<N - 1>;
 
 namespace Argo {
 
-template <std::size_t N>
+template <size_t N>
 struct ParserID {
   int idInt = 0;
   char idName[N];
@@ -428,7 +429,7 @@ struct ParserID {
 
   // NOLINTNEXTLINE(google-explicit-constructor)
   constexpr ParserID(const char (&id)[N + 1]) {
-    for (std::size_t i = 0; i < N; i++) {
+    for (size_t i = 0; i < N; i++) {
       this->idName[i] = id[i];
     }
   };
@@ -436,7 +437,7 @@ struct ParserID {
 
 ParserID(int) -> ParserID<0>;
 
-template <std::size_t N>
+template <size_t N>
 ParserID(const char (&)[N]) -> ParserID<N - 1>;
 
 /*!
@@ -518,7 +519,7 @@ constexpr std::string get_type_name() {
       base_type_name = get_type_name_base_type<vector_base_t<T>>();
     } else if constexpr (is_tuple_v<T>) {
       return std::string("<") +
-             []<std::size_t... Is>(std::index_sequence<Is...>) {
+             []<size_t... Is>(std::index_sequence<Is...>) {
                std::string ret =
                    ((get_type_name_base_type<std::tuple_element_t<Is, T>>() +
                      std::string(",")) +
@@ -530,7 +531,7 @@ constexpr std::string get_type_name() {
     } else {
       throw std::runtime_error("Error");
     }
-    for (std::size_t i = 0; i < TNArgs.nargs; i++) {
+    for (size_t i = 0; i < TNArgs.nargs; i++) {
       ret += base_type_name;
       ret.push_back(',');
     }
@@ -583,19 +584,19 @@ struct Arg : ArgTag,
                                      (TNArgs.nargs_char == '+') ||
                                      (TNArgs.nargs_char == '*');
   static constexpr bool isFixedLength = (TNArgs.nargs > 1);
-  using type =                                                           //
-      std::conditional_t<                                                //
-          !isVariadic                                                    //
-              || is_array_v<Type>                                        //
-              || is_tuple_v<Type>                                        //
-              || is_vector_v<Type>,                                      //
-          Type,                                                          //
-          std::conditional_t<                                            //
-              isFixedLength,                                             //
-              std::array<Type, static_cast<std::size_t>(TNArgs.nargs)>,  //
-              std::vector<Type>                                          //
-              >                                                          //
-          >;                                                             //
+  using type =                                                      //
+      std::conditional_t<                                           //
+          !isVariadic                                               //
+              || is_array_v<Type>                                   //
+              || is_tuple_v<Type>                                   //
+              || is_vector_v<Type>,                                 //
+          Type,                                                     //
+          std::conditional_t<                                       //
+              isFixedLength,                                        //
+              std::array<Type, static_cast<size_t>(TNArgs.nargs)>,  //
+              std::vector<Type>                                     //
+              >                                                     //
+          >;                                                        //
 
   inline static type value = {};
   inline static type defaultValue = {};
@@ -830,12 +831,12 @@ struct GetNameFromShortName {
 template <class Tuple, ArgName T, int Index = 0>
 struct SearchIndex;
 
-template <ArgName T, std::size_t Index>
+template <ArgName T, size_t Index>
 struct SearchIndex<std::tuple<>, T, Index> {
   static constexpr int value = -1;
 };
 
-template <ArgName T, std::size_t Index, class Head, class... Tails>
+template <ArgName T, size_t Index, class Head, class... Tails>
 struct SearchIndex<std::tuple<Head, Tails...>, T, Index> {
   static constexpr int value =
       (Head::name == T)
@@ -849,12 +850,12 @@ struct SearchIndex<std::tuple<Head, Tails...>, T, Index> {
 template <class Tuple, char T, int Index = 0>
 struct SearchIndexFromShortName;
 
-template <char T, std::size_t Index>
+template <char T, size_t Index>
 struct SearchIndexFromShortName<std::tuple<>, T, Index> {
   static constexpr int value = -1;
 };
 
-template <char T, std::size_t Index, class Head, class... Tails>
+template <char T, size_t Index, class Head, class... Tails>
 struct SearchIndexFromShortName<std::tuple<Head, Tails...>, T, Index> {
   static constexpr int value =
       Head::name.shortName == T
@@ -887,9 +888,7 @@ constexpr auto caster(std::string_view value) -> Type {
     }
     throw ParserInternalError("Invalid argument expect bool");
   } else if constexpr (std::is_integral_v<Type>) {
-    Type tmpValue;
-    std::from_chars(std::begin(value), std::end(value), tmpValue);
-    return tmpValue;
+    return static_cast<Type>(std::stoi(std::string(value)));
   } else if constexpr (std::is_floating_point_v<Type>) {
     return static_cast<Type>(std::stod(std::string(value)));
   } else if constexpr (std::is_same_v<Type, const char*>) {
@@ -899,7 +898,7 @@ constexpr auto caster(std::string_view value) -> Type {
   }
 }
 
-template <class... T, std::size_t... N>
+template <class... T, size_t... N>
 constexpr auto tupleAssign(std::tuple<T...>& t, std::span<std::string_view> v,
                            std::index_sequence<N...> /* unused */) {
   ((std::get<N>(t) =
@@ -1122,7 +1121,7 @@ struct Assigner {
   template <class Args>
   static auto assignImpl(std::string_view key,
                          std::span<std::string_view> values) {
-    [&key, &values]<std::size_t... Is>(std::index_sequence<Is...> /*unused*/) {
+    [&key, &values]<size_t... Is>(std::index_sequence<Is...> /*unused*/) {
       if (!(... ||
             (std::string_view(std::tuple_element_t<Is, Args>::name) == key and
              assignOneArg<std::tuple_element_t<Is, Args>>(key, values)))) {
@@ -1133,7 +1132,7 @@ struct Assigner {
 
   template <class T>
   static auto assignFlagImpl(std::string_view key) -> void {
-    [&key]<std::size_t... Is>(std::index_sequence<Is...>) {
+    [&key]<size_t... Is>(std::index_sequence<Is...>) {
       if (!(... || [&key]<ArgType Head>() {
             if constexpr (std::derived_from<Head, FlagArgTag>) {
               if (std::string_view(Head::name) == key) {
@@ -1167,7 +1166,7 @@ struct Assigner {
   };
 
   static auto assign(std::span<char> key, std::span<std::string_view> values) {
-    for (std::size_t i = 0; i < key.size() - 1; i++) {
+    for (size_t i = 0; i < key.size() - 1; i++) {
       assignFlagImpl<Arguments>(GetNameFromShortName<Arguments>::eval(key[i]));
     }
     assignImpl<Arguments>(GetNameFromShortName<Arguments>::eval(key.back()),
@@ -1177,7 +1176,7 @@ struct Assigner {
 
 template <class Args>
 auto ValueReset() {
-  []<std::size_t... Is>(std::index_sequence<Is...>) {
+  []<size_t... Is>(std::index_sequence<Is...>) {
     (..., []<ArgType T>() {
       if (T::assigned) {
         T::value = typename T::type();
@@ -1258,7 +1257,7 @@ auto MetaParse(SubParsers sub_parsers, int index, int argc,
                char** argv) -> bool {
   return std::apply(
       [&](auto&&... s) {
-        std::int64_t idx = -1;
+        int64_t idx = -1;
         return (... || (idx++, idx == index &&
                                    (s.parser.get().parse(argc, argv), true)));
       },
@@ -1268,10 +1267,10 @@ auto MetaParse(SubParsers sub_parsers, int index, int argc,
 template <class SubParsers>
   requires(is_tuple_v<SubParsers>)
 constexpr auto ParserIndex(SubParsers sub_parsers,  //
-                           std::string_view key) -> std::int64_t {
+                           std::string_view key) -> int64_t {
   return std::apply(
       [&](auto&&... s) {
-        std::int64_t index = -1;
+        int64_t index = -1;
         bool found = (... || (index++, s.name == key));
         return found ? index : -1;
       },
@@ -1692,8 +1691,8 @@ auto Parser<ID, Args, PArgs, HArg, SubParsers>::parse(int argc,
     throw ParseError(std::format("keys {} already assigned", assigned_keys));
   }
 
-  std::int64_t subcmd_found_idx = -1;
-  std::int64_t cmd_end_pos = argc;
+  int64_t subcmd_found_idx = -1;
+  int64_t cmd_end_pos = argc;
   if constexpr (!std::is_same_v<SubParsers, std::tuple<>>) {
     for (int i = argc - 1; i > 0; i--) {
       subcmd_found_idx = ParserIndex(subParsers, argv[i]);
@@ -1866,7 +1865,7 @@ inline auto createUsageSection(const auto& program_name,
 inline auto createSubcommandSection(const auto& ansi,
                                     const auto& sub_commands) {
   std::string ret;
-  std::size_t max_command_length = 0;
+  size_t max_command_length = 0;
   for (const auto& command : sub_commands) {
     if (max_command_length < command.name.size()) {
       max_command_length = command.name.size();
@@ -1880,7 +1879,7 @@ inline auto createSubcommandSection(const auto& ansi,
         std::format("  {}{} {}{} {}", ansi.getBold(), command.name,
                     std::string(max_command_length - command.name.size(), ' '),
                     ansi.getReset(), description[0]));
-    for (std::size_t i = 1; i < description.size(); i++) {
+    for (size_t i = 1; i < description.size(); i++) {
       ret.push_back('\n');
       ret.append(std::format("    {}{}",  //
                              std::string(max_command_length, ' '),
@@ -1898,7 +1897,7 @@ inline auto createSubcommandSection(const auto& ansi,
 
 inline auto createOptionsSection(const auto& ansi, const auto& help_info) {
   std::string ret;
-  std::size_t max_name_len = 0;
+  size_t max_name_len = 0;
   for (const auto& option : help_info) {
     if (max_name_len < option.name.size() + option.typeName.size()) {
       max_name_len = option.name.size() + option.typeName.size();
@@ -1916,7 +1915,7 @@ inline auto createOptionsSection(const auto& ansi, const auto& help_info) {
         std::string(max_name_len - option.name.size() - option.typeName.size(),
                     ' '),
         description[0]));
-    for (std::size_t i = 1; i < description.size(); i++) {
+    for (size_t i = 1; i < description.size(); i++) {
       ret.push_back('\n');
       ret.append(std::format("      {}     {}", std::string(max_name_len, ' '),
                              description[i]));
@@ -1938,7 +1937,7 @@ auto createPositionalArgumentSection(const auto& ansi) {
                          std::string_view(PArgs::name), ansi.getReset(),
                          desc[0]));
 
-  for (std::size_t i = 1; i < desc.size(); i++) {
+  for (size_t i = 1; i < desc.size(); i++) {
     ret.push_back('\n');
     ret.append(std::format("{}{}", std::string(8, ' '), desc[i]));
   }
@@ -1957,7 +1956,12 @@ auto Parser<ID, Args, PArgs, HArg, SubParsers>::formatHelp(bool no_color) const
 
   assert(this->info_);  // this->info_ cannot be nullptr
 
-  auto help_info = HelpGenerator<tuple_append_t<Args, HArg>>::generate();
+  std::vector<ArgInfo> help_info;
+  if constexpr (std::is_same_v<HArg, void>) {
+    help_info = HelpGenerator<Args>::generate();
+  } else {
+    help_info = HelpGenerator<tuple_append_t<Args, HArg>>::generate();
+  }
   auto sub_commands = SubParserInfo(subParsers);
 
   if (this->info_->help) {
