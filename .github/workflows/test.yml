@@ -19,9 +19,6 @@ jobs:
       - name: Upgrade homebrew
         run: |
           brew update
-          brew install python@3.11 --force
-          brew install node@18 --force
-          brew upgrade
         continue-on-error: true
 
       - name: Install llvm
