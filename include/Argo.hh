@@ -421,16 +421,18 @@ namespace Argo {
 
 template <size_t N>
 struct ParserID {
-  int idInt = 0;
-  char idName[N];
+  union {
+    int idInt = 0;
+    char idName[N];
+  } id;
 
   // NOLINTNEXTLINE(google-explicit-constructor)
-  constexpr ParserID(int id) : idInt(id){};
+  constexpr ParserID(int id) : id(id){};
 
   // NOLINTNEXTLINE(google-explicit-constructor)
   constexpr ParserID(const char (&id)[N + 1]) {
     for (size_t i = 0; i < N; i++) {
-      this->idName[i] = id[i];
+      this->id.idName[i] = id[i];
     }
   };
 };
@@ -481,7 +483,6 @@ concept ArgType = requires(T& x) {
   not std::is_same_v<decltype(T::value), void>;
 
   std::derived_from<decltype(T::name), ArgNameTag>;
-  std::is_same_v<decltype(T::isVariadic), char>;
   std::is_same_v<decltype(T::nargs), NArgs>;
   std::is_same_v<decltype(T::assigned), bool>;
   std::is_same_v<decltype(T::description), std::string_view>;
@@ -580,19 +581,16 @@ struct Arg : ArgTag,
                  Required,                     //
                  ID                            //
                  > {
-  static constexpr bool isVariadic = (TNArgs.nargs > 1) ||
-                                     (TNArgs.nargs_char == '+') ||
-                                     (TNArgs.nargs_char == '*');
-  static constexpr bool isFixedLength = (TNArgs.nargs > 1);
-  using type =                                                      //
-      std::conditional_t<                                           //
-          !isVariadic                                               //
+  using type =             //
+      std::conditional_t<  //
+          ((TNArgs.nargs <= 1) && (TNArgs.nargs_char != '+') &&
+           (TNArgs.nargs_char != '*'))                              //
               || is_array_v<Type>                                   //
               || is_tuple_v<Type>                                   //
               || is_vector_v<Type>,                                 //
           Type,                                                     //
           std::conditional_t<                                       //
-              isFixedLength,                                        //
+              (TNArgs.nargs > 1),                                   //
               std::array<Type, static_cast<size_t>(TNArgs.nargs)>,  //
               std::vector<Type>                                     //
               >                                                     //
@@ -616,7 +614,6 @@ struct FlagArgTag {};
 
 template <ArgName Name, ParserID ID>
 struct FlagArg : FlagArgTag, ArgBase<bool, Name, false, ID> {
-  static constexpr bool isVariadic = false;
   using type = bool;
 
   inline static type value = {};
@@ -630,15 +627,12 @@ struct FlagArg : FlagArgTag, ArgBase<bool, Name, false, ID> {
 struct HelpArgTag {};
 
 template <ArgName Name, ParserID ID>
-struct HelpArg : HelpArgTag, FlagArgTag, ArgBase<bool, Name, true, ID> {
-  static constexpr bool isVariadic = false;
+struct HelpArg : HelpArgTag, FlagArgTag, ArgBase<bool, Name, false, ID> {
   using type = bool;
   inline static type value = {};
   inline static type defaultValue = {};
 
-  inline static bool assigned = false;
   inline static std::string_view description = "Print help information";
-  inline static bool required = false;
 
   inline static constexpr NArgs nargs = NArgs(-1);
   inline static std::function<void()> callback = nullptr;
