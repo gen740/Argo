@@ -90,7 +90,6 @@ class Parser {
   template <class Type, ArgName Name, auto arg1 = Unspecified(),
             auto arg2 = Unspecified(), bool ISPArgs, class... T>
   auto createArg(T... args) {
-    static_assert(!Name.containsInvalidChar(), "Name has invalid char");
     static_assert(Name.hasValidNameLength(),
                   "Short name can't be more than one charactor");
 
@@ -172,8 +171,7 @@ class Parser {
          || nargs.getNargsChar() == '*'),  //
         "nargs must be '?', '+', '*' or int");
 
-    ArgInitializer<Type, Name, nargs, required, ID>::init(
-        std::forward<T>(args)...);
+    ArgInitializer<Type, Name, nargs, required, ID>(std::forward<T>(args)...);
     return type_identity<Arg<Type, Name, nargs, required, ID>>();
   }
 
@@ -226,7 +224,7 @@ class Parser {
         "Duplicated short name");
     static_assert(Argo::SearchIndex<Args, Name>::value == -1,
                   "Duplicated name");
-    FlagArgInitializer<Name, ID>::init(std::forward<T>(args)...);
+    FlagArgInitializer<Name, ID>(std::forward<T>(args)...);
     return Parser<ID, tuple_append_t<Args, FlagArg<Name, ID>>, PArgs, HArg,
                   SubParsers>(std::move(this->info_), subParsers);
   }
@@ -247,7 +245,6 @@ class Parser {
                   "Duplicated short name");
     static_assert(Argo::SearchIndex<Args, Name>::value == -1,
                   "Duplicated name");
-    static_assert(!Name.containsInvalidChar(), "Name has invalid char");
     static_assert(Name.hasValidNameLength(),
                   "Short name can't be more than one charactor");
     this->info_->help = help;

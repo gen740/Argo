@@ -8,21 +8,19 @@ import :std_module;
 
 namespace Argo {
 
-export struct ArgNameTag {};
+using namespace std;
 
 /*!
  * ArgName which holds argument name
  */
 template <size_t N>
-struct ArgName : ArgNameTag {
+struct ArgName {
   char name[N] = {};
   char shortName = '\0';
   size_t nameLen = N;
 
-  explicit ArgName() = default;
-
   // NOLINTNEXTLINE(google-explicit-constructor)
-  constexpr ArgName(const char (&lhs)[N + 1]) {
+  consteval ArgName(const char (&lhs)[N + 1]) {
     for (size_t i = 0; i < N; i++) {
       if (lhs[i] == ',') {
         nameLen = i;
@@ -33,7 +31,7 @@ struct ArgName : ArgNameTag {
     }
   };
 
-  constexpr char operator[](size_t idx) const {
+  [[nodiscard]] constexpr char operator[](size_t idx) const {
     return this->name[idx];
   }
 
@@ -41,28 +39,28 @@ struct ArgName : ArgNameTag {
     return this->name[idx];
   }
 
-  constexpr auto begin() const {
+  [[nodiscard]] constexpr auto begin() const {
     return &this->name[0];
   }
 
-  constexpr auto end() const {
+  [[nodiscard]] constexpr auto end() const {
     return &this->name[this->nameLen];
   }
 
-  constexpr auto size() const {
+  [[nodiscard]] constexpr auto size() const {
     return N;
   }
 
-  friend auto begin(ArgName lhs) {
+  [[nodiscard]] friend constexpr auto begin(const ArgName& lhs) {
     return lhs.begin();
   }
 
-  friend auto end(ArgName lhs) {
+  [[nodiscard]] friend constexpr auto end(const ArgName& lhs) {
     return lhs.end();
   }
 
   template <size_t M>
-  constexpr auto operator==(ArgName<M> lhs) -> bool {
+  [[nodiscard]] constexpr auto operator==(const ArgName<M>& lhs) -> bool {
     if constexpr (M != N) {
       return false;
     } else {
@@ -76,7 +74,7 @@ struct ArgName : ArgNameTag {
   }
 
   template <size_t M>
-  constexpr auto operator==(ArgName<M> lhs) const -> bool {
+  [[nodiscard]] constexpr auto operator==(const ArgName<M>& lhs) const -> bool {
     auto NV = this->nameLen;
     auto MV = lhs.nameLen;
 
@@ -92,24 +90,11 @@ struct ArgName : ArgNameTag {
   }
 
   // NOLINTNEXTLINE(google-explicit-constructor)
-  constexpr operator std::string_view() const {
-    return std::string_view(this->begin(), this->end());
+  [[nodiscard]] constexpr operator string_view() const {
+    return string_view(this->begin(), this->end());
   }
 
-  [[nodiscard]] constexpr auto containsInvalidChar() const -> bool {
-    auto invalid_chars = std::string_view(" \\\"'<>&|$[]");
-    if (invalid_chars.contains(this->shortName)) {
-      return true;
-    }
-    for (size_t i = 0; i < this->nameLen; i++) {
-      if (invalid_chars.contains(this->name[i])) {
-        return true;
-      }
-    }
-    return false;
-  }
-
-  [[nodiscard]] constexpr auto hasValidNameLength() const -> bool {
+  [[nodiscard]] consteval auto hasValidNameLength() const -> bool {
     if (this->shortName == '\0') {
       return true;
     }
@@ -119,6 +104,12 @@ struct ArgName : ArgNameTag {
 
 template <size_t N>
 ArgName(const char (&)[N]) -> ArgName<N - 1>;
+
+template <class T>
+concept ArgNameType = requires(T& x) {
+  static_cast<string_view>(x);
+  is_same_v<decltype(x.shortName), char>;
+};
 
 }  // namespace Argo
 

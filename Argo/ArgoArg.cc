@@ -21,17 +21,17 @@ struct ParserID {
   } id;
 
   // NOLINTNEXTLINE(google-explicit-constructor)
-  constexpr ParserID(int id) : id(id){};
+  consteval ParserID(int id) : id(id){};
 
   // NOLINTNEXTLINE(google-explicit-constructor)
-  constexpr ParserID(const char (&id)[N + 1]) {
+  consteval ParserID(const char (&id)[N + 1]) {
     for (size_t i = 0; i < N; i++) {
       this->id.idName[i] = id[i];
     }
   };
 };
 
-export ParserID(int) -> ParserID<0>;
+export ParserID(int) -> ParserID<1>;
 
 export template <size_t N>
 ParserID(const char (&)[N]) -> ParserID<N - 1>;
@@ -42,7 +42,7 @@ ParserID(const char (&)[N]) -> ParserID<N - 1>;
  *          *  : Any number of argument if zero use default -> vector<ValueType>
  *          +  : Any number of argument except zero         -> vector<ValueType>
  */
-export struct NArgs {
+struct NArgs {
   int nargs = -1;
   char nargs_char = '\0';
 
@@ -68,23 +68,6 @@ struct ArgBase {
   inline static bool required = Required;
   using baseType = BaseType;
 };
-
-export template <class T>
-concept ArgType = requires(T& x) {
-  typename T::baseType;
-  typename T::type;
-
-  not is_same_v<decltype(T::value), void>;
-
-  derived_from<decltype(T::name), ArgNameTag>;
-  is_same_v<decltype(T::nargs), NArgs>;
-  is_same_v<decltype(T::assigned), bool>;
-  is_same_v<decltype(T::description), string_view>;
-  is_same_v<decltype(T::typeName), string>;
-  is_same_v<decltype(T::required), bool>;
-};
-
-export struct ArgTag {};
 
 template <size_t N>
 struct constexprString {};
@@ -156,11 +139,12 @@ constexpr string get_type_name() {
   }
 }
 
+struct ArgTag {};
+
 /*!
  * Arg type this holds argument value
  */
-export template <class Type, ArgName Name, NArgs TNArgs, bool Required,
-                 ParserID ID>
+template <class Type, ArgName Name, NArgs TNArgs, bool Required, ParserID ID>
 struct Arg : ArgTag,
              ArgBase<                          //
                  conditional_t<                //
@@ -204,9 +188,9 @@ struct Arg : ArgTag,
   inline static bool required = Required;
 };
 
-export struct FlagArgTag {};
+struct FlagArgTag {};
 
-export template <ArgName Name, ParserID ID>
+template <ArgName Name, ParserID ID>
 struct FlagArg : FlagArgTag, ArgBase<bool, Name, false, ID> {
   using type = bool;
 
@@ -218,9 +202,9 @@ struct FlagArg : FlagArgTag, ArgBase<bool, Name, false, ID> {
   inline static string typeName;
 };
 
-export struct HelpArgTag {};
+struct HelpArgTag {};
 
-export template <ArgName Name, ParserID ID>
+template <ArgName Name, ParserID ID>
 struct HelpArg : HelpArgTag, FlagArgTag, ArgBase<bool, Name, false, ID> {
   using type = bool;
   inline static type value = {};
@@ -231,6 +215,21 @@ struct HelpArg : HelpArgTag, FlagArgTag, ArgBase<bool, Name, false, ID> {
   inline static constexpr NArgs nargs = NArgs(-1);
   inline static function<void()> callback = nullptr;
   inline static string typeName;
+};
+
+template <class T>
+concept ArgType = requires(T& x) {
+  typename T::baseType;
+  typename T::type;
+
+  not is_same_v<decltype(T::value), void>;
+
+  { T::name } -> ArgNameType;
+  is_same_v<decltype(T::nargs), NArgs>;
+  is_same_v<decltype(T::assigned), bool>;
+  is_same_v<decltype(T::description), string_view>;
+  is_same_v<decltype(T::typeName), string>;
+  is_same_v<decltype(T::required), bool>;
 };
 
 }  // namespace Argo

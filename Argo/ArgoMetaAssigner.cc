@@ -33,9 +33,12 @@ constexpr auto caster(const string_view& value) -> Type {
         || (value == "0")) {
       return false;
     }
-    throw ParserInternalError("Invalid argument expect bool");
+    throw InvalidArgument("Invalid argument expect bool");
   } else if constexpr (is_integral_v<Type>) {
-    return static_cast<Type>(stoi(string(value)));
+    Type ret;
+    from_chars(value.begin(), value.end(), ret);
+    return ret;
+
   } else if constexpr (is_floating_point_v<Type>) {
     return static_cast<Type>(stod(string(value)));
   } else if constexpr (is_same_v<Type, const char*>) {
@@ -51,10 +54,10 @@ constexpr auto tupleAssign(tuple<T...>& t, span<string_view> v,
   ((get<N>(t) = caster<remove_cvref_t<decltype(get<N>(t))>>(v[N])), ...);
 }
 
-export template <class PArgs>
+template <class PArgs>
 struct PArgAssigner {};
 
-export template <class... PArgs>
+template <class... PArgs>
 struct PArgAssigner<tuple<PArgs...>> {
   static auto assign(span<string_view> values) {
     return ([]<ArgType Arg>(auto& values) {
@@ -112,7 +115,7 @@ struct PArgAssigner<tuple<PArgs...>> {
   }
 };
 
-export template <class Arguments, class PArgs>
+template <class Arguments, class PArgs>
 struct Assigner {
   template <ArgType Head>
   static constexpr auto assignOneArg(const string_view& key,
@@ -318,7 +321,7 @@ struct Assigner {
   };
 };
 
-export template <class Args>
+template <class Args>
 auto ValueReset() {
   []<size_t... Is>(index_sequence<Is...>) {
     (..., []<ArgType T>() {

@@ -21,8 +21,8 @@ struct SubParser {
 
 template <class SubParsers>
   requires(is_tuple_v<SubParsers>)
-auto MetaParse(SubParsers sub_parsers, int index, int argc, char** argv)
-    -> bool {
+constexpr auto MetaParse(SubParsers sub_parsers, int index, int argc,
+                         char** argv) -> bool {
   return apply(
       [&](auto&&... s) {
         int64_t idx = -1;
