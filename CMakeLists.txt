@@ -39,6 +39,7 @@ unset(ARGO_LIBRARY_SOURCES)
 if(${CMAKE_SOURCE_DIR} STREQUAL ${CMAKE_CURRENT_LIST_DIR})
   add_executable(main ${CMAKE_CURRENT_LIST_DIR}/main.cc)
   target_link_libraries(main Argo)
+  target_compile_options(main PRIVATE -save-temps -O3)
 
   if(${ARGO_TESTS_ENABLE})
     set(CMAKE_CXX_FLAGS_RELEASE "")

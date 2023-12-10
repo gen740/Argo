@@ -13,7 +13,7 @@ export struct ArgNameTag {};
 /*!
  * ArgName which holds argument name
  */
-export template <size_t N>
+template <size_t N>
 struct ArgName : ArgNameTag {
   char name[N] = {};
   char shortName = '\0';
@@ -117,7 +117,7 @@ struct ArgName : ArgNameTag {
   }
 };
 
-export template <size_t N>
+template <size_t N>
 ArgName(const char (&)[N]) -> ArgName<N - 1>;
 
 }  // namespace Argo

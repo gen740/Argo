@@ -3,19 +3,10 @@ import Argo;
 #include <print>
 #include <tuple>
 
-template <typename... Args>
-std::tuple<size_t, char**> createArgcArgv(Args... args) {
-  const size_t N = sizeof...(Args);
-  char** array = new char*[N];
-  size_t i = 0;
-  (..., (array[i++] = strdup(args)));
-  return std::make_tuple(N, array);
-}
-
 using Argo::description;
 using Argo::nargs;
 
-auto main([[maybe_unused]]int argc, [[maybe_unused]]char** argv) -> int {
+auto main([[maybe_unused]] int argc, [[maybe_unused]] char** argv) -> int {
   // auto parser1 = Argo::Parser<"P1">()  //
   //                    .addArg<"p1a1", int>()
   //                    .addArg<"p1a2", int>();
@@ -24,12 +15,12 @@ auto main([[maybe_unused]]int argc, [[maybe_unused]]char** argv) -> int {
   //                    .addArg<"p2a1", int>(description("Hello\nWorld!"))
   //                    .addArg<"p2a2", int>(description("Hello\nWorld!"))
   //                    .addHelp();
-  //
+
   // auto parser =                                             //
   //     Argo::Parser<"Parser">("./main", "Some description")  //
-  //         .addParser<"cmd1">(parser1, description("subparser of 1\nsome help"))
-  //         .addParser<"cmd2">(parser2, description("subparser of 2\nsome help"))
-  //         .addPositionalArg<"test", std::array<int, 3>>(
+  //         .addParser<"cmd1">(parser1, description("subparser of 1\nsome
+  //         help")) .addParser<"cmd2">(parser2, description("subparser of
+  //         2\nsome help")) .addPositionalArg<"test", std::array<int, 3>>(
   //             description(R"(positional argument\nlong desc)"))
   //         .addArg<"test1", bool>()
   //         .addArg<"test2", int>()
@@ -49,8 +40,14 @@ auto main([[maybe_unused]]int argc, [[maybe_unused]]char** argv) -> int {
   //         .addArg<"test15", std::tuple<int, double, std::string>>(
   //             [](auto&&...) {})
   //         .addHelp<"help,h">();
-  //
-  // parser.parse(argc, argv);
-  //
-  // return 0;
+
+  auto parser =  //
+      Argo::Parser<"Parser">()
+          .addArg<"test1", std::tuple<int, int, float, double, const char*,
+                                      std::string>>()
+          .addArg<"bar", int>();
+  // println("{}", parser.formatHelp());
+  parser.parse(argc, argv);
+
+  return 0;
 }

@@ -15,15 +15,17 @@ import :std_module;
 
 namespace Argo {
 
+using namespace std;
+
 struct Unspecified {};
 
 export enum class RequiredFlag : bool {
-  optional = false,
-  required = true,
+  Optional = false,
+  Required = true,
 };
 
-export using RequiredFlag::required;
-export using RequiredFlag::optional;
+export using RequiredFlag::Required;
+export using RequiredFlag::Optional;
 
 /*!
  * Helper function to create nargs
@@ -37,42 +39,40 @@ export consteval auto nargs(int narg) -> NArgs {
 }
 
 struct ParserInfo {
-  std::optional<std::string_view> help = std::nullopt;
-  std::optional<std::string_view> program_name = std::nullopt;
-  std::optional<std::string_view> description = std::nullopt;
-  std::optional<std::string_view> usage = std::nullopt;
-  std::optional<std::string_view> subcommand_help = std::nullopt;
-  std::optional<std::string_view> options_help = std::nullopt;
-  std::optional<std::string_view> positional_argument_help = std::nullopt;
+  optional<string_view> help = nullopt;
+  optional<string_view> program_name = nullopt;
+  optional<string_view> description = nullopt;
+  optional<string_view> usage = nullopt;
+  optional<string_view> subcommand_help = nullopt;
+  optional<string_view> options_help = nullopt;
+  optional<string_view> positional_argument_help = nullopt;
 };
 
-export template <ParserID ID = 0, class Args = std::tuple<>,
-                 class PArgs = std::tuple<>, class HArg = void,
-                 class SubParsers = std::tuple<>>
+export template <ParserID ID = 0, class Args = tuple<>, class PArgs = tuple<>,
+                 class HArg = void, class SubParsers = tuple<>>
   requires(is_tuple_v<Args> && is_tuple_v<SubParsers>)
 class Parser {
  private:
   bool parsed_ = false;
-  std::unique_ptr<ParserInfo> info_ = nullptr;
+  unique_ptr<ParserInfo> info_ = nullptr;
 
  public:
-  constexpr explicit Parser() : info_(std::make_unique<ParserInfo>()){};
+  constexpr explicit Parser() : info_(make_unique<ParserInfo>()){};
 
-  constexpr explicit Parser(std::string_view program_name)
-      : info_(std::make_unique<ParserInfo>()) {
+  constexpr explicit Parser(string_view program_name)
+      : info_(make_unique<ParserInfo>()) {
     this->info_->program_name = program_name;
   };
 
-  constexpr explicit Parser(std::string_view program_name,
-                            std::string_view description)
-      : info_(std::make_unique<ParserInfo>()) {
+  constexpr explicit Parser(string_view program_name, string_view description)
+      : info_(make_unique<ParserInfo>()) {
     this->info_->program_name = program_name;
     this->info_->description = description;
   };
 
-  constexpr explicit Parser(std::string_view program_name,
+  constexpr explicit Parser(string_view program_name,
                             Argo::Description description)
-      : info_(std::make_unique<ParserInfo>()) {
+      : info_(make_unique<ParserInfo>()) {
     this->info_->program_name = program_name;
     this->info_->description = description.description;
   };
@@ -84,7 +84,7 @@ class Parser {
 
   constexpr explicit Parser(SubParsers tuple) : subParsers(tuple) {}
 
-  constexpr explicit Parser(std::unique_ptr<ParserInfo> info, SubParsers tuple)
+  constexpr explicit Parser(unique_ptr<ParserInfo> info, SubParsers tuple)
       : info_(std::move(info)), subParsers(tuple){};
 
   template <class Type, ArgName Name, auto arg1 = Unspecified(),
@@ -95,8 +95,7 @@ class Parser {
                   "Short name can't be more than one charactor");
 
     static constexpr auto nargs = []() {
-      if constexpr (std::is_same_v<std::remove_cvref_t<decltype(arg1)>,
-                                   NArgs>) {
+      if constexpr (is_same_v<remove_cvref_t<decltype(arg1)>, NArgs>) {
         if constexpr (is_array_v<Type>) {
           static_assert(array_len_v<Type> == arg1.nargs,
                         "Array size mismatch with nargs");
@@ -106,12 +105,11 @@ class Parser {
                         "Vector size mismatch with nargs");
         }
         if constexpr (is_tuple_v<Type>) {
-          static_assert(std::tuple_size_v<Type> == arg1.nargs,
+          static_assert(tuple_size_v<Type> == arg1.nargs,
                         "Tuple size mismatch with nargs");
         }
         return arg1;
-      } else if constexpr (std::is_same_v<std::remove_cvref_t<decltype(arg2)>,
-                                          NArgs>) {
+      } else if constexpr (is_same_v<remove_cvref_t<decltype(arg2)>, NArgs>) {
         if constexpr (is_array_v<Type>) {
           static_assert(array_len_v<Type> == arg2.nargs,
                         "Array size mismatch with nargs");
@@ -121,7 +119,7 @@ class Parser {
                         "Vector size mismatch with nargs");
         }
         if constexpr (is_tuple_v<Type>) {
-          static_assert(std::tuple_size_v<Type> == arg2.nargs,
+          static_assert(tuple_size_v<Type> == arg2.nargs,
                         "Tuple size mismatch with nargs");
         }
         return arg2;
@@ -133,7 +131,7 @@ class Parser {
           return NArgs{'*'};
         }
         if constexpr (is_tuple_v<Type>) {
-          return NArgs{static_cast<int>(std::tuple_size_v<Type>)};
+          return NArgs{static_cast<int>(tuple_size_v<Type>)};
         }
         if constexpr (ISPArgs) {
           return NArgs(1);
@@ -148,17 +146,16 @@ class Parser {
                   "Tuple size must be more than one");
 
     static constexpr auto required = []() {
-      if constexpr (std::is_same_v<std::remove_cvref_t<decltype(arg1)>,
-                                   RequiredFlag>) {
+      if constexpr (is_same_v<remove_cvref_t<decltype(arg1)>, RequiredFlag>) {
         return static_cast<bool>(arg1);
-      } else if constexpr (std::is_same_v<std::remove_cvref_t<decltype(arg2)>,
-                                          RequiredFlag>) {
+      } else if constexpr (is_same_v<remove_cvref_t<decltype(arg2)>,
+                                     RequiredFlag>) {
         return static_cast<bool>(arg2);
       } else {
         return false;
       }
     }();
-    if constexpr (!std::is_same_v<PArgs, std::tuple<>>) {
+    if constexpr (!is_same_v<PArgs, tuple<>>) {
       static_assert(SearchIndex<PArgs, Name>::value == -1, "Duplicated name");
     }
     static_assert(
@@ -177,7 +174,7 @@ class Parser {
 
     ArgInitializer<Type, Name, nargs, required, ID>::init(
         std::forward<T>(args)...);
-    return std::type_identity<Arg<Type, Name, nargs, required, ID>>();
+    return type_identity<Arg<Type, Name, nargs, required, ID>>();
   }
 
   /*!
@@ -220,7 +217,7 @@ class Parser {
 
   template <ArgName Name, class... T>
   auto addFlag(T... args) {
-    if constexpr (!std::is_same_v<PArgs, std::tuple<>>) {
+    if constexpr (!is_same_v<PArgs, tuple<>>) {
       static_assert(SearchIndex<PArgs, Name>::value == -1, "Duplicated name");
     }
     static_assert(
@@ -245,7 +242,7 @@ class Parser {
   }
 
   template <ArgName Name = "help,h">
-  auto addHelp(std::string_view help) {
+  auto addHelp(string_view help) {
     static_assert((SearchIndexFromShortName<Args, Name.shortName>::value == -1),
                   "Duplicated short name");
     static_assert(Argo::SearchIndex<Args, Name>::value == -1,
@@ -263,35 +260,31 @@ class Parser {
     if (!this->parsed_) {
       throw ParseError("Parser did not parse argument, call parse first");
     }
-    if constexpr (!std::is_same_v<PArgs, std::tuple<>>) {
+    if constexpr (!is_same_v<PArgs, tuple<>>) {
       if constexpr (SearchIndex<PArgs, Name>::value != -1) {
-        return std::tuple_element_t<SearchIndex<PArgs, Name>::value,
-                                    PArgs>::value;
+        return tuple_element_t<SearchIndex<PArgs, Name>::value, PArgs>::value;
       } else {
         static_assert(SearchIndex<Args, Name>::value != -1,
                       "Argument does not exist");
-        return std::remove_cvref_t<
-            decltype(std::get<SearchIndex<Args, Name>::value>(
-                std::declval<Args>()))>::value;
+        return remove_cvref_t<decltype(get<SearchIndex<Args, Name>::value>(
+            declval<Args>()))>::value;
       }
     } else {
       static_assert(SearchIndex<Args, Name>::value != -1,
                     "Argument does not exist");
-      return std::remove_cvref_t<
-          decltype(std::get<SearchIndex<Args, Name>::value>(
-              std::declval<Args>()))>::value;
+      return remove_cvref_t<decltype(get<SearchIndex<Args, Name>::value>(
+          declval<Args>()))>::value;
     }
   }
 
   template <ArgName Name>
   auto& getParser() {
-    if constexpr (std::is_same_v<SubParsers, std::tuple<>>) {
+    if constexpr (is_same_v<SubParsers, tuple<>>) {
       static_assert(false, "Parser has no sub parser");
     }
     static_assert(!(SearchIndex<SubParsers, Name>::value == -1),
                   "Could not find subparser");
-    return std::get<SearchIndex<SubParsers, Name>::value>(subParsers)
-        .parser.get();
+    return get<SearchIndex<SubParsers, Name>::value>(subParsers).parser.get();
   }
 
   template <ArgName Name>
@@ -299,18 +292,16 @@ class Parser {
     if (!this->parsed_) {
       throw ParseError("Parser did not parse argument, call parse first");
     }
-    if constexpr (!std::is_same_v<PArgs, std::tuple<>>) {
-      if constexpr (std::string_view(Name) == std::string_view(PArgs::name)) {
+    if constexpr (!is_same_v<PArgs, tuple<>>) {
+      if constexpr (string_view(Name) == string_view(PArgs::name)) {
         return PArgs::assigned;
       } else {
-        return std::remove_cvref_t<
-            decltype(std::get<SearchIndex<Args, Name>::value>(
-                std::declval<Args>()))>::assigned;
+        return remove_cvref_t<decltype(get<SearchIndex<Args, Name>::value>(
+            declval<Args>()))>::assigned;
       }
     } else {
-      return std::remove_cvref_t<
-          decltype(std::get<SearchIndex<Args, Name>::value>(
-              std::declval<Args>()))>::assigned;
+      return remove_cvref_t<decltype(get<SearchIndex<Args, Name>::value>(
+          declval<Args>()))>::assigned;
     }
   }
 
@@ -319,40 +310,38 @@ class Parser {
    */
   template <ArgName Name, class T>
   auto addParser(T& sub_parser, Description description = {""}) {
-    auto s = std::make_tuple(
-        SubParser<Name, T>{std::ref(sub_parser), description.description});
-    auto sub_parsers = std::tuple_cat(subParsers, s);
+    auto s = make_tuple(
+        SubParser<Name, T>{ref(sub_parser), description.description});
+    auto sub_parsers = tuple_cat(subParsers, s);
     return Parser<ID, Args, PArgs, HArg, decltype(sub_parsers)>(
         std::move(this->info_), sub_parsers);
   }
 
   auto resetArgs() -> void;
 
-  auto addUsageHelp(std::string_view usage) {
+  auto addUsageHelp(string_view usage) {
     this->info_->usage = usage;
   }
 
-  auto addSubcommandHelp(std::string_view subcommand_help) {
+  auto addSubcommandHelp(string_view subcommand_help) {
     this->info_->subcommand_help = subcommand_help;
   }
 
-  auto addPositionalArgumentHelp(std::string_view positional_argument_help) {
+  auto addPositionalArgumentHelp(string_view positional_argument_help) {
     this->info_->positional_argument_help = positional_argument_help;
   }
 
-  auto addOptionsHelp(std::string_view options_help) {
+  auto addOptionsHelp(string_view options_help) {
     this->info_->options_help = options_help;
   }
 
  private:
-  auto setArg(std::string_view key,
-              std::span<std::string_view> val) const -> void;
-  auto setArg(std::span<char> key,
-              std::span<std::string_view> val) const -> void;
+  auto setArg(string_view key, span<string_view> val) const -> void;
+  auto setArg(span<char> key, span<string_view> val) const -> void;
 
  public:
   auto parse(int argc, char* argv[]) -> void;
-  [[nodiscard]] std::string formatHelp(bool no_color = false) const;
+  [[nodiscard]] string formatHelp(bool no_color = false) const;
 
   explicit operator bool() const {
     return this->parsed_;

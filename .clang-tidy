@@ -28,6 +28,7 @@ Checks: >-
   -readability-isolate-declaration,
   -readability-magic-numbers,
   -readability-uppercase-literal-suffix,
+  -google-build-using-namespace,
 WarningsAsErrors: ''
 HeaderFileExtensions:
   - ''

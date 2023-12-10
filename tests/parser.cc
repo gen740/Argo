@@ -287,8 +287,8 @@ TEST(ArgoTest, Required) {
     auto argo = Argo::Parser<"Required argument">("Sample Program");
     auto parser = argo  //
                       .addArg<"arg1,a", int, Argo::nargs(1)>()
-                      .addArg<"arg2", int, Argo::required, Argo::nargs(1)>()
-                      .addArg<"arg3", int, Argo::nargs(1), Argo::required>()
+                      .addArg<"arg2", int, Argo::Required, Argo::nargs(1)>()
+                      .addArg<"arg3", int, Argo::nargs(1), Argo::Required>()
                       .addArg<"arg4,b", int, Argo::nargs(1)>()
                       .addArg<"arg5,c", int, Argo::nargs(1)>();
 

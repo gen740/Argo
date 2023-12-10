@@ -11,6 +11,8 @@ import :std_module;
 
 namespace Argo {
 
+using namespace std;
+
 export template <size_t N>
 struct ParserID {
   union {
@@ -36,7 +38,7 @@ ParserID(const char (&)[N]) -> ParserID<N - 1>;
 
 /*!
  * (default)?  : If value specified use it else use default -> ValueType
- *          int: Exactly (n > 1)                     -> std::array<ValueType, N>
+ *          int: Exactly (n > 1)                     -> array<ValueType, N>
  *          *  : Any number of argument if zero use default -> vector<ValueType>
  *          +  : Any number of argument except zero         -> vector<ValueType>
  */
@@ -62,7 +64,7 @@ struct ArgBase {
   static constexpr auto name = Name;
   static constexpr auto id = ID;
   inline static bool assigned = false;
-  inline static std::string_view description;
+  inline static string_view description;
   inline static bool required = Required;
   using baseType = BaseType;
 };
@@ -72,29 +74,31 @@ concept ArgType = requires(T& x) {
   typename T::baseType;
   typename T::type;
 
-  not std::is_same_v<decltype(T::value), void>;
+  not is_same_v<decltype(T::value), void>;
 
-  std::derived_from<decltype(T::name), ArgNameTag>;
-  std::is_same_v<decltype(T::nargs), NArgs>;
-  std::is_same_v<decltype(T::assigned), bool>;
-  std::is_same_v<decltype(T::description), std::string_view>;
-  std::is_same_v<decltype(T::typeName), std::string>;
-  std::is_same_v<decltype(T::required), bool>;
+  derived_from<decltype(T::name), ArgNameTag>;
+  is_same_v<decltype(T::nargs), NArgs>;
+  is_same_v<decltype(T::assigned), bool>;
+  is_same_v<decltype(T::description), string_view>;
+  is_same_v<decltype(T::typeName), string>;
+  is_same_v<decltype(T::required), bool>;
 };
 
 export struct ArgTag {};
 
+template <size_t N>
+struct constexprString {};
+
 template <class T>
-constexpr std::string get_type_name_base_type() {
-  if constexpr (std::is_same_v<T, bool>) {
+constexpr string get_type_name_base_type() {
+  if constexpr (is_same_v<T, bool>) {
     return "BOOL";
-  } else if constexpr (std::is_integral_v<T>) {
+  } else if constexpr (is_integral_v<T>) {
     return "NUMBER";
-  } else if constexpr (std::is_floating_point_v<T>) {
+  } else if constexpr (is_floating_point_v<T>) {
     return "FLOAT";
-  } else if constexpr (std::is_same_v<T, const char*> or
-                       std::is_same_v<T, std::string> or
-                       std::is_same_v<T, std::string_view>) {
+  } else if constexpr (is_same_v<T, const char*> or is_same_v<T, string> or
+                       is_same_v<T, string_view>) {
     return "STRING";
   } else {
     return "UNKNOWN";
@@ -102,27 +106,27 @@ constexpr std::string get_type_name_base_type() {
 }
 
 template <class T, NArgs TNArgs>
-constexpr std::string get_type_name() {
+constexpr string get_type_name() {
   if constexpr (is_array_v<T> or TNArgs.nargs > 1) {
-    std::string ret("<");
-    auto base_type_name = std::string();
+    string ret("<");
+    auto base_type_name = string();
     if constexpr (is_array_v<T>) {
       base_type_name = get_type_name_base_type<array_base_t<T>>();
     } else if constexpr (is_vector_v<T>) {
       base_type_name = get_type_name_base_type<vector_base_t<T>>();
     } else if constexpr (is_tuple_v<T>) {
-      return std::string("<") +
-             []<size_t... Is>(std::index_sequence<Is...>) {
-               std::string ret =
-                   ((get_type_name_base_type<std::tuple_element_t<Is, T>>() +
-                     std::string(",")) +
+      return string("<") +
+             []<size_t... Is>(index_sequence<Is...>) {
+               string ret =
+                   ((get_type_name_base_type<tuple_element_t<Is, T>>() +
+                     string(",")) +
                     ...);
                ret.pop_back();
                return ret;
-             }(std::make_index_sequence<std::tuple_size_v<T>>()) +
-             std::string(">");
+             }(make_index_sequence<tuple_size_v<T>>()) +
+             string(">");
     } else {
-      throw std::runtime_error("Error");
+      throw runtime_error("Error");
     }
     for (size_t i = 0; i < TNArgs.nargs; i++) {
       ret += base_type_name;
@@ -139,16 +143,15 @@ constexpr std::string get_type_name() {
     }
   } else if constexpr (is_vector_v<T>) {
     if constexpr (TNArgs.nargs_char == '*') {
-      return std::string("[<") + get_type_name_base_type<vector_base_t<T>>() +
+      return string("[<") + get_type_name_base_type<vector_base_t<T>>() +
              ",...>]";
     } else if constexpr (TNArgs.nargs_char == '+') {
-      return std::string("<") + get_type_name_base_type<vector_base_t<T>>() +
+      return string("<") + get_type_name_base_type<vector_base_t<T>>() +
              ",...>";
     }
   } else {
     if constexpr (TNArgs.nargs_char == '?') {
-      return std::string("[<") + get_type_name_base_type<T>() +
-             std::string(">]");
+      return string("[<") + get_type_name_base_type<T>() + string(">]");
     }
   }
 }
@@ -160,10 +163,10 @@ export template <class Type, ArgName Name, NArgs TNArgs, bool Required,
                  ParserID ID>
 struct Arg : ArgTag,
              ArgBase<                          //
-                 std::conditional_t<           //
+                 conditional_t<                //
                      is_array_v<Type>,         //
                      array_base_t<Type>,       //
-                     std::conditional_t<       //
+                     conditional_t<            //
                          is_vector_v<Type>,    //
                          vector_base_t<Type>,  //
                          Type                  //
@@ -173,32 +176,31 @@ struct Arg : ArgTag,
                  Required,                     //
                  ID                            //
                  > {
-  using type =             //
-      std::conditional_t<  //
+  using type =        //
+      conditional_t<  //
           ((TNArgs.nargs <= 1) && (TNArgs.nargs_char != '+') &&
-           (TNArgs.nargs_char != '*'))                              //
-              || is_array_v<Type>                                   //
-              || is_tuple_v<Type>                                   //
-              || is_vector_v<Type>,                                 //
-          Type,                                                     //
-          std::conditional_t<                                       //
-              (TNArgs.nargs > 1),                                   //
-              std::array<Type, static_cast<size_t>(TNArgs.nargs)>,  //
-              std::vector<Type>                                     //
-              >                                                     //
-          >;                                                        //
+           (TNArgs.nargs_char != '*'))                         //
+              || is_array_v<Type>                              //
+              || is_tuple_v<Type>                              //
+              || is_vector_v<Type>,                            //
+          Type,                                                //
+          conditional_t<                                       //
+              (TNArgs.nargs > 1),                              //
+              array<Type, static_cast<size_t>(TNArgs.nargs)>,  //
+              vector<Type>                                     //
+              >                                                //
+          >;                                                   //
 
   inline static type value = {};
   inline static type defaultValue = {};
 
   inline static constexpr NArgs nargs = TNArgs;
-  inline static std::function<type(std::string_view)> caster = nullptr;
-  inline static std::function<void(
-      const type& value, std::span<std::string_view>, std::string_view)>
+  inline static function<type(string_view)> caster = nullptr;
+  inline static function<void(const type& value, span<string_view>,
+                              string_view)>
       validator = nullptr;
-  inline static std::function<void(type&, std::span<std::string_view>)>
-      callback = nullptr;
-  inline static std::string typeName = get_type_name<type, TNArgs>();
+  inline static function<void(type&, span<string_view>)> callback = nullptr;
+  inline static string typeName = get_type_name<type, TNArgs>();
   inline static bool required = Required;
 };
 
@@ -212,8 +214,8 @@ struct FlagArg : FlagArgTag, ArgBase<bool, Name, false, ID> {
   inline static type defaultValue = {};
 
   inline static constexpr NArgs nargs = NArgs(-1);
-  inline static std::function<void()> callback = nullptr;
-  inline static std::string typeName;
+  inline static function<void()> callback = nullptr;
+  inline static string typeName;
 };
 
 export struct HelpArgTag {};
@@ -224,11 +226,11 @@ struct HelpArg : HelpArgTag, FlagArgTag, ArgBase<bool, Name, false, ID> {
   inline static type value = {};
   inline static type defaultValue = {};
 
-  inline static std::string_view description = "Print help information";
+  inline static string_view description = "Print help information";
 
   inline static constexpr NArgs nargs = NArgs(-1);
-  inline static std::function<void()> callback = nullptr;
-  inline static std::string typeName;
+  inline static function<void()> callback = nullptr;
+  inline static string typeName;
 };
 
 }  // namespace Argo

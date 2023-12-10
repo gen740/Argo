@@ -11,27 +11,29 @@ import :ArgName;
 
 namespace Argo {
 
-export template <class Arguments>
+using namespace std;
+
+template <class Arguments>
 struct GetNameFromShortName {
   template <class Head, class... Tails>
   struct GetNameFromShortNameImpl {
-    [[noreturn]] static auto get(char /* unused */) -> std::string_view {
+    [[noreturn]] static auto get(char /* unused */) -> string_view {
       throw ParserInternalError("Fail to lookup");
     }
   };
 
   template <class Head, class... Tails>
-  struct GetNameFromShortNameImpl<std::tuple<Head, Tails...>> {
-    static auto get(char key) -> std::string_view {
-      auto name = std::string_view(Head::name);
+  struct GetNameFromShortNameImpl<tuple<Head, Tails...>> {
+    static auto get(char key) -> string_view {
+      auto name = string_view(Head::name);
       if (Head::name.shortName == key) {
         return name;
       }
-      return GetNameFromShortNameImpl<std::tuple<Tails...>>::get(key);
+      return GetNameFromShortNameImpl<tuple<Tails...>>::get(key);
     }
   };
 
-  static auto eval(char key) -> std::string_view {
+  static auto eval(char key) -> string_view {
     return GetNameFromShortNameImpl<Arguments>::get(key);
   }
 };
@@ -39,39 +41,38 @@ struct GetNameFromShortName {
 /*!
  * Index Search meta function
  */
-export template <class Tuple, ArgName T, int Index = 0>
+template <class Tuple, ArgName T, int Index = 0>
 struct SearchIndex;
 
-export template <ArgName T, size_t Index>
-struct SearchIndex<std::tuple<>, T, Index> {
+template <ArgName T, size_t Index>
+struct SearchIndex<tuple<>, T, Index> {
   static constexpr int value = -1;
 };
 
-export template <ArgName T, size_t Index, class Head, class... Tails>
-struct SearchIndex<std::tuple<Head, Tails...>, T, Index> {
+template <ArgName T, size_t Index, class Head, class... Tails>
+struct SearchIndex<tuple<Head, Tails...>, T, Index> {
   static constexpr int value =
-      (Head::name == T)
-          ? Index
-          : SearchIndex<std::tuple<Tails...>, T, Index + 1>::value;
+      (Head::name == T) ? Index
+                        : SearchIndex<tuple<Tails...>, T, Index + 1>::value;
 };
 
 /*!
  * Index Search meta function
  */
-export template <class Tuple, char T, int Index = 0>
+template <class Tuple, char T, int Index = 0>
 struct SearchIndexFromShortName;
 
-export template <char T, size_t Index>
-struct SearchIndexFromShortName<std::tuple<>, T, Index> {
+template <char T, size_t Index>
+struct SearchIndexFromShortName<tuple<>, T, Index> {
   static constexpr int value = -1;
 };
 
-export template <char T, size_t Index, class Head, class... Tails>
-struct SearchIndexFromShortName<std::tuple<Head, Tails...>, T, Index> {
+template <char T, size_t Index, class Head, class... Tails>
+struct SearchIndexFromShortName<tuple<Head, Tails...>, T, Index> {
   static constexpr int value =
       Head::name.shortName == T
           ? Index
-          : SearchIndexFromShortName<std::tuple<Tails...>, T, Index + 1>::value;
+          : SearchIndexFromShortName<tuple<Tails...>, T, Index + 1>::value;
 };
 
 };  // namespace Argo
