@@ -54,6 +54,71 @@ constexpr auto tupleAssign(tuple<T...>& t, span<string_view> v,
   ((get<N>(t) = caster<remove_cvref_t<decltype(get<N>(t))>>(v[N])), ...);
 }
 
+template <class Arg>
+auto assignValiadicArg(const span<string_view>& values) {
+  for (const auto& value : values) {
+    Arg::value.push_back(caster<typename Arg::baseType>(value));
+  }
+  if (Arg::validator) {
+    Arg::validator(Arg::value, values, string_view(Arg::name));
+  }
+  if (Arg::callback) {
+    Arg::callback(Arg::value, values);
+  }
+  Arg::assigned = true;
+}
+
+template <class Arg>
+auto assignNLengthArg(span<string_view>& values) {
+  if (Arg::nargs.getNargs() > values.size()) {
+    throw Argo::InvalidArgument(format("Argument {}: invalid argument {}",
+                                       string_view(Arg::name), values));
+  }
+  if constexpr (is_array_v<typename Arg::type>) {
+    for (int i = 0; i < Arg::nargs.getNargs(); i++) {
+      Arg::value[i] = caster<typename Arg::baseType>(values[i]);
+    }
+  } else if constexpr (is_vector_v<typename Arg::type>) {
+    for (int i = 0; i < Arg::nargs.getNargs(); i++) {
+      Arg::value.push_back(caster<typename Arg::baseType>(values[i]));
+    }
+  } else if constexpr (is_tuple_v<typename Arg::type>) {
+    tupleAssign(Arg::value, values,
+                make_index_sequence<tuple_size_v<typename Arg::type>>());
+  } else {
+    static_assert(false, "Invalid Type");
+  }
+
+  if (Arg::validator) {
+    Arg::validator(Arg::value, values.subspan(0, Arg::nargs.getNargs()),
+                   string_view(Arg::name));
+  }
+  if (Arg::callback) {
+    Arg::callback(Arg::value, values.subspan(0, Arg::nargs.getNargs()));
+  }
+  Arg::assigned = true;
+  values = values.subspan(Arg::nargs.getNargs());
+}
+
+template <class Arg>
+auto assignZeroOrOneArg(span<string_view>& values) {
+  if (values.empty()) {
+    Arg::value = Arg::defaultValue;
+    Arg::assigned = true;
+    return;
+  }
+  Arg::value = caster<typename Arg::type>(values[0]);
+  Arg::assigned = true;
+  if (Arg::validator) {
+    Arg::validator(Arg::value, values, string_view(Arg::name));
+  }
+  if (Arg::callback) {
+    Arg::callback(Arg::value, values);
+  }
+  values = values.subspan(1);
+  return;
+}
+
 template <class PArgs>
 struct PArgAssigner {};
 
@@ -65,49 +130,11 @@ struct PArgAssigner<tuple<PArgs...>> {
         return false;
       }
       if constexpr (Arg::nargs.getNargsChar() == '+') {
-        for (const auto& value : values) {
-          Arg::value.push_back(caster<typename Arg::baseType>(value));
-        }
-        if (Arg::validator) {
-          Arg::validator(Arg::value, values, string_view(Arg::name));
-        }
-        if (Arg::callback) {
-          Arg::callback(Arg::value, values);
-        }
-        Arg::assigned = true;
+        assignValiadicArg<Arg>(values);
         return true;
       }
       if constexpr (Arg::nargs.getNargs() > 0) {
-        if (Arg::nargs.getNargs() > values.size()) {
-          throw Argo::InvalidArgument(
-              format("Positional Argument {} Invalid positional argument {}",
-                     string_view(Arg::name), values));
-        }
-
-        if constexpr (is_array_v<typename Arg::type>) {
-          for (int i = 0; i < Arg::nargs.getNargs(); i++) {
-            Arg::value[i] = caster<typename Arg::baseType>(values[i]);
-          }
-        } else if constexpr (is_vector_v<typename Arg::type>) {
-          for (int i = 0; i < Arg::nargs.getNargs(); i++) {
-            Arg::value.push_back(caster<typename Arg::baseType>(values[i]));
-          }
-        } else if constexpr (is_tuple_v<typename Arg::type>) {
-          tupleAssign(Arg::value, values,
-                      make_index_sequence<tuple_size_v<typename Arg::type>>());
-        } else {
-          static_assert(false, "Invalid Type");
-        }
-
-        if (Arg::validator) {
-          Arg::validator(Arg::value, values.subspan(0, Arg::nargs.getNargs()),
-                         string_view(Arg::name));
-        }
-        if (Arg::callback) {
-          Arg::callback(Arg::value, values.subspan(0, Arg::nargs.getNargs()));
-        }
-        Arg::assigned = true;
-        values = values.subspan(Arg::nargs.getNargs());
+        assignNLengthArg<Arg>(values);
         return values.empty();
       }
     }.template operator()<PArgs>(values) ||
@@ -115,11 +142,18 @@ struct PArgAssigner<tuple<PArgs...>> {
   }
 };
 
+template <>
+struct PArgAssigner<std::tuple<>> {
+  static auto assign(span<string_view> /*unused*/) {
+    return true;
+  }
+};
+
 template <class Arguments, class PArgs>
 struct Assigner {
   template <ArgType Head>
   static constexpr auto assignOneArg(const string_view& key,
-                                     const span<string_view>& values) -> bool {
+                                     span<string_view> values) -> bool {
     if constexpr (derived_from<Head, FlagArgTag>) {
       if (!values.empty()) {
         if constexpr (is_same_v<PArgs, tuple<>>) {
@@ -137,129 +171,42 @@ struct Assigner {
       return true;
     } else {
       if constexpr (Head::nargs.getNargsChar() == '?') {
+        assignZeroOrOneArg<Head>(values);
         if (values.empty()) {
-          Head::value = Head::defaultValue;
-          Head::assigned = true;
           return true;
         }
-        if (values.size() == 1) {
-          Head::value = caster<typename Head::type>(values[0]);
-          Head::assigned = true;
-          if (Head::validator) {
-            Head::validator(Head::value, values, key);
-          }
-          if (Head::callback) {
-            Head::callback(Head::value, values);
-          }
-          return true;
-        }
-        if constexpr (is_same_v<PArgs, tuple<>>) {
-          throw Argo::InvalidArgument(
-              format("Argument {} cannot take more than one value got {}", key,
-                     values.size()));
-        } else {
-          assignOneArg<Head>(key, values.subspan(0, 1));
-          return PArgAssigner<PArgs>::assign(values.subspan(1));
-        }
+        return PArgAssigner<PArgs>::assign(values);
       } else if constexpr (Head::nargs.getNargsChar() == '*') {
         if (values.empty()) {
           Head::value = Head::defaultValue;
           Head::assigned = true;
           return true;
         }
-        for (const auto& value : values) {
-          Head::value.emplace_back(
-              caster<vector_base_t<typename Head::type>>(value));
-        }
-        Head::assigned = true;
-        if (Head::validator) {
-          Head::validator(Head::value, values, key);
-        }
-        if (Head::callback) {
-          Head::callback(Head::value, values);
-        }
+        assignValiadicArg<Head>(values);
         return true;
       } else if constexpr (Head::nargs.getNargsChar() == '+') {
         if (values.empty()) {
           throw Argo::InvalidArgument(
               format("Argument {} should take more than one value", key));
         }
-        for (const auto& value : values) {
-          Head::value.emplace_back(caster<typename Head::baseType>(value));
-        }
-        Head::assigned = true;
-        if (Head::validator) {
-          Head::validator(Head::value, values, key);
-        }
-        if (Head::callback) {
-          Head::callback(Head::value, values);
-        }
+        assignValiadicArg<Head>(values);
         return true;
       } else if constexpr (Head::nargs.getNargs() == 1) {
         if (values.empty()) {
           throw Argo::InvalidArgument(format(
               "Argument {} should take exactly one value but zero", key));
         }
-        if (values.size() > 1) {
-          if constexpr (is_same_v<PArgs, tuple<>>) {
-            throw Argo::InvalidArgument(
-                format("Argument {} should take exactly one value but {}", key,
-                       values.size()));
-          } else {
-            assignOneArg<Head>(key, values.subspan(0, 1));
-            return PArgAssigner<PArgs>::assign(values.subspan(1));
-          }
-        }
-        Head::value = caster<typename Head::baseType>(values[0]);
-        Head::assigned = true;
-        if (Head::validator) {
-          Head::validator(Head::value, values, key);
-        }
-        if (Head::callback) {
-          Head::callback(Head::value, values);
-        }
-        return true;
-      } else {
-        if (values.size() == Head::nargs.getNargs()) {
-          if constexpr (is_array_v<typename Head::type>) {
-            for (int idx = 0; idx < Head::nargs.getNargs(); idx++) {
-              Head::value[idx] =
-                  caster<array_base_t<typename Head::type>>(values[idx]);
-            }
-          } else if constexpr (is_tuple_v<typename Head::type>) {
-            tupleAssign(
-                Head::value, values,
-                make_index_sequence<tuple_size_v<typename Head::type>>());
-          } else {
-            for (const auto& value : values) {
-              Head::value.emplace_back(
-                  caster<vector_base_t<typename Head::type>>(value));
-            }
-          }
-
-          Head::assigned = true;
-          if (Head::validator) {
-            Head::validator(Head::value, values, key);
-          }
-          if (Head::callback) {
-            Head::callback(Head::value, values);
-          }
+        assignZeroOrOneArg<Head>(values);
+        if (values.empty()) {
           return true;
         }
-        if (values.size() < Head::nargs.getNargs()) {
-          throw Argo::InvalidArgument(
-              format("Argument {} should take exactly {} value but {}", key,
-                     Head::nargs.getNargs(), values.size()));
+        return PArgAssigner<PArgs>::assign(values);
+      } else {
+        assignNLengthArg<Head>(values);
+        if (values.empty()) {
+          return true;
         }
-        if constexpr (is_same_v<PArgs, tuple<>>) {
-          throw Argo::InvalidArgument(
-              format("Argument {} should take exactly {} value but {}", key,
-                     Head::nargs.getNargs(), values.size()));
-        } else {
-          assignOneArg<Head>(key, values.subspan(0, Head::nargs.getNargs()));
-          return PArgAssigner<PArgs>::assign(
-              values.subspan(Head::nargs.getNargs()));
-        }
+        return PArgAssigner<PArgs>::assign(values);
       }
     }
     return false;

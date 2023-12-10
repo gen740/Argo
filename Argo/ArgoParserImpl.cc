@@ -81,6 +81,7 @@ auto Parser<ID, Args, PArgs, HArg, SubParsers>::parse(int argc, char* argv[])
     throw ParseError(format("keys {} already assigned", assigned_keys));
   }
 
+  // Search for subcommand
   int64_t subcmd_found_idx = -1;
   int64_t cmd_end_pos = argc;
   if constexpr (!is_same_v<SubParsers, tuple<>>) {

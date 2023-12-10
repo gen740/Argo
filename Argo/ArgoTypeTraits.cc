@@ -89,6 +89,20 @@ struct tuple_append<tuple<U...>, T> {
 template <class... T>
 using tuple_append_t = typename tuple_append<T...>::type;
 
+template <class... T>
+struct type_sequence {};
+
+template <class T>
+struct make_type_sequence {};
+
+template <class... T>
+struct make_type_sequence<tuple<T...>> {
+  using type = type_sequence<T...>;
+};
+
+template <class T>
+using make_type_sequence_t = make_type_sequence<T>::type;
+
 };  // namespace Argo
 
 // generator end here

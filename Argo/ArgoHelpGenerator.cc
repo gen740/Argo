@@ -14,7 +14,7 @@ struct ArgInfo {
   char shortName;
   string_view description;
   bool required;
-  string typeName;
+  string_view typeName;
 };
 
 template <class Args>
@@ -29,7 +29,7 @@ struct HelpGenerator<tuple<Args...>> {
           ret.emplace_back(
               string_view(Args::name).substr(0, Args::name.nameLen),
               Args::name.shortName, Args::description, Args::required,
-              Args::typeName);
+              string_view(Args::typeName));
         }.template operator()<Args>(),
         ...);
     return ret;

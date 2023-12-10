@@ -70,54 +70,102 @@ struct ArgBase {
 };
 
 template <size_t N>
-struct constexprString {};
+struct String {
+  char str_[N] = {};
+
+  String() = default;
+
+  consteval explicit String(const char (&str)[N + 1]) {
+    for (size_t i = 0; i < N; i++) {
+      str_[i] = str[i];
+    }
+  };
+
+  constexpr explicit operator string() {
+    return string(str_, N);
+  }
+
+  constexpr explicit operator string_view() {
+    return string_view(str_, N);
+  }
+
+  [[nodiscard]] consteval auto operator[](size_t n) const {
+    return str_[n];
+  }
+
+  consteval auto operator[](size_t n) -> char& {
+    return str_[n];
+  }
+
+  consteval auto removeTrail() {
+    String<N - 1> ret;
+    for (size_t i = 0; i < N - 1; i++) {
+      ret[i] = str_[i];
+    }
+    return ret;
+  }
+
+  template <size_t M>
+  consteval auto operator+(const String<M>& rhs) -> String<N + M> {
+    String<N + M> ret;
+    for (size_t i = 0; i < N; i++) {
+      ret[i] = str_[i];
+    }
+    for (size_t i = 0; i < M; i++) {
+      ret[i + N] = rhs[i];
+    }
+    return ret;
+  }
+};
+
+template <size_t N>
+String(const char (&)[N]) -> String<N - 1>;
 
 template <class T>
-constexpr string get_type_name_base_type() {
+consteval auto get_type_name_base_type([[maybe_unused]] size_t n = 0) {
   if constexpr (is_same_v<T, bool>) {
-    return "BOOL";
+    return String("BOOL");
   } else if constexpr (is_integral_v<T>) {
-    return "NUMBER";
+    return String("NUMBER");
   } else if constexpr (is_floating_point_v<T>) {
-    return "FLOAT";
+    return String("FLOAT");
   } else if constexpr (is_same_v<T, const char*> or is_same_v<T, string> or
                        is_same_v<T, string_view>) {
-    return "STRING";
+    return String("STRING");
   } else {
-    return "UNKNOWN";
+    return String("UNKNOWN");
   }
 }
 
 template <class T, NArgs TNArgs>
-constexpr string get_type_name() {
+consteval auto get_base_type_name_form_stl() {
+  if constexpr (is_array_v<T>) {
+    return []<size_t... Is>(index_sequence<Is...>) {
+      return ((get_type_name_base_type<array_base_t<T>>(Is) + String(",")) +
+              ...);
+    }(make_index_sequence<TNArgs.getNargs()>())
+               .removeTrail();
+  } else if constexpr (is_vector_v<T>) {
+    return []<size_t... Is>(index_sequence<Is...>) {
+      return ((get_type_name_base_type<vector_base_t<T>>(Is) + String(",")) +
+              ...)
+          .removeTrail();
+    }(make_index_sequence<TNArgs.getNargs()>());
+  } else if constexpr (is_tuple_v<T>) {
+    return []<class... U>(type_sequence<U...>) {
+      return (((get_type_name_base_type<vector_base_t<U>>()) + String(",")) +
+              ...);
+    }(make_type_sequence_t<T>())
+               .removeTrail();
+  } else {
+    return String("UNKNOWN");
+  }
+}
+
+template <class T, NArgs TNArgs>
+constexpr auto get_type_name() {
   if constexpr (is_array_v<T> or TNArgs.nargs > 1) {
-    string ret("<");
-    auto base_type_name = string();
-    if constexpr (is_array_v<T>) {
-      base_type_name = get_type_name_base_type<array_base_t<T>>();
-    } else if constexpr (is_vector_v<T>) {
-      base_type_name = get_type_name_base_type<vector_base_t<T>>();
-    } else if constexpr (is_tuple_v<T>) {
-      return string("<") +
-             []<size_t... Is>(index_sequence<Is...>) {
-               string ret =
-                   ((get_type_name_base_type<tuple_element_t<Is, T>>() +
-                     string(",")) +
-                    ...);
-               ret.pop_back();
-               return ret;
-             }(make_index_sequence<tuple_size_v<T>>()) +
-             string(">");
-    } else {
-      throw runtime_error("Error");
-    }
-    for (size_t i = 0; i < TNArgs.nargs; i++) {
-      ret += base_type_name;
-      ret.push_back(',');
-    }
-    ret.pop_back();
-    ret.push_back('>');
-    return ret;
+    return String("<") + get_base_type_name_form_stl<T, TNArgs>() + String(">");
   } else if constexpr (TNArgs.nargs == 1) {
     if constexpr (is_vector_v<T>) {
       return get_type_name_base_type<vector_base_t<T>>();
@@ -126,15 +174,15 @@ constexpr string get_type_name() {
     }
   } else if constexpr (is_vector_v<T>) {
     if constexpr (TNArgs.nargs_char == '*') {
-      return string("[<") + get_type_name_base_type<vector_base_t<T>>() +
-             ",...>]";
+      return String("[<") + get_type_name_base_type<vector_base_t<T>>() +
+             String(",...>]");
     } else if constexpr (TNArgs.nargs_char == '+') {
-      return string("<") + get_type_name_base_type<vector_base_t<T>>() +
-             ",...>";
+      return String("<") + get_type_name_base_type<vector_base_t<T>>() +
+             String(",...>");
     }
   } else {
     if constexpr (TNArgs.nargs_char == '?') {
-      return string("[<") + get_type_name_base_type<T>() + string(">]");
+      return String("[<") + get_type_name_base_type<T>() + String(">]");
     }
   }
 }
@@ -184,7 +232,7 @@ struct Arg : ArgTag,
                               string_view)>
       validator = nullptr;
   inline static function<void(type&, span<string_view>)> callback = nullptr;
-  inline static string typeName = get_type_name<type, TNArgs>();
+  inline static auto typeName = get_type_name<type, TNArgs>();
   inline static bool required = Required;
 };
 
@@ -199,7 +247,7 @@ struct FlagArg : FlagArgTag, ArgBase<bool, Name, false, ID> {
 
   inline static constexpr NArgs nargs = NArgs(-1);
   inline static function<void()> callback = nullptr;
-  inline static string typeName;
+  inline static auto typeName = String("");
 };
 
 struct HelpArgTag {};
@@ -214,7 +262,7 @@ struct HelpArg : HelpArgTag, FlagArgTag, ArgBase<bool, Name, false, ID> {
 
   inline static constexpr NArgs nargs = NArgs(-1);
   inline static function<void()> callback = nullptr;
-  inline static string typeName;
+  inline static auto typeName = String("");
 };
 
 template <class T>
@@ -228,7 +276,8 @@ concept ArgType = requires(T& x) {
   is_same_v<decltype(T::nargs), NArgs>;
   is_same_v<decltype(T::assigned), bool>;
   is_same_v<decltype(T::description), string_view>;
-  is_same_v<decltype(T::typeName), string>;
+  is_convertible_v<decltype(T::typeName), string>;
+  is_convertible_v<decltype(T::typeName), string_view>;
   is_same_v<decltype(T::required), bool>;
 };
 
