@@ -42,7 +42,6 @@ using ::std::end;
 using ::std::exchange;
 using ::std::forward;
 using ::std::move;
-using ::std::unreachable;
 
 // cstdint
 using ::std::int64_t;
@@ -50,7 +49,6 @@ using ::std::size_t;
 
 // string
 using ::std::stod;
-using ::std::stof;
 using ::std::stoi;
 using ::std::string;
 
@@ -62,7 +60,6 @@ using ::std::from_chars;
 
 // print
 using ::std::format;
-using ::std::formatter;
 using ::std::println;
 
 // array

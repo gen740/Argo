@@ -155,14 +155,13 @@ class Parser {
       }
     }();
     if constexpr (!is_same_v<PArgs, tuple<>>) {
-      static_assert(SearchIndex<PArgs, Name>::value == -1, "Duplicated name");
+      static_assert(SearchIndex<PArgs, Name>() == -1, "Duplicated name");
     }
-    static_assert(
-        (Name.shortName == '\0') ||
-            (SearchIndexFromShortName<Args, Name.shortName>::value == -1),
-        "Duplicated short name");
-    static_assert(                                   //
-        Argo::SearchIndex<Args, Name>::value == -1,  //
+    static_assert((Name.shortName == '\0') ||
+                      (SearchIndexFromShortName<Args, Name.shortName>() == -1),
+                  "Duplicated short name");
+    static_assert(                        //
+        SearchIndex<Args, Name>() == -1,  //
         "Duplicated name");
     static_assert(                         //
         (nargs.getNargs() > 0              //
@@ -216,14 +215,12 @@ class Parser {
   template <ArgName Name, class... T>
   auto addFlag(T... args) {
     if constexpr (!is_same_v<PArgs, tuple<>>) {
-      static_assert(SearchIndex<PArgs, Name>::value == -1, "Duplicated name");
+      static_assert(SearchIndex<PArgs, Name>() == -1, "Duplicated name");
     }
-    static_assert(
-        (Name.shortName == '\0') ||
-            (SearchIndexFromShortName<Args, Name.shortName>::value == -1),
-        "Duplicated short name");
-    static_assert(Argo::SearchIndex<Args, Name>::value == -1,
-                  "Duplicated name");
+    static_assert((Name.shortName == '\0') ||
+                      (SearchIndexFromShortName<Args, Name.shortName>() == -1),
+                  "Duplicated short name");
+    static_assert(SearchIndex<Args, Name>() == -1, "Duplicated name");
     FlagArgInitializer<Name, ID>(std::forward<T>(args)...);
     return Parser<ID, tuple_append_t<Args, FlagArg<Name, ID>>, PArgs, HArg,
                   SubParsers>(std::move(this->info_), subParsers);
@@ -231,20 +228,18 @@ class Parser {
 
   template <ArgName Name = "help,h">
   auto addHelp() {
-    static_assert((SearchIndexFromShortName<Args, Name.shortName>::value == -1),
+    static_assert((SearchIndexFromShortName<Args, Name.shortName>() == -1),
                   "Duplicated short name");
-    static_assert(Argo::SearchIndex<Args, Name>::value == -1,
-                  "Duplicated name");
+    static_assert(Argo::SearchIndex<Args, Name>() == -1, "Duplicated name");
     return Parser<ID, Args, PArgs, HelpArg<Name, ID>, SubParsers>(
         std::move(this->info_), subParsers);
   }
 
   template <ArgName Name = "help,h">
   auto addHelp(string_view help) {
-    static_assert((SearchIndexFromShortName<Args, Name.shortName>::value == -1),
+    static_assert((SearchIndexFromShortName<Args, Name.shortName>() == -1),
                   "Duplicated short name");
-    static_assert(Argo::SearchIndex<Args, Name>::value == -1,
-                  "Duplicated name");
+    static_assert(Argo::SearchIndex<Args, Name>() == -1, "Duplicated name");
     static_assert(Name.hasValidNameLength(),
                   "Short name can't be more than one charactor");
     this->info_->help = help;
@@ -258,18 +253,17 @@ class Parser {
       throw ParseError("Parser did not parse argument, call parse first");
     }
     if constexpr (!is_same_v<PArgs, tuple<>>) {
-      if constexpr (SearchIndex<PArgs, Name>::value != -1) {
-        return tuple_element_t<SearchIndex<PArgs, Name>::value, PArgs>::value;
+      if constexpr (SearchIndex<PArgs, Name>() != -1) {
+        return tuple_element_t<SearchIndex<PArgs, Name>(), PArgs>::value;
       } else {
-        static_assert(SearchIndex<Args, Name>::value != -1,
+        static_assert(SearchIndex<Args, Name>() != -1,
                       "Argument does not exist");
-        return remove_cvref_t<decltype(get<SearchIndex<Args, Name>::value>(
+        return remove_cvref_t<decltype(get<SearchIndex<Args, Name>()>(
             declval<Args>()))>::value;
       }
     } else {
-      static_assert(SearchIndex<Args, Name>::value != -1,
-                    "Argument does not exist");
-      return remove_cvref_t<decltype(get<SearchIndex<Args, Name>::value>(
+      static_assert(SearchIndex<Args, Name>() != -1, "Argument does not exist");
+      return remove_cvref_t<decltype(get<SearchIndex<Args, Name>()>(
           declval<Args>()))>::value;
     }
   }
@@ -279,9 +273,9 @@ class Parser {
     if constexpr (is_same_v<SubParsers, tuple<>>) {
       static_assert(false, "Parser has no sub parser");
     }
-    static_assert(!(SearchIndex<SubParsers, Name>::value == -1),
+    static_assert(!(SearchIndex<SubParsers, Name>() == -1),
                   "Could not find subparser");
-    return get<SearchIndex<SubParsers, Name>::value>(subParsers).parser.get();
+    return get<SearchIndex<SubParsers, Name>()>(subParsers).parser.get();
   }
 
   template <ArgName Name>
@@ -293,11 +287,11 @@ class Parser {
       if constexpr (string_view(Name) == string_view(PArgs::name)) {
         return PArgs::assigned;
       } else {
-        return remove_cvref_t<decltype(get<SearchIndex<Args, Name>::value>(
+        return remove_cvref_t<decltype(get<SearchIndex<Args, Name>()>(
             declval<Args>()))>::assigned;
       }
     } else {
-      return remove_cvref_t<decltype(get<SearchIndex<Args, Name>::value>(
+      return remove_cvref_t<decltype(get<SearchIndex<Args, Name>()>(
           declval<Args>()))>::assigned;
     }
   }

@@ -81,11 +81,11 @@ struct String {
     }
   };
 
-  constexpr explicit operator string() {
+  consteval explicit operator string() const {
     return string(str_, N);
   }
 
-  constexpr explicit operator string_view() {
+  consteval explicit operator string_view() const {
     return string_view(str_, N);
   }
 
@@ -163,7 +163,7 @@ consteval auto get_base_type_name_form_stl() {
 }
 
 template <class T, NArgs TNArgs>
-constexpr auto get_type_name() {
+consteval auto get_type_name() {
   if constexpr (is_array_v<T> or TNArgs.nargs > 1) {
     return String("<") + get_base_type_name_form_stl<T, TNArgs>() + String(">");
   } else if constexpr (TNArgs.nargs == 1) {
@@ -232,7 +232,7 @@ struct Arg : ArgTag,
                               string_view)>
       validator = nullptr;
   inline static function<void(type&, span<string_view>)> callback = nullptr;
-  inline static auto typeName = get_type_name<type, TNArgs>();
+  inline static constexpr auto typeName = get_type_name<type, TNArgs>();
   inline static bool required = Required;
 };
 
@@ -247,7 +247,7 @@ struct FlagArg : FlagArgTag, ArgBase<bool, Name, false, ID> {
 
   inline static constexpr NArgs nargs = NArgs(-1);
   inline static function<void()> callback = nullptr;
-  inline static auto typeName = String("");
+  inline static constexpr auto typeName = String("");
 };
 
 struct HelpArgTag {};
@@ -262,7 +262,7 @@ struct HelpArg : HelpArgTag, FlagArgTag, ArgBase<bool, Name, false, ID> {
 
   inline static constexpr NArgs nargs = NArgs(-1);
   inline static function<void()> callback = nullptr;
-  inline static auto typeName = String("");
+  inline static constexpr auto typeName = String("");
 };
 
 template <class T>

@@ -11,12 +11,12 @@ import Argo;
 #endif
 
 template <typename... Args>
-std::tuple<size_t, char**> createArgcArgv(Args... args) {
+std::tuple<int, char**> createArgcArgv(Args... args) {
   const size_t N = sizeof...(Args);
   char** array = new char*[N];
   size_t i = 0;
   (..., (array[i++] = strdup(args)));
-  return std::make_tuple(N, array);
+  return std::make_tuple(static_cast<int>(N), array);
 }
 
 auto [argc, argv] = createArgcArgv(                              //
@@ -45,8 +45,7 @@ using Argo::Parser;
 
 static void ArgoParser(benchmark::State& state) {
   for (auto _ : state) {
-    auto argo = Parser<1>();
-    auto parser = argo  //
+    auto parser = Parser<1>()  //
                       .addArg<"arg1", int, nargs(8)>()
                       .addArg<"arg2", float>()
                       .addFlag<"arg3">()
@@ -74,7 +73,7 @@ BENCHMARK(ArgoParser);
 #if CLI11_FOUND
 static void CLI11Parser(benchmark::State& state) {
   for (auto _ : state) {
-    CLI::App app{"App description"};
+    auto app = CLI::App{"App description"};
 
     std::array<int, 8> arg1;
     app.add_option("--arg1", arg1);
@@ -114,10 +113,10 @@ BENCHMARK(CLI11Parser);
 #endif
 
 #if argparse_FOUND
-argparse::ArgumentParser program("program_name");
 
 static void argparseParser(benchmark::State& state) {
   for (auto _ : state) {
+    auto program = argparse::ArgumentParser("program_name");
     program.add_argument("--arg1").nargs(8).scan<'d', int>();
     program.add_argument("--arg2").scan<'g', double>();
     program.add_argument("--arg3").default_value(false);

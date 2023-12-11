@@ -107,7 +107,7 @@ if(${CMAKE_SOURCE_DIR} STREQUAL ${CMAKE_CURRENT_LIST_DIR})
                             ${CLI11_LIBRARY})
       set_target_properties(${release_target_name} PROPERTIES CXX_STANDARD 23)
       target_compile_options(${release_target_name}
-                             PRIVATE -Wno-writable-strings -O3)
+                             PRIVATE -Wno-writable-strings -O3 -Os)
     endforeach()
   endif()
 endif()

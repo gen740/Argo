@@ -261,10 +261,9 @@ struct Assigner {
 
   static auto assign(span<char> key, span<string_view> values) {
     for (size_t i = 0; i < key.size() - 1; i++) {
-      assignFlagImpl<Arguments>(GetNameFromShortName<Arguments>::eval(key[i]));
+      assignFlagImpl<Arguments>(GetNameFromShortName<Arguments>(key[i]));
     }
-    assignImpl<Arguments>(GetNameFromShortName<Arguments>::eval(key.back()),
-                          values);
+    assignImpl<Arguments>(GetNameFromShortName<Arguments>(key.back()), values);
   };
 };
 

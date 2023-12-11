@@ -76,7 +76,7 @@ auto Parser<ID, Args, PArgs, HArg, SubParsers>::parse(int argc, char* argv[])
   if (this->parsed_) [[unlikely]] {
     throw ParseError("Cannot parse twice");
   }
-  auto assigned_keys = AssignChecker<Args>::check();
+  auto assigned_keys = AssignChecker<Args>();
   if (!assigned_keys.empty()) [[unlikely]] {
     throw ParseError(format("keys {} already assigned", assigned_keys));
   }
@@ -183,8 +183,8 @@ auto Parser<ID, Args, PArgs, HArg, SubParsers>::parse(int argc, char* argv[])
   }
 
   // Check Required values
-  auto required_keys = RequiredChecker<  //
-      decltype(tuple_cat(declval<Args>(), declval<PArgs>()))>::check();
+  auto required_keys =
+      RequiredChecker<decltype(tuple_cat(declval<Args>(), declval<PArgs>()))>();
   if (!required_keys.empty()) {
     throw InvalidArgument(format("Requried {}", required_keys));
   }
