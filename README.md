@@ -76,7 +76,7 @@ auto main(int argc, char* argv[]) -> int {
   return 0;
 }
 ```
-[Try this at Compiler Explorer](https://godbolt.org/z/rfMsPnroc).
+[Try this at Compiler Explorer](https://godbolt.org/z/r1rhhjvsf).
 
 ## Defining argument
 
