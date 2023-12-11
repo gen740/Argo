@@ -3,15 +3,15 @@
 #include <unistd.h>
 
 #include <array>
-#include <charconv>
 #include <cassert>
+#include <charconv>
 #include <concepts>
 #include <cstring>
 #include <format>
 #include <functional>
+#include <iostream>
 #include <memory>
 #include <optional>
-#include <print>
 #include <span>
 #include <stdexcept>
 #include <string>
@@ -1566,7 +1566,7 @@ auto Parser<ID, Args, PArgs, HArg, SubParsers>::setArg(
     string_view key, span<string_view> val) const -> void {
   if constexpr (!is_same_v<HArg, void>) {
     if (key == HArg::name) {
-      println("{}", formatHelp());
+      std::cout << formatHelp() << '\n';
       exit(0);
     }
   }
@@ -1581,7 +1581,7 @@ auto Parser<ID, Args, PArgs, HArg, SubParsers>::setArg(
     for (const auto& i : key) {
       if constexpr (HArg::name.shortName != '\0') {
         if (i == HArg::name.shortName) {
-          println("{}", formatHelp());
+          std::cout << formatHelp() << '\n';
           exit(0);
         }
       }
@@ -1688,7 +1688,7 @@ auto Parser<ID, Args, PArgs, HArg, SubParsers>::parse(int argc, char* argv[])
     } else {
       if constexpr (is_same_v<PArgs, tuple<>>) {
         if (key.empty() && short_keys.empty()) {
-          throw InvalidArgument(format("No keys specified"));
+          throw InvalidArgument("No keys specified");
         }
       }
       values.push_back(arg);
@@ -1700,7 +1700,7 @@ auto Parser<ID, Args, PArgs, HArg, SubParsers>::parse(int argc, char* argv[])
           this->setArg(short_keys, values);
         } else {
           if constexpr (is_same_v<PArgs, tuple<>>) {
-            throw InvalidArgument(format("No keys specified"));
+            throw InvalidArgument("No keys specified");
           } else {
             this->setArg(key, values);
           }

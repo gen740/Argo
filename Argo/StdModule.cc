@@ -9,9 +9,9 @@ module;
 #include <concepts>
 #include <format>
 #include <functional>
+#include <iostream>
 #include <memory>
 #include <optional>
-#include <print>
 #include <span>
 #include <stdexcept>
 #include <string>
@@ -58,9 +58,11 @@ using ::std::string_view;
 // charconv
 using ::std::from_chars;
 
-// print
+// iostream
+using ::std::cout;
+
+// format
 using ::std::format;
-using ::std::println;
 
 // array
 using ::std::array;
