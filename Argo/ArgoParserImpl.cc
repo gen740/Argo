@@ -13,7 +13,6 @@ import :HelpGenerator;
 import :Arg;
 import :std_module;
 import :Exceptions;
-import :MetaChecker;
 
 // generator start here
 
@@ -76,7 +75,13 @@ auto Parser<ID, Args, PArgs, HArg, SubParsers>::parse(int argc, char* argv[])
   if (this->parsed_) [[unlikely]] {
     throw ParseError("Cannot parse twice");
   }
-  auto assigned_keys = AssignChecker<Args>();
+  auto assigned_keys = vector<string_view>();
+  tuple_type_visit<decltype(tuple_cat(declval<Args>(), declval<PArgs>()))>(
+      [&assigned_keys]<class T>(T) {
+        if (T::type::assigned) {
+          assigned_keys.push_back(string_view(T::type::name));
+        }
+      });
   if (!assigned_keys.empty()) [[unlikely]] {
     throw ParseError(format("keys {} already assigned", assigned_keys));
   }
@@ -182,9 +187,14 @@ auto Parser<ID, Args, PArgs, HArg, SubParsers>::parse(int argc, char* argv[])
     }
   }
 
-  // Check Required values
-  auto required_keys =
-      RequiredChecker<decltype(tuple_cat(declval<Args>(), declval<PArgs>()))>();
+  auto required_keys = vector<string_view>();
+  tuple_type_visit<decltype(tuple_cat(declval<Args>(), declval<PArgs>()))>(
+      [&required_keys]<class T>(T) {
+        if ((T::type::required && !T::type::assigned)) {
+          required_keys.push_back(string_view(T::type::name));
+        }
+      });
+
   if (!required_keys.empty()) {
     throw InvalidArgument(format("Requried {}", required_keys));
   }

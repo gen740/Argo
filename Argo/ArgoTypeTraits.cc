@@ -7,6 +7,7 @@ import :std_module;
 // generator start here
 
 export namespace Argo {
+using std::type_identity;
 
 using namespace std;
 
@@ -102,6 +103,27 @@ struct make_type_sequence<tuple<T...>> {
 
 template <class T>
 using make_type_sequence_t = make_type_sequence<T>::type;
+
+template <class Tuple, class T>
+inline constexpr auto tuple_type_visit(T fun) {
+  [&fun]<class... U>(type_sequence<U...>) {
+    (fun(type_identity<U>()), ...);
+  }(make_type_sequence_t<Tuple>());
+}
+
+template <class Tuple, class T>
+inline constexpr auto tuple_type_or_visit(T fun) -> bool {
+  return [&fun]<class... U>(type_sequence<U...>) {
+    return (fun(type_identity<U>()) || ...);
+  }(make_type_sequence_t<Tuple>());
+}
+
+template <class Tuple, class T>
+inline constexpr auto tuple_type_and_visit(T fun) -> bool {
+  return [&fun]<class... U>(type_sequence<U...>) {
+    return (fun(type_identity<U>()) && ...);
+  }(make_type_sequence_t<Tuple>());
+}
 
 };  // namespace Argo
 

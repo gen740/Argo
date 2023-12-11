@@ -29,7 +29,6 @@
 // fetch { Argo/ArgoHelpGenerator.cc }
 // fetch { Argo/ArgoMetaLookup.cc }
 // fetch { Argo/ArgoMetaAssigner.cc }
-// fetch { Argo/ArgoMetaChecker.cc }
 // fetch { Argo/ArgoMetaParse.cc }
 // fetch { Argo/ArgoParser.cc }
 // fetch { Argo/ArgoParserImpl.cc }

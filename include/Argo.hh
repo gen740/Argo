@@ -68,6 +68,7 @@ class ValidationError : public InvalidArgument {
 
 
 namespace Argo {
+using std::type_identity;
 
 using namespace std;
 
@@ -163,6 +164,27 @@ struct make_type_sequence<tuple<T...>> {
 
 template <class T>
 using make_type_sequence_t = make_type_sequence<T>::type;
+
+template <class Tuple, class T>
+inline constexpr auto tuple_type_visit(T fun) {
+  [&fun]<class... U>(type_sequence<U...>) {
+    (fun(type_identity<U>()), ...);
+  }(make_type_sequence_t<Tuple>());
+}
+
+template <class Tuple, class T>
+inline constexpr auto tuple_type_or_visit(T fun) -> bool {
+  return [&fun]<class... U>(type_sequence<U...>) {
+    return (fun(type_identity<U>()) || ...);
+  }(make_type_sequence_t<Tuple>());
+}
+
+template <class Tuple, class T>
+inline constexpr auto tuple_type_and_visit(T fun) -> bool {
+  return [&fun]<class... U>(type_sequence<U...>) {
+    return (fun(type_identity<U>()) && ...);
+  }(make_type_sequence_t<Tuple>());
+}
 
 };  // namespace Argo
 
@@ -731,9 +753,9 @@ inline constexpr auto implicitDefault(T value) -> ImplicitDefaultValue<T> {
 
 template <class Type, ArgName Name, NArgs nargs, bool Required, ParserID ID,
           class... Args>
-__attribute__((always_inline)) constexpr auto ArgInitializer(Args... args) {
+inline constexpr auto ArgInitializer(Args... args) {
   (
-      [&args]() __attribute__((always_inline)) {
+      [&args]() {
         using Arg = Arg<Type, Name, nargs, Required, ID>;
         if constexpr (is_same_v<Args, Description>) {
           Arg::description = args.description;
@@ -760,7 +782,7 @@ __attribute__((always_inline)) constexpr auto ArgInitializer(Args... args) {
 }
 
 template <ArgName Name, ParserID ID, class... Args>
-__attribute__((always_inline)) constexpr auto FlagArgInitializer(Args... args) {
+inline constexpr auto FlagArgInitializer(Args... args) {
   (
       [&args]() {
         using FlagArg = FlagArg<Name, ID>;
@@ -1145,51 +1167,6 @@ inline constexpr auto ValueReset() -> void {
 }
 
 };  // namespace Argo
-
-
-namespace Argo {
-
-using namespace std;
-
-/*!
- * Checking if the given argument is required key, cycle through all the
- * tuple argument.
- */
-template <class Args>
-inline constexpr auto RequiredChecker() {
-  auto required_keys = vector<string_view>();
-  [&required_keys]<class... T>(type_sequence<T...>) {
-    (
-        [&required_keys] {
-          if ((T::required && !T::assigned)) {
-            required_keys.push_back(string_view(T::name));
-          }
-        }(),
-        ...);
-  }(make_type_sequence_t<Args>());
-  return required_keys;
-}
-
-/*!
- * Checking if the given argument is assigned, cycle through all the
- * tuple argument.
- */
-template <class Args>
-inline constexpr auto AssignChecker() {
-  auto assigned_keys = vector<string_view>();
-  [&assigned_keys]<class... T>(type_sequence<T...>) {
-    (
-        [&assigned_keys] {
-          if (T::assigned) {
-            assigned_keys.push_back(string_view(T::name));
-          }
-        }(),
-        ...);
-  }(make_type_sequence_t<Args>());
-  return assigned_keys;
-}
-
-}  // namespace Argo
 
 
 namespace Argo {
@@ -1620,7 +1597,13 @@ auto Parser<ID, Args, PArgs, HArg, SubParsers>::parse(int argc, char* argv[])
   if (this->parsed_) [[unlikely]] {
     throw ParseError("Cannot parse twice");
   }
-  auto assigned_keys = AssignChecker<Args>();
+  auto assigned_keys = vector<string_view>();
+  tuple_type_visit<decltype(tuple_cat(declval<Args>(), declval<PArgs>()))>(
+      [&assigned_keys]<class T>(T) {
+        if (T::type::assigned) {
+          assigned_keys.push_back(string_view(T::type::name));
+        }
+      });
   if (!assigned_keys.empty()) [[unlikely]] {
     throw ParseError(format("keys {} already assigned", assigned_keys));
   }
@@ -1726,9 +1709,14 @@ auto Parser<ID, Args, PArgs, HArg, SubParsers>::parse(int argc, char* argv[])
     }
   }
 
-  // Check Required values
-  auto required_keys =
-      RequiredChecker<decltype(tuple_cat(declval<Args>(), declval<PArgs>()))>();
+  auto required_keys = vector<string_view>();
+  tuple_type_visit<decltype(tuple_cat(declval<Args>(), declval<PArgs>()))>(
+      [&required_keys]<class T>(T) {
+        if ((T::type::required && !T::type::assigned)) {
+          required_keys.push_back(string_view(T::type::name));
+        }
+      });
+
   if (!required_keys.empty()) {
     throw InvalidArgument(format("Requried {}", required_keys));
   }

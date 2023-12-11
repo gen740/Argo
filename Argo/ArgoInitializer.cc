@@ -48,9 +48,9 @@ inline constexpr auto implicitDefault(T value) -> ImplicitDefaultValue<T> {
 
 template <class Type, ArgName Name, NArgs nargs, bool Required, ParserID ID,
           class... Args>
-__attribute__((always_inline)) constexpr auto ArgInitializer(Args... args) {
+inline constexpr auto ArgInitializer(Args... args) {
   (
-      [&args]() __attribute__((always_inline)) {
+      [&args]() {
         using Arg = Arg<Type, Name, nargs, Required, ID>;
         if constexpr (is_same_v<Args, Description>) {
           Arg::description = args.description;
@@ -77,7 +77,7 @@ __attribute__((always_inline)) constexpr auto ArgInitializer(Args... args) {
 }
 
 template <ArgName Name, ParserID ID, class... Args>
-__attribute__((always_inline)) constexpr auto FlagArgInitializer(Args... args) {
+inline constexpr auto FlagArgInitializer(Args... args) {
   (
       [&args]() {
         using FlagArg = FlagArg<Name, ID>;
