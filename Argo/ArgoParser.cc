@@ -89,7 +89,7 @@ class Parser {
 
   template <class Type, ArgName Name, auto arg1 = Unspecified(),
             auto arg2 = Unspecified(), bool ISPArgs, class... T>
-  auto createArg(T... args) {
+  inline constexpr auto createArg(T... args) {
     static_assert(Name.hasValidNameLength(),
                   "Short name can't be more than one charactor");
 

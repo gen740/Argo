@@ -715,25 +715,25 @@ struct Description {
   string_view description;
 };
 
-constexpr auto description(string_view desc) -> Description {
+inline constexpr auto description(string_view desc) -> Description {
   return {.description = desc};
 }
 
 template <class T>
-constexpr auto explicitDefault(T value) -> ExlicitDefaultValue<T> {
+inline constexpr auto explicitDefault(T value) -> ExlicitDefaultValue<T> {
   return {.explicit_default_value = value};
 }
 
 template <class T>
-constexpr auto implicitDefault(T value) -> ImplicitDefaultValue<T> {
+inline constexpr auto implicitDefault(T value) -> ImplicitDefaultValue<T> {
   return {.implicit_default_value = value};
 }
 
 template <class Type, ArgName Name, NArgs nargs, bool Required, ParserID ID,
           class... Args>
-constexpr auto ArgInitializer(Args... args) {
+__attribute__((always_inline)) constexpr auto ArgInitializer(Args... args) {
   (
-      [&args]() {
+      [&args]() __attribute__((always_inline)) {
         using Arg = Arg<Type, Name, nargs, Required, ID>;
         if constexpr (is_same_v<Args, Description>) {
           Arg::description = args.description;
@@ -760,7 +760,7 @@ constexpr auto ArgInitializer(Args... args) {
 }
 
 template <ArgName Name, ParserID ID, class... Args>
-constexpr auto FlagArgInitializer(Args... args) {
+__attribute__((always_inline)) constexpr auto FlagArgInitializer(Args... args) {
   (
       [&args]() {
         using FlagArg = FlagArg<Name, ID>;
@@ -899,7 +899,7 @@ using namespace std;
  * Helper class of assigning value
  */
 template <class Type>
-constexpr auto caster(const string_view& value) -> Type {
+inline constexpr auto ArgCaster(const string_view& value) -> Type {
   if constexpr (is_same_v<Type, bool>) {
     if ((value == "true")     //
         || (value == "True")  //
@@ -918,7 +918,6 @@ constexpr auto caster(const string_view& value) -> Type {
     Type ret;
     from_chars(value.begin(), value.end(), ret);
     return ret;
-
   } else if constexpr (is_floating_point_v<Type>) {
     return static_cast<Type>(stod(string(value)));
   } else if constexpr (is_same_v<Type, const char*>) {
@@ -929,226 +928,212 @@ constexpr auto caster(const string_view& value) -> Type {
 }
 
 template <class... T, size_t... N>
-constexpr auto tupleAssign(tuple<T...>& t, span<string_view> v,
-                           index_sequence<N...> /* unused */) {
-  ((get<N>(t) = caster<remove_cvref_t<decltype(get<N>(t))>>(v[N])), ...);
+inline constexpr auto TupleAssign(tuple<T...>& t, span<string_view> v,
+                                  index_sequence<N...> /* unused */) -> void {
+  ((get<N>(t) = ArgCaster<remove_cvref_t<decltype(get<N>(t))>>(v[N])), ...);
 }
 
-template <class Arg>
-auto assignValiadicArg(const span<string_view>& values) {
-  for (const auto& value : values) {
-    Arg::value.push_back(caster<typename Arg::baseType>(value));
-  }
+template <ArgType Arg>
+inline constexpr auto AfterAssign(const span<string_view>& values) -> void {
+  Arg::assigned = true;
   if (Arg::validator) {
     Arg::validator(Arg::value, values, string_view(Arg::name));
   }
   if (Arg::callback) {
     Arg::callback(Arg::value, values);
   }
-  Arg::assigned = true;
+}
+
+template <ArgType Arg>
+inline constexpr auto ValiadicArgAssign(const span<string_view>& values)
+    -> void {
+  Arg::value.resize(values.size());
+  for (size_t i = 0; i < values.size(); i++) {
+    Arg::value[i] = ArgCaster<typename Arg::baseType>(values[i]);
+  }
+  AfterAssign<Arg>(values);
 }
 
 template <class Arg>
-auto assignNLengthArg(span<string_view>& values) {
+inline constexpr auto NLengthArgAssign(span<string_view>& values) -> void {
   if (Arg::nargs.getNargs() > values.size()) {
     throw Argo::InvalidArgument(format("Argument {}: invalid argument {}",
                                        string_view(Arg::name), values));
   }
   if constexpr (is_array_v<typename Arg::type>) {
-    for (int i = 0; i < Arg::nargs.getNargs(); i++) {
-      Arg::value[i] = caster<typename Arg::baseType>(values[i]);
+    for (size_t i = 0; i < Arg::nargs.getNargs(); i++) {
+      Arg::value[i] = ArgCaster<typename Arg::baseType>(values[i]);
     }
   } else if constexpr (is_vector_v<typename Arg::type>) {
-    for (int i = 0; i < Arg::nargs.getNargs(); i++) {
-      Arg::value.push_back(caster<typename Arg::baseType>(values[i]));
+    Arg::value.resize(Arg::nargs.getNargs());
+    for (size_t i = 0; i < Arg::nargs.getNargs(); i++) {
+      Arg::value[i] = ArgCaster<typename Arg::baseType>(values[i]);
     }
   } else if constexpr (is_tuple_v<typename Arg::type>) {
-    tupleAssign(Arg::value, values,
+    TupleAssign(Arg::value, values,
                 make_index_sequence<tuple_size_v<typename Arg::type>>());
   } else {
     static_assert(false, "Invalid Type");
   }
-
-  if (Arg::validator) {
-    Arg::validator(Arg::value, values.subspan(0, Arg::nargs.getNargs()),
-                   string_view(Arg::name));
-  }
-  if (Arg::callback) {
-    Arg::callback(Arg::value, values.subspan(0, Arg::nargs.getNargs()));
-  }
-  Arg::assigned = true;
+  AfterAssign<Arg>(values.subspan(0, Arg::nargs.getNargs()));
   values = values.subspan(Arg::nargs.getNargs());
 }
 
 template <class Arg>
-auto assignZeroOrOneArg(span<string_view>& values) {
+inline constexpr auto ZeroOrOneArgAssign(span<string_view>& values) -> void {
   if (values.empty()) {
     Arg::value = Arg::defaultValue;
-    Arg::assigned = true;
-    return;
+  } else {
+    Arg::value = ArgCaster<typename Arg::type>(values[0]);
   }
-  Arg::value = caster<typename Arg::type>(values[0]);
-  Arg::assigned = true;
-  if (Arg::validator) {
-    Arg::validator(Arg::value, values, string_view(Arg::name));
-  }
-  if (Arg::callback) {
-    Arg::callback(Arg::value, values);
-  }
+  AfterAssign<Arg>(values.subspan(0, 1));
   values = values.subspan(1);
-  return;
 }
 
 template <class PArgs>
-struct PArgAssigner {};
-
-template <class... PArgs>
-struct PArgAssigner<tuple<PArgs...>> {
-  static auto assign(span<string_view> values) {
-    return ([]<ArgType Arg>(auto& values) {
+inline constexpr auto PArgAssigner(span<string_view> values) -> bool {
+  return [&values]<class... Arg>(type_sequence<Arg...>) {
+    return ([&values] {
       if (Arg::assigned) {
         return false;
       }
       if constexpr (Arg::nargs.getNargsChar() == '+') {
-        assignValiadicArg<Arg>(values);
+        ValiadicArgAssign<Arg>(values);
         return true;
       }
       if constexpr (Arg::nargs.getNargs() > 0) {
-        assignNLengthArg<Arg>(values);
+        NLengthArgAssign<Arg>(values);
         return values.empty();
       }
-    }.template operator()<PArgs>(values) ||
-            ...);
-  }
-};
+    }() || ...);
+  }(make_type_sequence_t<PArgs>());
+}
 
 template <>
-struct PArgAssigner<std::tuple<>> {
-  static auto assign(span<string_view> /*unused*/) {
+inline constexpr auto PArgAssigner<std::tuple<>>(span<string_view> /*unused*/)
+    -> bool {
+  return true;
+}
+
+template <class Head, class PArgs>
+inline constexpr auto AssignOneArg(const string_view& key,
+                                   span<string_view> values) -> bool {
+  if constexpr (derived_from<Head, FlagArgTag>) {
+    if (!values.empty()) {
+      if constexpr (is_same_v<PArgs, tuple<>>) {
+        throw Argo::InvalidArgument(format("Flag {} can not take value", key));
+      } else {
+        PArgAssigner<PArgs>(values);
+      }
+    }
+    Head::value = true;
+    Head::assigned = true;
+    if (Head::callback) {
+      Head::callback();
+    }
     return true;
+  } else {
+    if constexpr (Head::nargs.getNargsChar() == '?') {
+      ZeroOrOneArgAssign<Head>(values);
+      if (values.empty()) {
+        return true;
+      }
+      return PArgAssigner<PArgs>(values);
+    } else if constexpr (Head::nargs.getNargsChar() == '*') {
+      if (values.empty()) {
+        Head::value = Head::defaultValue;
+        Head::assigned = true;
+        return true;
+      }
+      ValiadicArgAssign<Head>(values);
+      return true;
+    } else if constexpr (Head::nargs.getNargsChar() == '+') {
+      if (values.empty()) {
+        throw Argo::InvalidArgument(
+            format("Argument {} should take more than one value", key));
+      }
+      ValiadicArgAssign<Head>(values);
+      return true;
+    } else if constexpr (Head::nargs.getNargs() == 1) {
+      if (values.empty()) {
+        throw Argo::InvalidArgument(
+            format("Argument {} should take exactly one value but zero", key));
+      }
+      ZeroOrOneArgAssign<Head>(values);
+      if (values.empty()) {
+        return true;
+      }
+      return PArgAssigner<PArgs>(values);
+    } else {
+      NLengthArgAssign<Head>(values);
+      if (values.empty()) {
+        return true;
+      }
+      return PArgAssigner<PArgs>(values);
+    }
   }
-};
+  return false;
+}
+
+template <class Args, class PArgs>
+inline constexpr auto assignArg(const string_view& key,
+                                const span<string_view>& values) {
+  [&key, &values]<size_t... Is>(index_sequence<Is...> /*unused*/) -> void {
+    if (!(... ||
+          (string_view(tuple_element_t<Is, Args>::name) == key and
+           AssignOneArg<tuple_element_t<Is, Args>, PArgs>(key, values)))) {
+      throw Argo::InvalidArgument(format("Invalid argument {}", key));
+    }
+  }(make_index_sequence<tuple_size_v<Args>>());
+}
+
+template <class T>
+inline constexpr auto assignFlagImpl(string_view key) -> void {
+  [&key]<size_t... Is>(index_sequence<Is...>) {
+    if (!(... || [&key]<ArgType Head>() {
+          if constexpr (derived_from<Head, FlagArgTag>) {
+            if (string_view(Head::name) == key) {
+              Head::value = true;
+              return true;
+            }
+            return false;
+          } else {
+            return false;
+          }
+        }.template operator()<tuple_element_t<Is, T>>())) {
+      throw Argo::InvalidArgument("");
+    }
+  }(make_index_sequence<tuple_size_v<T>>());
+}
 
 template <class Arguments, class PArgs>
-struct Assigner {
-  template <ArgType Head>
-  static constexpr auto assignOneArg(const string_view& key,
-                                     span<string_view> values) -> bool {
-    if constexpr (derived_from<Head, FlagArgTag>) {
-      if (!values.empty()) {
-        if constexpr (is_same_v<PArgs, tuple<>>) {
-          throw Argo::InvalidArgument(
-              format("Flag {} can not take value", key));
-        } else {
-          PArgAssigner<PArgs>::assign(values);
-        }
+inline constexpr auto Assigner(string_view key, span<string_view> values)
+    -> void {
+  if (key.empty()) {
+    if constexpr (!is_same_v<PArgs, tuple<>>) {
+      if (!PArgAssigner<PArgs>(values)) {
+        throw InvalidArgument(format("Duplicated positional argument"));
       }
-      Head::value = true;
-      Head::assigned = true;
-      if (Head::callback) {
-        Head::callback();
-      }
-      return true;
+      return;
     } else {
-      if constexpr (Head::nargs.getNargsChar() == '?') {
-        assignZeroOrOneArg<Head>(values);
-        if (values.empty()) {
-          return true;
-        }
-        return PArgAssigner<PArgs>::assign(values);
-      } else if constexpr (Head::nargs.getNargsChar() == '*') {
-        if (values.empty()) {
-          Head::value = Head::defaultValue;
-          Head::assigned = true;
-          return true;
-        }
-        assignValiadicArg<Head>(values);
-        return true;
-      } else if constexpr (Head::nargs.getNargsChar() == '+') {
-        if (values.empty()) {
-          throw Argo::InvalidArgument(
-              format("Argument {} should take more than one value", key));
-        }
-        assignValiadicArg<Head>(values);
-        return true;
-      } else if constexpr (Head::nargs.getNargs() == 1) {
-        if (values.empty()) {
-          throw Argo::InvalidArgument(format(
-              "Argument {} should take exactly one value but zero", key));
-        }
-        assignZeroOrOneArg<Head>(values);
-        if (values.empty()) {
-          return true;
-        }
-        return PArgAssigner<PArgs>::assign(values);
-      } else {
-        assignNLengthArg<Head>(values);
-        if (values.empty()) {
-          return true;
-        }
-        return PArgAssigner<PArgs>::assign(values);
-      }
+      throw Argo::InvalidArgument(format("Assigner: Invalid argument {}", key));
     }
-    return false;
   }
+  assignArg<Arguments, PArgs>(key, values);
+}
 
-  template <class Args>
-  static auto assignImpl([[maybe_unused]] const string_view& key,
-                         [[maybe_unused]] const span<string_view>& values) {
-    [&key, &values]<size_t... Is>(index_sequence<Is...> /*unused*/) {
-      if (!(... || (string_view(tuple_element_t<Is, Args>::name) == key and
-                    assignOneArg<tuple_element_t<Is, Args>>(key, values)))) {
-        throw Argo::InvalidArgument(format("Invalid argument {}", key));
-      }
-    }(make_index_sequence<tuple_size_v<Args>>());
+template <class Arguments, class PArgs>
+inline constexpr auto Assigner(span<char> key, span<string_view> values)
+    -> void {
+  for (size_t i = 0; i < key.size() - 1; i++) {
+    assignFlagImpl<Arguments>(GetNameFromShortName<Arguments>(key[i]));
   }
-
-  template <class T>
-  static auto assignFlagImpl(string_view key) -> void {
-    [&key]<size_t... Is>(index_sequence<Is...>) {
-      if (!(... || [&key]<ArgType Head>() {
-            if constexpr (derived_from<Head, FlagArgTag>) {
-              if (string_view(Head::name) == key) {
-                Head::value = true;
-                return true;
-              }
-              return false;
-            } else {
-              return false;
-            }
-          }.template operator()<tuple_element_t<Is, T>>())) {
-        throw Argo::InvalidArgument("");
-      }
-    }(make_index_sequence<tuple_size_v<T>>());
-  }
-
-  static auto assign(string_view key, span<string_view> values) -> void {
-    if (key.empty()) {
-      if constexpr (!is_same_v<PArgs, tuple<>>) {
-        if (!PArgAssigner<PArgs>::assign(values)) {
-          throw InvalidArgument(format("Duplicated positional argument"));
-        }
-        return;
-      } else {
-        throw Argo::InvalidArgument(
-            format("Assigner: Invalid argument {}", key));
-      }
-    }
-    assignImpl<Arguments>(key, values);
-  };
-
-  // Multiple key assigner
-
-  static auto assign(span<char> key, span<string_view> values) {
-    for (size_t i = 0; i < key.size() - 1; i++) {
-      assignFlagImpl<Arguments>(GetNameFromShortName<Arguments>(key[i]));
-    }
-    assignImpl<Arguments>(GetNameFromShortName<Arguments>(key.back()), values);
-  };
-};
+  assignArg<Arguments, PArgs>(GetNameFromShortName<Arguments>(key.back()),
+                              values);
+}
 
 template <class Args>
-auto ValueReset() {
+inline constexpr auto ValueReset() -> void {
   []<size_t... Is>(index_sequence<Is...>) {
     (..., []<ArgType T>() {
       if (T::assigned) {
@@ -1171,7 +1156,7 @@ using namespace std;
  * tuple argument.
  */
 template <class Args>
-constexpr inline auto RequiredChecker() {
+inline constexpr auto RequiredChecker() {
   auto required_keys = vector<string_view>();
   [&required_keys]<class... T>(type_sequence<T...>) {
     (
@@ -1190,7 +1175,7 @@ constexpr inline auto RequiredChecker() {
  * tuple argument.
  */
 template <class Args>
-constexpr inline auto AssignChecker() {
+inline constexpr auto AssignChecker() {
   auto assigned_keys = vector<string_view>();
   [&assigned_keys]<class... T>(type_sequence<T...>) {
     (
@@ -1323,7 +1308,7 @@ class Parser {
 
   template <class Type, ArgName Name, auto arg1 = Unspecified(),
             auto arg2 = Unspecified(), bool ISPArgs, class... T>
-  auto createArg(T... args) {
+  inline constexpr auto createArg(T... args) {
     static_assert(Name.hasValidNameLength(),
                   "Short name can't be more than one charactor");
 
@@ -1608,7 +1593,7 @@ auto Parser<ID, Args, PArgs, HArg, SubParsers>::setArg(
       exit(0);
     }
   }
-  Assigner<Args, PArgs>::assign(key, val);
+  Assigner<Args, PArgs>(key, val);
 }
 
 template <ParserID ID, class Args, class PArgs, class HArg, class SubParsers>
@@ -1625,7 +1610,7 @@ auto Parser<ID, Args, PArgs, HArg, SubParsers>::setArg(
       }
     }
   }
-  Assigner<Args, PArgs>::assign(key, val);
+  Assigner<Args, PArgs>(key, val);
 }
 
 template <ParserID ID, class Args, class PArgs, class HArg, class SubParsers>

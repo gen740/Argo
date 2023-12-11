@@ -19,7 +19,7 @@ using namespace std;
  * tuple argument.
  */
 template <class Args>
-constexpr inline auto RequiredChecker() {
+inline constexpr auto RequiredChecker() {
   auto required_keys = vector<string_view>();
   [&required_keys]<class... T>(type_sequence<T...>) {
     (
@@ -38,7 +38,7 @@ constexpr inline auto RequiredChecker() {
  * tuple argument.
  */
 template <class Args>
-constexpr inline auto AssignChecker() {
+inline constexpr auto AssignChecker() {
   auto assigned_keys = vector<string_view>();
   [&assigned_keys]<class... T>(type_sequence<T...>) {
     (

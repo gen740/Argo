@@ -32,25 +32,25 @@ struct Description {
   string_view description;
 };
 
-export constexpr auto description(string_view desc) -> Description {
+export inline constexpr auto description(string_view desc) -> Description {
   return {.description = desc};
 }
 
 export template <class T>
-constexpr auto explicitDefault(T value) -> ExlicitDefaultValue<T> {
+inline constexpr auto explicitDefault(T value) -> ExlicitDefaultValue<T> {
   return {.explicit_default_value = value};
 }
 
 export template <class T>
-constexpr auto implicitDefault(T value) -> ImplicitDefaultValue<T> {
+inline constexpr auto implicitDefault(T value) -> ImplicitDefaultValue<T> {
   return {.implicit_default_value = value};
 }
 
 template <class Type, ArgName Name, NArgs nargs, bool Required, ParserID ID,
           class... Args>
-constexpr auto ArgInitializer(Args... args) {
+__attribute__((always_inline)) constexpr auto ArgInitializer(Args... args) {
   (
-      [&args]() {
+      [&args]() __attribute__((always_inline)) {
         using Arg = Arg<Type, Name, nargs, Required, ID>;
         if constexpr (is_same_v<Args, Description>) {
           Arg::description = args.description;
@@ -77,7 +77,7 @@ constexpr auto ArgInitializer(Args... args) {
 }
 
 template <ArgName Name, ParserID ID, class... Args>
-constexpr auto FlagArgInitializer(Args... args) {
+__attribute__((always_inline)) constexpr auto FlagArgInitializer(Args... args) {
   (
       [&args]() {
         using FlagArg = FlagArg<Name, ID>;

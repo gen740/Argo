@@ -49,7 +49,7 @@ auto Parser<ID, Args, PArgs, HArg, SubParsers>::setArg(
       exit(0);
     }
   }
-  Assigner<Args, PArgs>::assign(key, val);
+  Assigner<Args, PArgs>(key, val);
 }
 
 template <ParserID ID, class Args, class PArgs, class HArg, class SubParsers>
@@ -66,7 +66,7 @@ auto Parser<ID, Args, PArgs, HArg, SubParsers>::setArg(
       }
     }
   }
-  Assigner<Args, PArgs>::assign(key, val);
+  Assigner<Args, PArgs>(key, val);
 }
 
 template <ParserID ID, class Args, class PArgs, class HArg, class SubParsers>
