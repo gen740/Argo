@@ -28,8 +28,8 @@ export struct ValidationBase {
   }
 
   template <class T>
-  auto isValid(const T& /* unused */, span<string_view> /* unuesd */) const
-      -> bool {
+  [[noreturn]] auto isValid(const T& /* unused */,
+                            span<string_view> /* unuesd */) const -> bool {
     static_assert(false, "Invalid validation");
   };
 

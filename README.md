@@ -100,6 +100,16 @@ auto parser = argo.addArg<"arg2", int>();
 parser.parse(argc, argv);
 ```
 
+or
+
+```cpp
+auto parser = Argo::Parser()
+                .addArg<"arg1", int>()
+                .addArg<"arg2", int>();
+
+parser.parse(argc, argv);
+```
+
 This approach ensures that each argument is properly added and stored, enabling the parser to function as expected.
 
 ## Template Options
