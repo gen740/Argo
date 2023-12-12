@@ -12,6 +12,7 @@ if(${CMAKE_SOURCE_DIR} STREQUAL ${CMAKE_CURRENT_LIST_DIR})
   if(NOT CMAKE_BUILD_TYPE)
     set(CMAKE_BUILD_TYPE "Debug")
   endif()
+
   # set release flag
   set(CMAKE_CXX_FLAGS_RELEASE "-O3 -ffast-math")
   set(CMAKE_CXX_FLAGS_DEBUG "-g -O0")
@@ -20,14 +21,12 @@ if(${CMAKE_SOURCE_DIR} STREQUAL ${CMAKE_CURRENT_LIST_DIR})
 
   message(STATUS "Build Type: ${CMAKE_BUILD_TYPE}")
 
-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra -Werror")
-  set(CMAKE_CXX_FLAGS
-      "${CMAKE_CXX_FLAGS} -Wnon-virtual-dtor -Wfloat-equal -Winline")
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra -Werror -Winline")
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wnon-virtual-dtor -Wfloat-equal")
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fdiagnostics-color=always")
-
 endif()
 
-add_library(Argo STATIC)
+add_library(Argo)
 
 file(GLOB ARGO_LIBRARY_SOURCES ${CMAKE_CURRENT_LIST_DIR}/Argo/*.cc)
 
@@ -41,14 +40,17 @@ if(${CMAKE_SOURCE_DIR} STREQUAL ${CMAKE_CURRENT_LIST_DIR})
   target_link_libraries(main Argo)
   target_compile_options(main PRIVATE -save-temps -O3 -ftime-trace)
 
+
+  ################################ TESTS ######################################
   if(${ARGO_TESTS_ENABLE})
+    # Reset all optimization flags
     set(CMAKE_CXX_FLAGS_RELEASE "")
     set(CMAKE_CXX_FLAGS_DEBUG "")
 
     find_package(GTest REQUIRED)
     file(GLOB ARGO_TEST_SOURCES ${CMAKE_CURRENT_LIST_DIR}/tests/*.cc)
 
-    # Debug Target
+    ############################### DEBUG TARGET ##############################
     add_executable(test-argo-debug ${ARGO_TEST_SOURCES})
     target_link_libraries(test-argo-debug GTest::GTest GTest::Main GTest::gmock
                           Argo)
@@ -56,7 +58,7 @@ if(${CMAKE_SOURCE_DIR} STREQUAL ${CMAKE_CURRENT_LIST_DIR})
     target_compile_options(test-argo-debug PRIVATE -Wno-writable-strings
                                                    -DDEBUG_BUILD -O1 -g)
 
-    # Release Target
+    ############################### RELEASE TARGET ############################
     add_executable(test-argo-release ${ARGO_TEST_SOURCES})
     target_link_libraries(test-argo-release GTest::GTest GTest::Main
                           GTest::gmock Argo)
@@ -64,6 +66,7 @@ if(${CMAKE_SOURCE_DIR} STREQUAL ${CMAKE_CURRENT_LIST_DIR})
     target_compile_options(test-argo-release PRIVATE -Wno-writable-strings -O3)
   endif()
 
+  ############################### BENCHMARKS #################################
   if(${ARGO_BENCHMARKS_ENABLE})
     set(CMAKE_CXX_FLAGS_RELEASE "")
     set(CMAKE_CXX_FLAGS_DEBUG "")
@@ -92,7 +95,7 @@ if(${CMAKE_SOURCE_DIR} STREQUAL ${CMAKE_CURRENT_LIST_DIR})
     foreach(target ${ARGO_BENCHMARK_SOURCES})
       get_filename_component(target_name ${target} NAME_WE)
 
-      # Debug Target
+      ############################## DEBUG TARGET #############################
       set(debug_target_name "bench-${target_name}-debug")
       add_executable(${debug_target_name} ${target})
       target_link_libraries(${debug_target_name} benchmark::benchmark Argo
@@ -100,7 +103,7 @@ if(${CMAKE_SOURCE_DIR} STREQUAL ${CMAKE_CURRENT_LIST_DIR})
       set_target_properties(${debug_target_name} PROPERTIES CXX_STANDARD 23)
       target_compile_options(${debug_target_name} PRIVATE -Wno-writable-strings
                                                           -DDEBUG_BUILD)
-      # Release Target
+      ############################## RELEASE TARGET ###########################
       set(release_target_name "bench-${target_name}-release")
       add_executable(${release_target_name} ${target})
       target_link_libraries(${release_target_name} benchmark::benchmark Argo

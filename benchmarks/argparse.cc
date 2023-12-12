@@ -23,11 +23,9 @@ auto main([[maybe_unused]] int argc, [[maybe_unused]] char** argv) -> int {
   program.add_argument("-n", "--arg16").default_value(false);
   program.add_argument("--arg18").nargs(100).scan<'d', int>();
 
-  program.parse_args(argc, argv);
+  // program.parse_args(argc, argv);
 
-  program.get<std::vector<int>>("--arg1");
-  program.get<double>("--arg2");
-  program.get<bool>("--arg3");
+  std::cout << program << '\n';
 #endif
   return 0;
 }

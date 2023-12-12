@@ -1,10 +1,11 @@
 import Argo;
 
+#include <iostream>
 #include <string>
 
 using namespace Argo;
 
-auto main(int argc, char** argv) -> int {
+auto main([[maybe_unused]] int argc, [[maybe_unused]] char** argv) -> int {
   auto parser = Parser<1>()  //
                     .addArg<"arg1", int, nargs(8)>()
                     .addArg<"arg2", float>()
@@ -23,6 +24,7 @@ auto main(int argc, char** argv) -> int {
                     .addFlag<"arg16,m">()
                     .addFlag<"arg17,n">()
                     .addArg<"arg18", int, nargs('+')>();
-  parser.parse(argc, argv);
+  // parser.parse(argc, argv);
+  std::cout << parser.formatHelp() << '\n';
   return 0;
 }
