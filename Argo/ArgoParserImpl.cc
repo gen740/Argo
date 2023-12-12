@@ -34,13 +34,13 @@ inline auto splitStringView(string_view str, char delimeter)
 
 template <ParserID ID, class Args, class PArgs, class HArg, class SubParsers>
   requires(is_tuple_v<Args> && is_tuple_v<SubParsers>)
-auto Parser<ID, Args, PArgs, HArg, SubParsers>::resetArgs() -> void {
+constexpr auto Parser<ID, Args, PArgs, HArg, SubParsers>::resetArgs() -> void {
   ValueReset<Args>();
 }
 
 template <ParserID ID, class Args, class PArgs, class HArg, class SubParsers>
   requires(is_tuple_v<Args> && is_tuple_v<SubParsers>)
-auto Parser<ID, Args, PArgs, HArg, SubParsers>::setArg(
+constexpr auto Parser<ID, Args, PArgs, HArg, SubParsers>::setArg(
     string_view key, span<string_view> val) const -> void {
   if constexpr (!is_same_v<HArg, void>) {
     if (key == HArg::name) {
@@ -53,7 +53,7 @@ auto Parser<ID, Args, PArgs, HArg, SubParsers>::setArg(
 
 template <ParserID ID, class Args, class PArgs, class HArg, class SubParsers>
   requires(is_tuple_v<Args> && is_tuple_v<SubParsers>)
-auto Parser<ID, Args, PArgs, HArg, SubParsers>::setArg(
+constexpr auto Parser<ID, Args, PArgs, HArg, SubParsers>::setArg(
     span<char> key, span<string_view> val) const -> void {
   if constexpr (!is_same_v<HArg, void>) {
     for (const auto& i : key) {
@@ -70,8 +70,8 @@ auto Parser<ID, Args, PArgs, HArg, SubParsers>::setArg(
 
 template <ParserID ID, class Args, class PArgs, class HArg, class SubParsers>
   requires(is_tuple_v<Args> && is_tuple_v<SubParsers>)
-auto Parser<ID, Args, PArgs, HArg, SubParsers>::parse(int argc, char* argv[])
-    -> void {
+inline constexpr auto Parser<ID, Args, PArgs, HArg, SubParsers>::parse(
+    int argc, char* argv[]) -> void {
   if (this->parsed_) [[unlikely]] {
     throw ParseError("Cannot parse twice");
   }
@@ -229,9 +229,9 @@ struct AnsiEscapeCode {
   }
 };
 
-inline auto createUsageSection(const auto& program_name,
-                               [[maybe_unused]] const auto& help_info,
-                               const auto& sub_commands) {
+inline constexpr auto createUsageSection(const auto& program_name,
+                                         [[maybe_unused]] const auto& help_info,
+                                         const auto& sub_commands) {
   string ret;
   ret.append(program_name);
 
@@ -266,8 +266,8 @@ inline auto createUsageSection(const auto& program_name,
   return ret;
 }
 
-inline auto createSubcommandSection(const auto& ansi,
-                                    const auto& sub_commands) {
+inline constexpr auto createSubcommandSection(const auto& ansi,
+                                              const auto& sub_commands) {
   string ret;
   size_t max_command_length = 0;
   for (const auto& command : sub_commands) {
@@ -297,7 +297,8 @@ inline auto createSubcommandSection(const auto& ansi,
   return ret;
 }
 
-inline auto createOptionsSection(const auto& ansi, const auto& help_info) {
+inline constexpr auto createOptionsSection(const auto& ansi,
+                                           const auto& help_info) {
   string ret;
   size_t max_name_len = 0;
   for (const auto& option : help_info) {
@@ -328,7 +329,7 @@ inline auto createOptionsSection(const auto& ansi, const auto& help_info) {
 }
 
 template <class PArgs>
-auto createPositionalArgumentSection(const auto& ansi) {
+inline constexpr auto createPositionalArgumentSection(const auto& ansi) {
   string ret;
 
   vector<ArgInfo> info = HelpGenerator<PArgs>::generate();
@@ -350,8 +351,8 @@ auto createPositionalArgumentSection(const auto& ansi) {
 
 template <ParserID ID, class Args, class PArgs, class HArg, class SubParsers>
   requires(is_tuple_v<Args> && is_tuple_v<SubParsers>)
-auto Parser<ID, Args, PArgs, HArg, SubParsers>::formatHelp(bool no_color) const
-    -> string {
+constexpr auto Parser<ID, Args, PArgs, HArg, SubParsers>::formatHelp(
+    bool no_color) const -> string {
   string ret;
 
   AnsiEscapeCode ansi((::isatty(1) != 0) and !no_color);

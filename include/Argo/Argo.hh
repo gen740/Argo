@@ -166,24 +166,34 @@ template <class T>
 using make_type_sequence_t = make_type_sequence<T>::type;
 
 template <class Tuple, class T>
-inline constexpr auto tuple_type_visit(T fun) {
-  [&fun]<class... U>(type_sequence<U...>) {
+__attribute__((always_inline)) constexpr auto tuple_type_visit(T fun) {
+  [&fun]<class... U>(type_sequence<U...>) __attribute__((always_inline)) {
     (fun(type_identity<U>()), ...);
-  }(make_type_sequence_t<Tuple>());
+  }
+
+  (make_type_sequence_t<Tuple>());
 }
 
 template <class Tuple, class T>
-inline constexpr auto tuple_type_or_visit(T fun) -> bool {
-  return [&fun]<class... U>(type_sequence<U...>) {
+__attribute__((always_inline)) constexpr auto tuple_type_or_visit(T fun)
+    -> bool {
+  return [&fun]<class... U>(type_sequence<U...>)
+      __attribute__((always_inline)) {
     return (fun(type_identity<U>()) || ...);
-  }(make_type_sequence_t<Tuple>());
+  }
+
+  (make_type_sequence_t<Tuple>());
 }
 
 template <class Tuple, class T>
-inline constexpr auto tuple_type_and_visit(T fun) -> bool {
-  return [&fun]<class... U>(type_sequence<U...>) {
+__attribute__((always_inline)) constexpr auto tuple_type_and_visit(T fun)
+    -> bool {
+  return [&fun]<class... U>(type_sequence<U...>)
+      __attribute__((always_inline)) {
     return (fun(type_identity<U>()) && ...);
-  }(make_type_sequence_t<Tuple>());
+  }
+
+  (make_type_sequence_t<Tuple>());
 }
 
 };  // namespace Argo
@@ -209,8 +219,8 @@ struct ValidationBase {
   }
 
   template <class T>
-  auto isValid(const T& /* unused */, span<string_view> /* unuesd */) const
-      -> bool {
+  [[noreturn]] auto isValid(const T& /* unused */,
+                            span<string_view> /* unuesd */) const -> bool {
     static_assert(false, "Invalid validation");
   };
 
@@ -490,16 +500,6 @@ struct NArgs {
   }
 };
 
-template <typename BaseType, ArgName Name, bool Required, ParserID ID>
-struct ArgBase {
-  static constexpr auto name = Name;
-  static constexpr auto id = ID;
-  inline static bool assigned = false;
-  inline static string_view description;
-  inline static bool required = Required;
-  using baseType = BaseType;
-};
-
 template <size_t N>
 struct String {
   char str_[N] = {};
@@ -624,21 +624,7 @@ struct ArgTag {};
  * Arg type this holds argument value
  */
 template <class Type, ArgName Name, NArgs TNArgs, bool Required, ParserID ID>
-struct Arg : ArgTag,
-             ArgBase<                          //
-                 conditional_t<                //
-                     is_array_v<Type>,         //
-                     array_base_t<Type>,       //
-                     conditional_t<            //
-                         is_vector_v<Type>,    //
-                         vector_base_t<Type>,  //
-                         Type                  //
-                         >                     //
-                     >,                        //
-                 Name,                         //
-                 Required,                     //
-                 ID                            //
-                 > {
+struct Arg : ArgTag {
   using type =        //
       conditional_t<  //
           ((TNArgs.nargs <= 1) && (TNArgs.nargs_char != '+') &&
@@ -653,6 +639,20 @@ struct Arg : ArgTag,
               vector<Type>                                     //
               >                                                //
           >;                                                   //
+  using baseType = conditional_t<                              //
+      is_array_v<Type>,                                        //
+      array_base_t<Type>,                                      //
+      conditional_t<                                           //
+          is_vector_v<Type>,                                   //
+          vector_base_t<Type>,                                 //
+          Type                                                 //
+          >                                                    //
+      >;
+  static constexpr auto name = Name;
+  static constexpr auto id = ID;
+  inline static string_view description;
+  inline static bool assigned = false;
+  inline static bool required = Required;
 
   inline static type value = {};
   inline static type defaultValue = {};
@@ -664,14 +664,20 @@ struct Arg : ArgTag,
       validator = nullptr;
   inline static function<void(type&, span<string_view>)> callback = nullptr;
   inline static constexpr auto typeName = get_type_name<type, TNArgs>();
-  inline static bool required = Required;
 };
 
 struct FlagArgTag {};
 
 template <ArgName Name, ParserID ID>
-struct FlagArg : FlagArgTag, ArgBase<bool, Name, false, ID> {
+struct FlagArg : FlagArgTag {
   using type = bool;
+  using baseType = bool;
+
+  static constexpr auto name = Name;
+  static constexpr auto id = ID;
+  inline static bool assigned = false;
+  inline static string_view description;
+  inline static bool required = false;
 
   inline static type value = {};
   inline static type defaultValue = {};
@@ -684,12 +690,18 @@ struct FlagArg : FlagArgTag, ArgBase<bool, Name, false, ID> {
 struct HelpArgTag {};
 
 template <ArgName Name, ParserID ID>
-struct HelpArg : HelpArgTag, FlagArgTag, ArgBase<bool, Name, false, ID> {
+struct HelpArg : HelpArgTag, FlagArgTag {
   using type = bool;
+  using baseType = bool;
+  static constexpr auto name = Name;
+  static constexpr auto id = ID;
+
+  inline static bool assigned = false;
+  inline static string_view description = "Print help information";
+  inline static bool required = false;
+
   inline static type value = {};
   inline static type defaultValue = {};
-
-  inline static string_view description = "Print help information";
 
   inline static constexpr NArgs nargs = NArgs(-1);
   inline static function<void()> callback = nullptr;
@@ -1285,7 +1297,7 @@ class Parser {
 
   template <class Type, ArgName Name, auto arg1 = Unspecified(),
             auto arg2 = Unspecified(), bool ISPArgs, class... T>
-  inline constexpr auto createArg(T... args) {
+  constexpr auto createArg(T... args) {
     static_assert(Name.hasValidNameLength(),
                   "Short name can't be more than one charactor");
 
@@ -1378,7 +1390,7 @@ class Parser {
    */
   template <ArgName Name, class Type, auto arg1 = Unspecified(),
             auto arg2 = Unspecified(), class... T>
-  auto addArg(T... args) {
+  constexpr auto addArg(T... args) {
     auto arg =
         createArg<Type, Name, arg1, arg2, false>(std::forward<T>(args)...);
     return Parser<ID, tuple_append_t<Args, typename decltype(arg)::type>, PArgs,
@@ -1393,7 +1405,7 @@ class Parser {
    */
   template <ArgName Name, class Type, auto arg1 = Unspecified(),
             auto arg2 = Unspecified(), class... T>
-  auto addPositionalArg(T... args) {
+  constexpr auto addPositionalArg(T... args) {
     static_assert(Name.shortName == '\0',
                   "Positional argment cannot have short name");
     auto arg =
@@ -1409,7 +1421,7 @@ class Parser {
   }
 
   template <ArgName Name, class... T>
-  auto addFlag(T... args) {
+  constexpr auto addFlag(T... args) {
     if constexpr (!is_same_v<PArgs, tuple<>>) {
       static_assert(SearchIndex<PArgs, Name>() == -1, "Duplicated name");
     }
@@ -1423,7 +1435,7 @@ class Parser {
   }
 
   template <ArgName Name = "help,h">
-  auto addHelp() {
+  constexpr auto addHelp() {
     static_assert((SearchIndexFromShortName<Args, Name.shortName>() == -1),
                   "Duplicated short name");
     static_assert(Argo::SearchIndex<Args, Name>() == -1, "Duplicated name");
@@ -1432,7 +1444,7 @@ class Parser {
   }
 
   template <ArgName Name = "help,h">
-  auto addHelp(string_view help) {
+  constexpr auto addHelp(string_view help) {
     static_assert((SearchIndexFromShortName<Args, Name.shortName>() == -1),
                   "Duplicated short name");
     static_assert(Argo::SearchIndex<Args, Name>() == -1, "Duplicated name");
@@ -1496,7 +1508,7 @@ class Parser {
    * Add subcommand
    */
   template <ArgName Name, class T>
-  auto addParser(T& sub_parser, Description description = {""}) {
+  constexpr auto addParser(T& sub_parser, Description description = {""}) {
     auto s = make_tuple(
         SubParser<Name, T>{ref(sub_parser), description.description});
     auto sub_parsers = tuple_cat(subParsers, s);
@@ -1504,33 +1516,37 @@ class Parser {
         std::move(this->info_), sub_parsers);
   }
 
-  auto resetArgs() -> void;
+  constexpr auto resetArgs() -> void;
 
-  auto addUsageHelp(string_view usage) {
+  constexpr auto addUsageHelp(string_view usage) {
     this->info_->usage = usage;
   }
 
-  auto addSubcommandHelp(string_view subcommand_help) {
+  constexpr auto addSubcommandHelp(string_view subcommand_help) {
     this->info_->subcommand_help = subcommand_help;
   }
 
-  auto addPositionalArgumentHelp(string_view positional_argument_help) {
+  constexpr auto addPositionalArgumentHelp(
+      string_view positional_argument_help) {
     this->info_->positional_argument_help = positional_argument_help;
   }
 
-  auto addOptionsHelp(string_view options_help) {
+  constexpr auto addOptionsHelp(string_view options_help) {
     this->info_->options_help = options_help;
   }
 
  private:
-  auto setArg(string_view key, span<string_view> val) const -> void;
-  auto setArg(span<char> key, span<string_view> val) const -> void;
+  __attribute__((always_inline)) constexpr auto setArg(
+      string_view key, span<string_view> val) const -> void;
+  __attribute__((always_inline)) constexpr auto setArg(
+      span<char> key, span<string_view> val) const -> void;
 
  public:
-  auto parse(int argc, char* argv[]) -> void;
-  [[nodiscard]] string formatHelp(bool no_color = false) const;
+  __attribute__((always_inline)) constexpr auto parse(int argc, char* argv[])
+      -> void;
+  [[nodiscard]] constexpr string formatHelp(bool no_color = false) const;
 
-  explicit operator bool() const {
+  explicit constexpr operator bool() const {
     return this->parsed_;
   }
 };
@@ -1556,13 +1572,13 @@ inline auto splitStringView(string_view str, char delimeter)
 
 template <ParserID ID, class Args, class PArgs, class HArg, class SubParsers>
   requires(is_tuple_v<Args> && is_tuple_v<SubParsers>)
-auto Parser<ID, Args, PArgs, HArg, SubParsers>::resetArgs() -> void {
+constexpr auto Parser<ID, Args, PArgs, HArg, SubParsers>::resetArgs() -> void {
   ValueReset<Args>();
 }
 
 template <ParserID ID, class Args, class PArgs, class HArg, class SubParsers>
   requires(is_tuple_v<Args> && is_tuple_v<SubParsers>)
-auto Parser<ID, Args, PArgs, HArg, SubParsers>::setArg(
+constexpr auto Parser<ID, Args, PArgs, HArg, SubParsers>::setArg(
     string_view key, span<string_view> val) const -> void {
   if constexpr (!is_same_v<HArg, void>) {
     if (key == HArg::name) {
@@ -1575,7 +1591,7 @@ auto Parser<ID, Args, PArgs, HArg, SubParsers>::setArg(
 
 template <ParserID ID, class Args, class PArgs, class HArg, class SubParsers>
   requires(is_tuple_v<Args> && is_tuple_v<SubParsers>)
-auto Parser<ID, Args, PArgs, HArg, SubParsers>::setArg(
+constexpr auto Parser<ID, Args, PArgs, HArg, SubParsers>::setArg(
     span<char> key, span<string_view> val) const -> void {
   if constexpr (!is_same_v<HArg, void>) {
     for (const auto& i : key) {
@@ -1592,8 +1608,8 @@ auto Parser<ID, Args, PArgs, HArg, SubParsers>::setArg(
 
 template <ParserID ID, class Args, class PArgs, class HArg, class SubParsers>
   requires(is_tuple_v<Args> && is_tuple_v<SubParsers>)
-auto Parser<ID, Args, PArgs, HArg, SubParsers>::parse(int argc, char* argv[])
-    -> void {
+inline constexpr auto Parser<ID, Args, PArgs, HArg, SubParsers>::parse(
+    int argc, char* argv[]) -> void {
   if (this->parsed_) [[unlikely]] {
     throw ParseError("Cannot parse twice");
   }
@@ -1751,9 +1767,9 @@ struct AnsiEscapeCode {
   }
 };
 
-inline auto createUsageSection(const auto& program_name,
-                               [[maybe_unused]] const auto& help_info,
-                               const auto& sub_commands) {
+inline constexpr auto createUsageSection(const auto& program_name,
+                                         [[maybe_unused]] const auto& help_info,
+                                         const auto& sub_commands) {
   string ret;
   ret.append(program_name);
 
@@ -1788,8 +1804,8 @@ inline auto createUsageSection(const auto& program_name,
   return ret;
 }
 
-inline auto createSubcommandSection(const auto& ansi,
-                                    const auto& sub_commands) {
+inline constexpr auto createSubcommandSection(const auto& ansi,
+                                              const auto& sub_commands) {
   string ret;
   size_t max_command_length = 0;
   for (const auto& command : sub_commands) {
@@ -1819,7 +1835,8 @@ inline auto createSubcommandSection(const auto& ansi,
   return ret;
 }
 
-inline auto createOptionsSection(const auto& ansi, const auto& help_info) {
+inline constexpr auto createOptionsSection(const auto& ansi,
+                                           const auto& help_info) {
   string ret;
   size_t max_name_len = 0;
   for (const auto& option : help_info) {
@@ -1850,7 +1867,7 @@ inline auto createOptionsSection(const auto& ansi, const auto& help_info) {
 }
 
 template <class PArgs>
-auto createPositionalArgumentSection(const auto& ansi) {
+inline constexpr auto createPositionalArgumentSection(const auto& ansi) {
   string ret;
 
   vector<ArgInfo> info = HelpGenerator<PArgs>::generate();
@@ -1872,8 +1889,8 @@ auto createPositionalArgumentSection(const auto& ansi) {
 
 template <ParserID ID, class Args, class PArgs, class HArg, class SubParsers>
   requires(is_tuple_v<Args> && is_tuple_v<SubParsers>)
-auto Parser<ID, Args, PArgs, HArg, SubParsers>::formatHelp(bool no_color) const
-    -> string {
+constexpr auto Parser<ID, Args, PArgs, HArg, SubParsers>::formatHelp(
+    bool no_color) const -> string {
   string ret;
 
   AnsiEscapeCode ansi((::isatty(1) != 0) and !no_color);

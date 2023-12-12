@@ -35,7 +35,7 @@ def main():
     # delete export keyword
     generated = [line.replace("export ", "") for line in generated]
 
-    with open("../include/Argo.hh", "w+") as f:
+    with open("../include/Argo/Argo.hh", "w+") as f:
         f.write("".join(generated))
 
 

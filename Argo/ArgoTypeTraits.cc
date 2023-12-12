@@ -105,24 +105,34 @@ template <class T>
 using make_type_sequence_t = make_type_sequence<T>::type;
 
 template <class Tuple, class T>
-inline constexpr auto tuple_type_visit(T fun) {
-  [&fun]<class... U>(type_sequence<U...>) {
+__attribute__((always_inline)) constexpr auto tuple_type_visit(T fun) {
+  [&fun]<class... U>(type_sequence<U...>) __attribute__((always_inline)) {
     (fun(type_identity<U>()), ...);
-  }(make_type_sequence_t<Tuple>());
+  }
+
+  (make_type_sequence_t<Tuple>());
 }
 
 template <class Tuple, class T>
-inline constexpr auto tuple_type_or_visit(T fun) -> bool {
-  return [&fun]<class... U>(type_sequence<U...>) {
+__attribute__((always_inline)) constexpr auto tuple_type_or_visit(T fun)
+    -> bool {
+  return [&fun]<class... U>(type_sequence<U...>)
+      __attribute__((always_inline)) {
     return (fun(type_identity<U>()) || ...);
-  }(make_type_sequence_t<Tuple>());
+  }
+
+  (make_type_sequence_t<Tuple>());
 }
 
 template <class Tuple, class T>
-inline constexpr auto tuple_type_and_visit(T fun) -> bool {
-  return [&fun]<class... U>(type_sequence<U...>) {
+__attribute__((always_inline)) constexpr auto tuple_type_and_visit(T fun)
+    -> bool {
+  return [&fun]<class... U>(type_sequence<U...>)
+      __attribute__((always_inline)) {
     return (fun(type_identity<U>()) && ...);
-  }(make_type_sequence_t<Tuple>());
+  }
+
+  (make_type_sequence_t<Tuple>());
 }
 
 };  // namespace Argo

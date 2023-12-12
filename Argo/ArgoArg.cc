@@ -59,16 +59,6 @@ struct NArgs {
   }
 };
 
-template <typename BaseType, ArgName Name, bool Required, ParserID ID>
-struct ArgBase {
-  static constexpr auto name = Name;
-  static constexpr auto id = ID;
-  inline static bool assigned = false;
-  inline static string_view description;
-  inline static bool required = Required;
-  using baseType = BaseType;
-};
-
 template <size_t N>
 struct String {
   char str_[N] = {};
@@ -193,21 +183,7 @@ struct ArgTag {};
  * Arg type this holds argument value
  */
 template <class Type, ArgName Name, NArgs TNArgs, bool Required, ParserID ID>
-struct Arg : ArgTag,
-             ArgBase<                          //
-                 conditional_t<                //
-                     is_array_v<Type>,         //
-                     array_base_t<Type>,       //
-                     conditional_t<            //
-                         is_vector_v<Type>,    //
-                         vector_base_t<Type>,  //
-                         Type                  //
-                         >                     //
-                     >,                        //
-                 Name,                         //
-                 Required,                     //
-                 ID                            //
-                 > {
+struct Arg : ArgTag {
   using type =        //
       conditional_t<  //
           ((TNArgs.nargs <= 1) && (TNArgs.nargs_char != '+') &&
@@ -222,6 +198,20 @@ struct Arg : ArgTag,
               vector<Type>                                     //
               >                                                //
           >;                                                   //
+  using baseType = conditional_t<                              //
+      is_array_v<Type>,                                        //
+      array_base_t<Type>,                                      //
+      conditional_t<                                           //
+          is_vector_v<Type>,                                   //
+          vector_base_t<Type>,                                 //
+          Type                                                 //
+          >                                                    //
+      >;
+  static constexpr auto name = Name;
+  static constexpr auto id = ID;
+  inline static string_view description;
+  inline static bool assigned = false;
+  inline static bool required = Required;
 
   inline static type value = {};
   inline static type defaultValue = {};
@@ -233,14 +223,20 @@ struct Arg : ArgTag,
       validator = nullptr;
   inline static function<void(type&, span<string_view>)> callback = nullptr;
   inline static constexpr auto typeName = get_type_name<type, TNArgs>();
-  inline static bool required = Required;
 };
 
 struct FlagArgTag {};
 
 template <ArgName Name, ParserID ID>
-struct FlagArg : FlagArgTag, ArgBase<bool, Name, false, ID> {
+struct FlagArg : FlagArgTag {
   using type = bool;
+  using baseType = bool;
+
+  static constexpr auto name = Name;
+  static constexpr auto id = ID;
+  inline static bool assigned = false;
+  inline static string_view description;
+  inline static bool required = false;
 
   inline static type value = {};
   inline static type defaultValue = {};
@@ -253,12 +249,18 @@ struct FlagArg : FlagArgTag, ArgBase<bool, Name, false, ID> {
 struct HelpArgTag {};
 
 template <ArgName Name, ParserID ID>
-struct HelpArg : HelpArgTag, FlagArgTag, ArgBase<bool, Name, false, ID> {
+struct HelpArg : HelpArgTag, FlagArgTag {
   using type = bool;
+  using baseType = bool;
+  static constexpr auto name = Name;
+  static constexpr auto id = ID;
+
+  inline static bool assigned = false;
+  inline static string_view description = "Print help information";
+  inline static bool required = false;
+
   inline static type value = {};
   inline static type defaultValue = {};
-
-  inline static string_view description = "Print help information";
 
   inline static constexpr NArgs nargs = NArgs(-1);
   inline static function<void()> callback = nullptr;

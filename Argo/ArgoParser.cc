@@ -89,7 +89,7 @@ class Parser {
 
   template <class Type, ArgName Name, auto arg1 = Unspecified(),
             auto arg2 = Unspecified(), bool ISPArgs, class... T>
-  inline constexpr auto createArg(T... args) {
+  constexpr auto createArg(T... args) {
     static_assert(Name.hasValidNameLength(),
                   "Short name can't be more than one charactor");
 
@@ -182,7 +182,7 @@ class Parser {
    */
   template <ArgName Name, class Type, auto arg1 = Unspecified(),
             auto arg2 = Unspecified(), class... T>
-  auto addArg(T... args) {
+  constexpr auto addArg(T... args) {
     auto arg =
         createArg<Type, Name, arg1, arg2, false>(std::forward<T>(args)...);
     return Parser<ID, tuple_append_t<Args, typename decltype(arg)::type>, PArgs,
@@ -197,7 +197,7 @@ class Parser {
    */
   template <ArgName Name, class Type, auto arg1 = Unspecified(),
             auto arg2 = Unspecified(), class... T>
-  auto addPositionalArg(T... args) {
+  constexpr auto addPositionalArg(T... args) {
     static_assert(Name.shortName == '\0',
                   "Positional argment cannot have short name");
     auto arg =
@@ -213,7 +213,7 @@ class Parser {
   }
 
   template <ArgName Name, class... T>
-  auto addFlag(T... args) {
+  constexpr auto addFlag(T... args) {
     if constexpr (!is_same_v<PArgs, tuple<>>) {
       static_assert(SearchIndex<PArgs, Name>() == -1, "Duplicated name");
     }
@@ -227,7 +227,7 @@ class Parser {
   }
 
   template <ArgName Name = "help,h">
-  auto addHelp() {
+  constexpr auto addHelp() {
     static_assert((SearchIndexFromShortName<Args, Name.shortName>() == -1),
                   "Duplicated short name");
     static_assert(Argo::SearchIndex<Args, Name>() == -1, "Duplicated name");
@@ -236,7 +236,7 @@ class Parser {
   }
 
   template <ArgName Name = "help,h">
-  auto addHelp(string_view help) {
+  constexpr auto addHelp(string_view help) {
     static_assert((SearchIndexFromShortName<Args, Name.shortName>() == -1),
                   "Duplicated short name");
     static_assert(Argo::SearchIndex<Args, Name>() == -1, "Duplicated name");
@@ -300,7 +300,7 @@ class Parser {
    * Add subcommand
    */
   template <ArgName Name, class T>
-  auto addParser(T& sub_parser, Description description = {""}) {
+  constexpr auto addParser(T& sub_parser, Description description = {""}) {
     auto s = make_tuple(
         SubParser<Name, T>{ref(sub_parser), description.description});
     auto sub_parsers = tuple_cat(subParsers, s);
@@ -308,33 +308,37 @@ class Parser {
         std::move(this->info_), sub_parsers);
   }
 
-  auto resetArgs() -> void;
+  constexpr auto resetArgs() -> void;
 
-  auto addUsageHelp(string_view usage) {
+  constexpr auto addUsageHelp(string_view usage) {
     this->info_->usage = usage;
   }
 
-  auto addSubcommandHelp(string_view subcommand_help) {
+  constexpr auto addSubcommandHelp(string_view subcommand_help) {
     this->info_->subcommand_help = subcommand_help;
   }
 
-  auto addPositionalArgumentHelp(string_view positional_argument_help) {
+  constexpr auto addPositionalArgumentHelp(
+      string_view positional_argument_help) {
     this->info_->positional_argument_help = positional_argument_help;
   }
 
-  auto addOptionsHelp(string_view options_help) {
+  constexpr auto addOptionsHelp(string_view options_help) {
     this->info_->options_help = options_help;
   }
 
  private:
-  auto setArg(string_view key, span<string_view> val) const -> void;
-  auto setArg(span<char> key, span<string_view> val) const -> void;
+  __attribute__((always_inline)) constexpr auto setArg(
+      string_view key, span<string_view> val) const -> void;
+  __attribute__((always_inline)) constexpr auto setArg(
+      span<char> key, span<string_view> val) const -> void;
 
  public:
-  auto parse(int argc, char* argv[]) -> void;
-  [[nodiscard]] string formatHelp(bool no_color = false) const;
+  __attribute__((always_inline)) constexpr auto parse(int argc, char* argv[])
+      -> void;
+  [[nodiscard]] constexpr string formatHelp(bool no_color = false) const;
 
-  explicit operator bool() const {
+  explicit constexpr operator bool() const {
     return this->parsed_;
   }
 };

@@ -7,9 +7,11 @@ using Argo::description;
 using Argo::nargs;
 
 auto main([[maybe_unused]] int argc, [[maybe_unused]] char** argv) -> int {
+  __asm__("# Creating parser");
   auto parser1 = Argo::Parser<"P1">()  //
                      .addArg<"p1a1", int>()
                      .addArg<"p1a2", int>();
+  __asm__("# Created parser");
 
   auto parser2 = Argo::Parser<"Parser2">()
                      .addArg<"p2a1", int>(description("Hello\nWorld!"))
@@ -41,13 +43,9 @@ auto main([[maybe_unused]] int argc, [[maybe_unused]] char** argv) -> int {
               [](auto&&...) {})
           .addHelp<"help,h">();
 
-  // auto parser =  //
-  //     Argo::Parser<"Parser">()
-  //         .addArg<"test1", std::tuple<int, int, float, double, const char*,
-  //                                     std::string>>()
-  //         .addArg<"bar", int>();
-  // // println("{}", parser.formatHelp());
+  __asm__("# Parse_ Start");
   parser.parse(argc, argv);
+  __asm__("# Parse_ End");
 
   return 0;
 }
