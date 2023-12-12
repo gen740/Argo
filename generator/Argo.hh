@@ -20,6 +20,8 @@
 #include <utility>
 #include <vector>
 
+#define ARGO_ALWAYS_INLINE __attribute__((always_inline))
+
 // fetch { Argo/ArgoExceptions.cc }
 // fetch { Argo/ArgoTypeTraits.cc }
 // fetch { Argo/ArgoValidation.cc }

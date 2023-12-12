@@ -1,5 +1,7 @@
 module;
 
+#include "Argo/ArgoMacros.hh"
+
 export module Argo:MetaLookup;
 
 import :Exceptions;
@@ -15,9 +17,9 @@ namespace Argo {
 using namespace std;
 
 template <class Arguments>
-constexpr inline auto GetNameFromShortName(char key) {
+ARGO_ALWAYS_INLINE constexpr inline auto GetNameFromShortName(char key) {
   auto name = string_view();
-  if ([&name, &key]<class... T>(type_sequence<T...>) {
+  if ([&name, &key]<class... T>(type_sequence<T...>) ARGO_ALWAYS_INLINE {
         return ([&name, &key] {
           if (T::name.shortName == key) {
             name = string_view(T::name);

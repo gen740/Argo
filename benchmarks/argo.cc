@@ -6,7 +6,6 @@ import Argo;
 using namespace Argo;
 
 auto main([[maybe_unused]] int argc, [[maybe_unused]] char** argv) -> int {
-  __asm__("# Creating parser");
   auto parser = Parser<1>()  //
                     .addArg<"arg1", int, nargs(8)>()
                     .addArg<"arg2", float>()
@@ -25,8 +24,6 @@ auto main([[maybe_unused]] int argc, [[maybe_unused]] char** argv) -> int {
                     .addFlag<"arg16,m">()
                     .addFlag<"arg17,n">()
                     .addArg<"arg18", int, nargs('+')>();
-  __asm__("# Creating parser end");
-  // parser.parse(argc, argv);
-  // std::cout << parser.formatHelp() << '\n';
+  parser.parse(argc, argv);
   return 0;
 }

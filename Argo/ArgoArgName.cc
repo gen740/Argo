@@ -4,6 +4,8 @@ export module Argo:ArgName;
 
 import :std_module;
 
+#include "Argo/ArgoMacros.hh"
+
 // generator start here
 
 namespace Argo {
@@ -60,7 +62,8 @@ struct ArgName {
   }
 
   template <size_t M>
-  [[nodiscard]] constexpr auto operator==(const ArgName<M>& lhs) -> bool {
+  [[nodiscard]] ARGO_ALWAYS_INLINE constexpr auto operator==(
+      const ArgName<M>& lhs) -> bool {
     if constexpr (M != N) {
       return false;
     } else {
@@ -74,7 +77,8 @@ struct ArgName {
   }
 
   template <size_t M>
-  [[nodiscard]] constexpr auto operator==(const ArgName<M>& lhs) const -> bool {
+  [[nodiscard]] ARGO_ALWAYS_INLINE constexpr auto operator==(
+      const ArgName<M>& lhs) const -> bool {
     auto NV = this->nameLen;
     auto MV = lhs.nameLen;
 
@@ -90,11 +94,12 @@ struct ArgName {
   }
 
   // NOLINTNEXTLINE(google-explicit-constructor)
-  [[nodiscard]] constexpr operator string_view() const {
+  [[nodiscard]] ARGO_ALWAYS_INLINE constexpr operator string_view() const {
     return string_view(this->begin(), this->end());
   }
 
-  [[nodiscard]] consteval auto hasValidNameLength() const -> bool {
+  [[nodiscard]] ARGO_ALWAYS_INLINE consteval auto hasValidNameLength() const
+      -> bool {
     if (this->shortName == '\0') {
       return true;
     }

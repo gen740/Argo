@@ -4,6 +4,8 @@ export module Argo:TypeTraits;
 import :Exceptions;
 import :std_module;
 
+#include "Argo/ArgoMacros.hh"
+
 // generator start here
 
 export namespace Argo {
@@ -105,34 +107,24 @@ template <class T>
 using make_type_sequence_t = make_type_sequence<T>::type;
 
 template <class Tuple, class T>
-__attribute__((always_inline)) constexpr auto tuple_type_visit(T fun) {
-  [&fun]<class... U>(type_sequence<U...>) __attribute__((always_inline)) {
+ARGO_ALWAYS_INLINE constexpr auto tuple_type_visit(T fun) {
+  [&fun]<class... U>(type_sequence<U...>) ARGO_ALWAYS_INLINE {
     (fun(type_identity<U>()), ...);
-  }
-
-  (make_type_sequence_t<Tuple>());
+  }(make_type_sequence_t<Tuple>());
 }
 
 template <class Tuple, class T>
-__attribute__((always_inline)) constexpr auto tuple_type_or_visit(T fun)
-    -> bool {
-  return [&fun]<class... U>(type_sequence<U...>)
-      __attribute__((always_inline)) {
+ARGO_ALWAYS_INLINE constexpr auto tuple_type_or_visit(T fun) -> bool {
+  return [&fun]<class... U>(type_sequence<U...>) ARGO_ALWAYS_INLINE {
     return (fun(type_identity<U>()) || ...);
-  }
-
-  (make_type_sequence_t<Tuple>());
+  }(make_type_sequence_t<Tuple>());
 }
 
 template <class Tuple, class T>
-__attribute__((always_inline)) constexpr auto tuple_type_and_visit(T fun)
-    -> bool {
-  return [&fun]<class... U>(type_sequence<U...>)
-      __attribute__((always_inline)) {
+ARGO_ALWAYS_INLINE constexpr auto tuple_type_and_visit(T fun) -> bool {
+  return [&fun]<class... U>(type_sequence<U...>) ARGO_ALWAYS_INLINE {
     return (fun(type_identity<U>()) && ...);
-  }
-
-  (make_type_sequence_t<Tuple>());
+  }(make_type_sequence_t<Tuple>());
 }
 
 };  // namespace Argo

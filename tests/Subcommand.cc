@@ -9,8 +9,7 @@ TEST(ArgoTest, SubCommands) {
   {
     auto [argc, argv] = createArgcArgv(  //
         "./main",                        //
-        "cmd1",
-        "--arg1",
+        "cmd1", "--arg1",
         "42"  // int
     );
 
@@ -40,9 +39,7 @@ TEST(ArgoTest, SubCommands) {
   {
     auto [argc, argv] = createArgcArgv(  //
         "./main",                        //
-        "cmd1",
-        "cmd3",
-        "--arg1",
+        "cmd1", "cmd3", "--arg1",
         "42"  // int
     );
 

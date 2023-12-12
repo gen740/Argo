@@ -1,5 +1,7 @@
 module;
 
+#include "Argo/ArgoMacros.hh"
+
 export module Argo:Parser;
 
 import :Exceptions;
@@ -248,7 +250,7 @@ class Parser {
   }
 
   template <ArgName Name>
-  auto getArg() {
+  constexpr auto getArg() {
     if (!this->parsed_) {
       throw ParseError("Parser did not parse argument, call parse first");
     }
@@ -269,7 +271,7 @@ class Parser {
   }
 
   template <ArgName Name>
-  auto& getParser() {
+  constexpr auto& getParser() {
     if constexpr (is_same_v<SubParsers, tuple<>>) {
       static_assert(false, "Parser has no sub parser");
     }
@@ -279,7 +281,7 @@ class Parser {
   }
 
   template <ArgName Name>
-  auto isAssigned() {
+  constexpr auto isAssigned() {
     if (!this->parsed_) {
       throw ParseError("Parser did not parse argument, call parse first");
     }
@@ -300,7 +302,8 @@ class Parser {
    * Add subcommand
    */
   template <ArgName Name, class T>
-  constexpr auto addParser(T& sub_parser, Description description = {""}) {
+  ARGO_ALWAYS_INLINE constexpr auto addParser(T& sub_parser,
+                                              Description description = {""}) {
     auto s = make_tuple(
         SubParser<Name, T>{ref(sub_parser), description.description});
     auto sub_parsers = tuple_cat(subParsers, s);
@@ -308,34 +311,34 @@ class Parser {
         std::move(this->info_), sub_parsers);
   }
 
-  constexpr auto resetArgs() -> void;
+  ARGO_ALWAYS_INLINE constexpr auto resetArgs() -> void;
 
-  constexpr auto addUsageHelp(string_view usage) {
+  ARGO_ALWAYS_INLINE constexpr auto addUsageHelp(string_view usage) {
     this->info_->usage = usage;
   }
 
-  constexpr auto addSubcommandHelp(string_view subcommand_help) {
+  ARGO_ALWAYS_INLINE constexpr auto addSubcommandHelp(
+      string_view subcommand_help) {
     this->info_->subcommand_help = subcommand_help;
   }
 
-  constexpr auto addPositionalArgumentHelp(
+  ARGO_ALWAYS_INLINE constexpr auto addPositionalArgumentHelp(
       string_view positional_argument_help) {
     this->info_->positional_argument_help = positional_argument_help;
   }
 
-  constexpr auto addOptionsHelp(string_view options_help) {
+  ARGO_ALWAYS_INLINE constexpr auto addOptionsHelp(string_view options_help) {
     this->info_->options_help = options_help;
   }
 
  private:
-  __attribute__((always_inline)) constexpr auto setArg(
-      string_view key, span<string_view> val) const -> void;
-  __attribute__((always_inline)) constexpr auto setArg(
-      span<char> key, span<string_view> val) const -> void;
+  ARGO_ALWAYS_INLINE constexpr auto setArg(string_view key,
+                                           span<string_view> val) const -> void;
+  ARGO_ALWAYS_INLINE constexpr auto setArg(span<char> key,
+                                           span<string_view> val) const -> void;
 
  public:
-  __attribute__((always_inline)) constexpr auto parse(int argc, char* argv[])
-      -> void;
+  ARGO_ALWAYS_INLINE constexpr auto parse(int argc, char* argv[]) -> void;
   [[nodiscard]] constexpr string formatHelp(bool no_color = false) const;
 
   explicit constexpr operator bool() const {

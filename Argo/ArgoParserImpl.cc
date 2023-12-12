@@ -1,6 +1,7 @@
 module;
 
 #include <cassert>
+#include <print>
 
 export module Argo:ParserImpl;
 
@@ -86,19 +87,6 @@ inline constexpr auto Parser<ID, Args, PArgs, HArg, SubParsers>::parse(
     throw ParseError(format("keys {} already assigned", assigned_keys));
   }
 
-  // Search for subcommand
-  int64_t subcmd_found_idx = -1;
-  int64_t cmd_end_pos = argc;
-  if constexpr (!is_same_v<SubParsers, tuple<>>) {
-    for (int i = argc - 1; i > 0; i--) {
-      subcmd_found_idx = ParserIndex(subParsers, argv[i]);
-      if (subcmd_found_idx != -1) {
-        cmd_end_pos = i;
-        break;
-      }
-    }
-  }
-
   string_view key{};
   vector<char> short_keys{};
   short_keys.reserve(10);
@@ -110,36 +98,31 @@ inline constexpr auto Parser<ID, Args, PArgs, HArg, SubParsers>::parse(
     this->info_->program_name = string_view(argv[0]);
   }
 
-  for (int i = 1; i < cmd_end_pos; i++) {
-    string_view arg = argv[i];
-    if (arg.starts_with('-')) {
-      if (arg.starts_with("--")) {  // start with --
-        if (!key.empty()) {
-          this->setArg(key, values);
-          key = "";
-          values.clear();
-        } else if (!short_keys.empty()) {
-          this->setArg(short_keys, values);
-          short_keys.clear();
-          values.clear();
-        } else if (!values.empty()) {
-          if constexpr (!is_same_v<PArgs, tuple<>>) {
-            this->setArg(key, values);
-            values.clear();
-          }
+  // Search for subcommand
+  int32_t subcmd_found_idx = -1;
+  int32_t cmd_end_pos = argc;
+
+  for (int i = argc - 1; i > 0; i--) {
+    if constexpr (!is_same_v<SubParsers, tuple<>>) {
+      if (subcmd_found_idx == -1) {
+        subcmd_found_idx = ParserIndex(subParsers, argv[i]);
+        if (subcmd_found_idx != -1) {
+          cmd_end_pos = i;
         }
-        if (arg.contains('=')) {
-          auto equal_pos = arg.find('=');
-          auto value = vector<string_view>{arg.substr(equal_pos + 1)};
-          this->setArg(arg.substr(2, equal_pos - 2), value);
-          continue;
-        }
-        key = arg.substr(2);
-        if (i == (cmd_end_pos - 1)) {
-          this->setArg(key, {});
-        }
-        continue;
       }
+    }
+  }
+  bool flag = false;
+  string_view arg;
+
+  for (int i = 1; i < cmd_end_pos + 1; i++) {
+    if (i != cmd_end_pos) {
+      arg = argv[i];
+      flag = arg.starts_with('-');
+    } else {
+      flag = true;
+    }
+    if (i != 1 and flag) {
       if (!key.empty()) {
         this->setArg(key, values);
         key = "";
@@ -152,38 +135,31 @@ inline constexpr auto Parser<ID, Args, PArgs, HArg, SubParsers>::parse(
         if constexpr (!is_same_v<PArgs, tuple<>>) {
           this->setArg(key, values);
           values.clear();
-        }
-      }
-      if (key.empty() && short_keys.empty()) {
-        for (const auto& j : arg.substr(1)) {
-          short_keys.push_back(j);
-        }
-        if (i == (cmd_end_pos - 1)) {
-          this->setArg(short_keys, {});
-        }
-        continue;
-      }
-    } else {
-      if constexpr (is_same_v<PArgs, tuple<>>) {
-        if (key.empty() && short_keys.empty()) {
+        } else {
           throw InvalidArgument("No keys specified");
         }
       }
-      values.push_back(arg);
-
-      if (i == cmd_end_pos - 1) {
-        if (!key.empty()) {
-          this->setArg(key, values);
-        } else if (!short_keys.empty()) {
-          this->setArg(short_keys, values);
+    }
+    if (i == cmd_end_pos) {
+      break;
+    }
+    if (flag) {
+      if (arg.size() > 1 and arg.at(1) == '-') {
+        if (arg.contains('=')) [[unlikely]] {
+          auto equal_pos = arg.find('=');
+          key = arg.substr(2, equal_pos - 2);
+          values.push_back(arg.substr(equal_pos + 1));
+          flag = true;
         } else {
-          if constexpr (is_same_v<PArgs, tuple<>>) {
-            throw InvalidArgument("No keys specified");
-          } else {
-            this->setArg(key, values);
-          }
+          key = arg.substr(2);
+        }
+      } else {
+        for (const auto& j : arg.substr(1)) {
+          short_keys.push_back(j);
         }
       }
+    } else {
+      values.push_back(arg);
     }
   }
 

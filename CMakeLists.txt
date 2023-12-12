@@ -32,6 +32,7 @@ file(GLOB ARGO_LIBRARY_SOURCES ${CMAKE_CURRENT_LIST_DIR}/Argo/*.cc)
 
 target_sources(Argo PUBLIC FILE_SET CXX_MODULES FILES ${ARGO_LIBRARY_SOURCES})
 target_compile_features(Argo PUBLIC cxx_std_23)
+target_include_directories(Argo PUBLIC ${CMAKE_CURRENT_LIST_DIR}/include)
 
 unset(ARGO_LIBRARY_SOURCES)
 
