@@ -1,4 +1,4 @@
-name: Tests
+name: Tests-Ubuntu
 
 on:
   push:
@@ -16,7 +16,7 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v3
 
-      - name: Upgrade homebrew
+      - name: Upgrade apt
         run: |
           sudo apt update && sudo apt upgrade
 
