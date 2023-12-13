@@ -1,4 +1,5 @@
-[![Tests](https://github.com/gen740/Argo/actions/workflows/test.yml/badge.svg)](https://github.com/gen740/Argo/actions/workflows/test.yml)
+[![Tests-Mac](https://github.com/gen740/Argo/actions/workflows/test-mac.yml/badge.svg)](https://github.com/gen740/Argo/actions/workflows/test-mac.yml)
+[![Tests-Ubuntu](https://github.com/gen740/Argo/actions/workflows/test-ubuntu.yml/badge.svg)](https://github.com/gen740/Argo/actions/workflows/test-ubuntu.yml)
 
 # Argo
 C++ mordern and safest argument parser, using C++ modules and metaprogramming.
