@@ -36,7 +36,7 @@ jobs:
 
       - name: Install googletest
         run: |
-          sudo apt install googletest
+          sudo apt-get install libgtest-dev
 
       - name: Install ninja
         run: |
