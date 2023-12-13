@@ -51,10 +51,17 @@ jobs:
           LDFLAGS: -L/usr/local/opt/llvm/lib -L/usr/local/opt/llvm/lib/c++ -Wl,-rpath,/usr/local/opt/llvm/lib/c++
           CPPFLAGS: -I/usr/local/opt/llvm/include
 
-      - name: Test Debug
-        run: |
-          ./build/test-argo-debug
-
       - name: Test Release
         run: |
           ./build/test-argo-release
+
+      - name: Test Debug with codecov
+        run: |
+          LLVM_PROFILE_FILE=./build/test-argo-debug.profraw ./build/test-argo-debug
+          /usr/local/opt/llvm/bin/llvm-profdata merge -sparse ./build/test-argo-debug.profraw -o ./build/coverage.profdata
+          /usr/local/opt/llvm/bin/llvm-cov show ./build/test-argo-debug -instr-profile=/tmp/llvm_profile/coverage.profdata > ./coverage.txt
+
+      - name: Upload coverage reports to Codecov
+        uses: codecov/codecov-action@v3
+        env:
+          CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}

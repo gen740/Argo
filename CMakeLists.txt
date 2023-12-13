@@ -40,7 +40,7 @@ unset(ARGO_LIBRARY_SOURCES)
 if(${CMAKE_SOURCE_DIR} STREQUAL ${CMAKE_CURRENT_LIST_DIR})
   add_executable(main ${CMAKE_CURRENT_LIST_DIR}/main.cc)
   target_link_libraries(main Argo)
-  target_compile_options(main PRIVATE -save-temps -O3 -ftime-trace)
+  target_compile_options(main PRIVATE -O3)
 
 
   ################################ TESTS ######################################
@@ -63,8 +63,11 @@ if(${CMAKE_SOURCE_DIR} STREQUAL ${CMAKE_CURRENT_LIST_DIR})
     target_link_libraries(test-argo-debug GTest::gtest GTest::gtest_main GTest::gmock
                           Argo)
     set_target_properties(test-argo-debug PROPERTIES CXX_STANDARD 23)
-    target_compile_options(test-argo-debug PRIVATE -Wno-writable-strings
-                                                   -DDEBUG_BUILD -O1 -g)
+    target_compile_options(test-argo-debug #
+      PRIVATE -Wno-writable-strings -DDEBUG_BUILD -O1 -g
+              -fprofile-instr-generate -fcoverage-mapping)
+    target_link_options(test-argo-debug
+      PRIVATE -fprofile-instr-generate -fcoverage-mapping)
 
     ############################### RELEASE TARGET ############################
     add_executable(test-argo-release ${ARGO_TEST_SOURCES})
@@ -118,7 +121,7 @@ if(${CMAKE_SOURCE_DIR} STREQUAL ${CMAKE_CURRENT_LIST_DIR})
                             ${CLI11_LIBRARY})
       set_target_properties(${release_target_name} PROPERTIES CXX_STANDARD 23)
       target_compile_options(${release_target_name}
-                             PRIVATE -Wno-writable-strings -O3 -Os -save-temps -fbracket-depth=1024)
+                             PRIVATE -Wno-writable-strings -O3 -Os -fbracket-depth=1024)
     endforeach()
   endif()
 endif()
