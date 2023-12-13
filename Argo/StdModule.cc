@@ -24,7 +24,6 @@ export module Argo:std_module;
 
 // NOLINTBEGIN(bugprone-reserved-identifier)
 export {
-  using ::__stderrp;
   using ::isatty;
   using ::std::int64_t;
   using ::std::size_t;
