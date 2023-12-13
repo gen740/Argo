@@ -8,10 +8,6 @@ on:
   schedule:
     - cron: '0 23 * * SUN-THU'
   workflow_dispatch:
-  workflow_run:
-    workflows: ["Tests-Mac"]
-    types:
-      - requested
 
 jobs:
   tests:
