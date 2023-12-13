@@ -6,7 +6,7 @@ import Argo;
 using Argo::description;
 using Argo::nargs;
 
-auto main([[maybe_unused]] int argc, [[maybe_unused]] char** argv) -> int {
+auto main(int argc, char** argv) -> int {
   auto parser1 = Argo::Parser<"P1">()  //
                      .addArg<"p1a1", int>()
                      .addArg<"p1a2", int>();

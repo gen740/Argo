@@ -5,7 +5,7 @@ import Argo;
 
 using namespace Argo;
 
-auto main([[maybe_unused]] int argc, [[maybe_unused]] char** argv) -> int {
+auto main(int argc, char** argv) -> int {
   auto parser = Parser<1>()  //
                     .addArg<"arg1", int, nargs(8)>()
                     .addArg<"arg2", float>()

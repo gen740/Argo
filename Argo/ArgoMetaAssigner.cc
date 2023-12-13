@@ -147,6 +147,9 @@ template <class Head, class PArgs>
 ARGO_ALWAYS_INLINE constexpr auto AssignOneArg(const string_view& key,
                                                span<string_view> values)
     -> bool {
+  if (Head::assigned) [[unlikely]] {
+    throw Argo::InvalidArgument(format("Duplicated argument {}", key));
+  }
   if constexpr (derived_from<Head, FlagArgTag>) {
     if (!values.empty()) {
       if constexpr (is_same_v<PArgs, tuple<>>) {

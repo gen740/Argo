@@ -44,8 +44,7 @@ constexpr auto Parser<ID, Args, PArgs, HArg, SubParsers>::resetArgs() -> void {
 template <ParserID ID, class Args, class PArgs, class HArg, class SubParsers>
   requires(is_tuple_v<Args> && is_tuple_v<SubParsers>)
 constexpr auto Parser<ID, Args, PArgs, HArg, SubParsers>::setArg(
-    [[maybe_unused]] string_view key,
-    [[maybe_unused]] span<string_view> val) const -> void {
+    string_view key, span<string_view> val) const -> void {
   if constexpr (!is_same_v<HArg, void>) {
     if (key == HArg::name) {
       std::cout << formatHelp() << '\n';
@@ -93,9 +92,7 @@ constexpr auto Parser<ID, Args, PArgs, HArg, SubParsers>::parse(int argc,
 
   string_view key{};
   vector<char> short_keys{};
-  short_keys.reserve(8);
   vector<string_view> values{};
-  values.reserve(8);
 
   assert(this->info_);  // this->info_ cannot be nullptr
   if (!this->info_->program_name) {
