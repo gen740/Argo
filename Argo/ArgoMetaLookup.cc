@@ -61,6 +61,23 @@ consteval auto SearchIndexFromShortName() {
   return value;
 }
 
+/*!
+ * Index Search meta function
+ */
+template <class Tuple>
+ARGO_ALWAYS_INLINE constexpr auto SearchIndexFromShortName(char c) {
+  int value = -1;
+  if (![&value, &c]<class... T>(type_sequence<T...>) ARGO_ALWAYS_INLINE {
+        return ((value++,
+                 (T::name.shortName >= '0' and T::name.shortName <= '9') and
+                     (c == T::name.shortName)) ||
+                ...);
+      }(make_type_sequence_t<Tuple>())) {
+    return -1;
+  }
+  return value;
+}
+
 };  // namespace Argo
 
 // generator end here

@@ -94,9 +94,9 @@ constexpr auto Parser<ID, Args, PArgs, HArg, SubParsers>::parse(int argc,
 
   [[maybe_unused]] string_view key{};
   vector<char> short_keys{};
-  short_keys.reserve(10);
+  short_keys.reserve(8);
   vector<string_view> values{};
-  values.reserve(10);
+  values.reserve(8);
 
   assert(this->info_);  // this->info_ cannot be nullptr
   if (!this->info_->program_name) {
@@ -125,7 +125,7 @@ constexpr auto Parser<ID, Args, PArgs, HArg, SubParsers>::parse(int argc,
       arg = argv[i];
       is_flag = arg.starts_with('-');
       if (arg.size() > 1 and arg.at(1) >= '0' and arg.at(1) <= '9') {
-        is_flag = false;
+        is_flag = SearchIndexFromShortName<Args>(arg.at(1)) != -1;
       }
     } else {
       is_flag = true;
