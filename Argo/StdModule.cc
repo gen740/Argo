@@ -59,6 +59,7 @@ using ::std::from_chars;
 
 // iostream
 using ::std::cout;
+using ::std::endl;
 
 // format
 using ::std::format;

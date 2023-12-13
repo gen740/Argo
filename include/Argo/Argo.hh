@@ -645,7 +645,7 @@ struct Arg : ArgTag {
       >;
   static constexpr auto name = Name;
   static constexpr auto id = ID;
-  inline static string_view description;
+  inline static string_view description{};
   inline static bool assigned = false;
   inline static bool required = Required;
 
@@ -671,7 +671,7 @@ struct FlagArg : FlagArgTag {
   static constexpr auto name = Name;
   static constexpr auto id = ID;
   inline static bool assigned = false;
-  inline static string_view description;
+  inline static string_view description{};
   inline static bool required = false;
 
   inline static type value = {};
@@ -1053,7 +1053,15 @@ ARGO_ALWAYS_INLINE constexpr auto PArgAssigner(span<string_view> values)
         ValiadicArgAssign<Arg>(values);
         return true;
       }
-      if constexpr (Arg::nargs.getNargs() > 0) {
+      if constexpr (Arg::nargs.getNargs() == 1) {
+        if (values.empty()) {
+          throw Argo::InvalidArgument(format(
+              "Argument {} should take exactly one value but zero", Arg::name));
+        }
+        ZeroOrOneArgAssign<Arg>(values);
+        return values.empty();
+      }
+      if constexpr (Arg::nargs.getNargs() > 1) {
         NLengthArgAssign<Arg>(values);
         return values.empty();
       }
@@ -1590,7 +1598,7 @@ constexpr auto Parser<ID, Args, PArgs, HArg, SubParsers>::setArg(
     string_view key, span<string_view> val) const -> void {
   if constexpr (!is_same_v<HArg, void>) {
     if (key == HArg::name) {
-      std::cout << formatHelp() << '\n';
+      std::cout << formatHelp() << std::endl;
       exit(0);
     }
   }
@@ -1605,7 +1613,7 @@ constexpr auto Parser<ID, Args, PArgs, HArg, SubParsers>::setArg(
     for (const auto& i : key) {
       if constexpr (HArg::name.shortName != '\0') {
         if (i == HArg::name.shortName) {
-          std::cout << formatHelp() << '\n';
+          std::cout << formatHelp() << std::endl;
           exit(0);
         }
       }
@@ -1752,30 +1760,29 @@ struct AnsiEscapeCode {
   }
 };
 
-inline constexpr auto createUsageSection(const auto& program_name,
-                                         [[maybe_unused]] const auto& help_info,
-                                         const auto& sub_commands) {
+inline size_t max_option_width = 48;
+
+constexpr auto createUsageSection(const auto& program_name,
+                                  const auto& help_info, const auto& pargs_info,
+                                  const auto& sub_commands) {
   string ret;
   ret.append(program_name);
-
-  // for (const auto& i : help_info) {
-  //   ret.push_back(' ');
-  //   if (!i.required) {
-  //     ret.push_back('[');
-  //   }
-  //   ret.append("--");
-  //   ret.append(i.name);
-  //   if (!i.typeName.empty()) {
-  //     ret.push_back(' ');
-  //     ret.append(i.typeName);
-  //   }
-  //   if (!i.required) {
-  //     ret.push_back(']');
-  //   }
-  // }
-
+  for (const auto& i : help_info) {
+    if (i.required) {
+      ret.append(format(" {} {}",
+                        i.shortName != '\0' ? format("-{}", i.shortName)
+                                            : format("--{}", i.name),
+                        i.typeName));
+    }
+  }
   ret.append(" [options...]");
-
+  for (const auto& i : pargs_info) {
+    if (i.required) {
+      ret.append(format(" {}", i.name));
+    } else {
+      ret.append(format(" [{}]", i.name));
+    }
+  }
   if (!sub_commands.empty()) {
     ret.append(" {");
     for (const auto& command : sub_commands) {
@@ -1789,86 +1796,111 @@ inline constexpr auto createUsageSection(const auto& program_name,
   return ret;
 }
 
-inline constexpr auto createSubcommandSection(const auto& ansi,
-                                              const auto& sub_commands) {
+constexpr auto createSubcommandSection(const auto& ansi,
+                                       const auto& sub_commands) {
   string ret;
-  size_t max_command_length = 0;
+  ret.push_back('\n');
   for (const auto& command : sub_commands) {
-    if (max_command_length < command.name.size()) {
-      max_command_length = command.name.size();
-    }
-  }
-  for (const auto& command : sub_commands) {
-    ret.push_back('\n');
     auto description = splitStringView(command.description, '\n');
-
-    ret.append(format("  {}{} {}{} {}", ansi.getBold(), command.name,
-                      string(max_command_length - command.name.size(), ' '),
-                      ansi.getReset(), description[0]));
-    for (size_t i = 1; i < description.size(); i++) {
-      ret.push_back('\n');
-      ret.append(format("    {}{}",  //
-                        string(max_command_length, ' '), description[i]));
-    }
-
-    // erase trailing spaces
-    auto pos = ret.find_last_not_of(' ');
-    ret = ret.substr(0, pos + 1);
-  }
-
-  ret.push_back('\n');
-  return ret;
-}
-
-inline constexpr auto createOptionsSection(const auto& ansi,
-                                           const auto& help_info) {
-  string ret;
-  size_t max_name_len = 0;
-  for (const auto& option : help_info) {
-    if (max_name_len < option.name.size() + option.typeName.size()) {
-      max_name_len = option.name.size() + option.typeName.size();
-    }
-  }
-  for (const auto& option : help_info) {
-    ret.push_back('\n');
-    auto description = splitStringView(option.description, '\n');
-
-    ret.append(format(
-        "  {}{} --{} {}{}{}  {}",
-        (option.shortName == '\0') ? "   " : format("-{},", option.shortName),
-        ansi.getBold(), option.name, ansi.getReset(), option.typeName,
-        string(max_name_len - option.name.size() - option.typeName.size(), ' '),
-        description[0]));
-    for (size_t i = 1; i < description.size(); i++) {
-      ret.push_back('\n');
+    if (command.name.size() < max_option_width and description[0] != "") {
       ret.append(
-          format("      {}     {}", string(max_name_len, ' '), description[i]));
+          format("  {0}{1}{2}{3}{4}\n",
+                 ansi.getBold(),                                           // 1
+                 command.name,                                             // 2
+                 ansi.getReset(),                                          // 3
+                 string(max_option_width - 2 - command.name.size(), ' '),  // 4
+                 description[0]));
+    } else {
+      ret.append(format("  {0}{1}{2}\n", ansi.getBold(), command.name,
+                        ansi.getReset()));
+      if (description[0] != "") {
+        ret.append(
+            format("{0}{1}\n", string(max_option_width, ' '), description[0]));
+      }
     }
-
-    auto pos = ret.find_last_not_of(' ');
-    ret = ret.substr(0, pos + 1);
+    for (size_t i = 1; i < description.size(); i++) {
+      ret.append(
+          format("{0}{1}\n", string(max_option_width, ' '), description[i]));
+    }
   }
   return ret;
 }
 
-template <class PArgs>
-inline constexpr auto createPositionalArgumentSection(const auto& ansi) {
+constexpr auto createOptionsSection(const auto& ansi, const auto& help_info) {
   string ret;
 
-  vector<ArgInfo> info = HelpGenerator<PArgs>::generate();
+  ret.push_back('\n');
+  for (const auto& option : help_info) {
+    auto description = splitStringView(option.description, '\n');
+    string option_string = format(
+        "{0}{1} --{2}{3} {4}",
+        ansi.getBold(),                                                 // 0
+        (option.shortName == '\0') ? "   "                              //
+                                   : format("-{},", option.shortName),  // 1
+        option.name,                                                    // 2
+        ansi.getReset(),                                                // 3
+        option.typeName                                                 // 4
+    );
 
-  for (const auto& i : info) {
-    ret.push_back('\n');
-    auto desc = splitStringView(i.description, '\n');
-    ret.append(format("  {}{}{}  {}", ansi.getBold(), string_view(i.name),
-                      ansi.getReset(), desc[0]));
-    for (size_t i = 1; i < desc.size(); i++) {
-      ret.push_back('\n');
-      ret.append(format("{}{}", string(8, ' '), desc[i]));
+    if (option_string.size() - ansi.getBold().size() - ansi.getReset().size() <
+            max_option_width and
+        description[0] != "") {
+      ret.append(format(
+          "  {0}{1}{2}\n",
+          option_string,  // 1
+          string(max_option_width - option_string.size() +
+                     ansi.getBold().size() + ansi.getReset().size() - 2,
+                 ' '),    // 3
+          description[0]  // 4
+          ));
+    } else {
+      ret.append(format("  {0}{1}{2}\n",
+                        ansi.getBold(),  // 0
+                        option_string,   // 1
+                        ansi.getReset()  // 2
+                        ));
+      if (description[0] != "") {
+        ret.append(
+            format("{0}{1}\n", string(max_option_width, ' '), description[0]));
+      }
+    }
+    for (size_t i = 1; i < description.size(); i++) {
+      ret.append(format("{0}{1}\n",                     //
+                        string(max_option_width, ' '),  // 0
+                        description[i]                  // 1
+                        ));
     }
   }
+  return ret;
+}
 
+constexpr auto createPositionalArgumentSection(const auto& ansi,
+                                               const auto& pargs_info) {
+  string ret;
   ret.push_back('\n');
+  for (const auto& i : pargs_info) {
+    auto description = splitStringView(i.description, '\n');
+
+    if (i.name.size() < max_option_width and description[0] != "") {
+      ret.append(format("  {0}{1}{2}{3}{4}\n",
+                        ansi.getBold(),                                     // 1
+                        i.name,                                             // 2
+                        ansi.getReset(),                                    // 3
+                        string(max_option_width - 2 - i.name.size(), ' '),  // 4
+                        description[0]));
+    } else {
+      ret.append(
+          format("  {0}{1}{2}\n", ansi.getBold(), i.name, ansi.getReset()));
+      if (description[0] != "") {
+        ret.append(
+            format("{0}{1}\n", string(max_option_width, ' '), description[0]));
+      }
+    }
+    for (size_t i = 1; i < description.size(); i++) {
+      ret.append(
+          format("{0}{1}\n", string(max_option_width, ' '), description[i]));
+    }
+  }
   return ret;
 }
 
@@ -1888,6 +1920,7 @@ constexpr auto Parser<ID, Args, PArgs, HArg, SubParsers>::formatHelp(
   } else {
     help_info = HelpGenerator<tuple_append_t<Args, HArg>>::generate();
   }
+  vector<ArgInfo> pargs_info = HelpGenerator<PArgs>::generate();
 
   auto sub_commands = SubParserInfo(subParsers);
 
@@ -1903,12 +1936,12 @@ constexpr auto Parser<ID, Args, PArgs, HArg, SubParsers>::formatHelp(
 
     // Usage Section
     ret.push_back('\n');
-    ret.append(ansi.getBoldUnderline() + "USAGE:" + ansi.getReset() + "\n");
+    ret.append(ansi.getBoldUnderline() + "Usage:" + ansi.getReset() + "\n");
     ret.append("  ");
 
     ret.append(this->info_->usage.value_or(
         createUsageSection(this->info_->program_name.value_or("no_name"),
-                           help_info, sub_commands)));
+                           help_info, pargs_info, sub_commands)));
 
     // Subcommand Section
     if constexpr (!is_same_v<SubParsers, tuple<>>) {
@@ -1923,7 +1956,7 @@ constexpr auto Parser<ID, Args, PArgs, HArg, SubParsers>::formatHelp(
       ret.append(ansi.getBoldUnderline() +
                  "Positional Argument:" + ansi.getReset());
       ret.append(this->info_->positional_argument_help.value_or(
-          createPositionalArgumentSection<PArgs>(ansi)));
+          createPositionalArgumentSection(ansi, pargs_info)));
     }
 
     // Options section

@@ -209,7 +209,7 @@ struct Arg : ArgTag {
       >;
   static constexpr auto name = Name;
   static constexpr auto id = ID;
-  inline static string_view description;
+  inline static string_view description{};
   inline static bool assigned = false;
   inline static bool required = Required;
 
@@ -235,7 +235,7 @@ struct FlagArg : FlagArgTag {
   static constexpr auto name = Name;
   static constexpr auto id = ID;
   inline static bool assigned = false;
-  inline static string_view description;
+  inline static string_view description{};
   inline static bool required = false;
 
   inline static type value = {};
