@@ -1,0 +1,62 @@
+name: Tests
+
+on:
+  push:
+    branches:
+      - main
+  pull_request: {}
+  schedule:
+    - cron: '0 23 * * SUN-THU'
+  workflow_dispatch:
+
+jobs:
+  tests:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - name: Upgrade homebrew
+        run: |
+          sudo apt update && sudo apt upgrade
+
+      - name: Install llvm
+        run: |
+          wget https://apt.llvm.org/llvm.sh
+          chmod +x llvm.sh
+          sudo ./llvm.sh 17 all
+          rm llvm.sh
+
+      - name: Install cmake
+        run: |
+          wget -O cmake_install.sh https://github.com/Kitware/CMake/releases/download/v3.28.0/cmake-3.28.0-linux-x86_64.sh
+          chmod +x cmake_install.sh
+          sudo ./cmake_install.sh --prefix=/usr/local --skip-license
+          rm cmake_install.sh
+
+      - name: Install googletest
+        run: |
+          sudo apt install googletest
+
+      - name: Install ninja
+        run: |
+          wget https://github.com/ninja-build/ninja/releases/download/v1.11.1/ninja-linux.zip
+          yes | sudo unzip ninja-linux.zip -d /usr/local/bin
+
+      - name: Cmake and Compile
+        run: |
+          cmake -B build -S . -DARGO_TESTS_ENABLE=true -GNinja
+          cmake --build build
+        env:
+          CC: /usr/bin/clang-17
+          CXX: /usr/bin/clang++-17
+          LDFLAGS: -L/usr/lib/llvm-17/lib
+          CPPFLAGS: -stdlib=libc++
+
+      - name: Test Debug
+        run: |
+          ./build/test-argo-debug
+
+      - name: Test Release
+        run: |
+          ./build/test-argo-release

@@ -223,7 +223,7 @@ ARGO_ALWAYS_INLINE constexpr auto Assigner(string_view key,
   if (key.empty()) {
     if constexpr (!is_same_v<PArgs, tuple<>>) {
       if (!PArgAssigner<PArgs>(values)) {
-        throw InvalidArgument(format("Duplicated positional argument"));
+        throw InvalidArgument("Duplicated positional argument");
       }
       return;
     } else {

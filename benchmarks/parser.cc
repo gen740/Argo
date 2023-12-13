@@ -19,25 +19,18 @@ std::tuple<int, char**> createArgcArgv(Args... args) {
   return std::make_tuple(static_cast<int>(N), array);
 }
 
-auto [argc, argv] = createArgcArgv(                              //
-    "./main",                                                    //
-    "--arg1", "1", "2", "3", "4", "5", "6", "7", "8",            //
-    "--arg2", "42.23",                                           //
-    "--arg3",                                                    //
-    "--arg4", "Hello,World",                                     //
-    "-bc", "-d", "3.14",                                         // 17
-    "-efgijklmn",                                                //
-    "--arg18",                                                   //
-    "0", "1", "2", "3", "4", "5", "6", "7", "8", "9",            //
-    "10", "11", "12", "13", "14", "15", "16", "17", "18", "19",  //
-    "20", "21", "22", "23", "24", "25", "26", "27", "28", "29",  //
-    "30", "31", "32", "33", "34", "35", "36", "37", "38", "39",  //
-    "40", "41", "42", "43", "44", "45", "46", "47", "48", "49",  //
-    "50", "51", "52", "53", "54", "55", "56", "57", "58", "59",  //
-    "60", "61", "62", "63", "64", "65", "66", "67", "68", "69",  //
-    "70", "71", "72", "73", "74", "75", "76", "77", "78", "79",  //
-    "80", "81", "82", "83", "84", "85", "86", "87", "88", "89",  //
-    "90", "91", "92", "93", "94", "95", "96", "97", "98", "99"   //
+auto [argc, argv] = createArgcArgv(                    //
+    "./main",                                          //
+    "--arg1", "1", "2", "3", "4", "5", "6", "7", "8",  //
+    "--arg2", "42.23",                                 //
+    "--arg3",                                          //
+    "--arg4", "Hello,World",                           //
+    "-bc", "-d", "3.14",                               // 17
+    "-efgijklmn",                                      //
+    "--arg18",                                         //
+    "0", "1", "2", "3", "4",                           //
+    "--arg19",                                         //
+    "0.1", "0.2", "0.3"                                //
 );
 
 using Argo::nargs;
@@ -62,7 +55,8 @@ static void ArgoParser(benchmark::State& state) {
                       .addFlag<"arg15,l">()
                       .addFlag<"arg16,m">()
                       .addFlag<"arg17,n">()
-                      .addArg<"arg18", int, nargs('+')>();
+                      .addArg<"arg18", int, nargs('+')>()
+                      .addArg<"arg19", double, nargs(3)>();
     parser.parse(argc, argv);
     parser.resetArgs();
   }
@@ -102,6 +96,9 @@ static void CLI11Parser(benchmark::State& state) {
     std::vector<int> arg18;
     app.add_option("--arg18", arg18);
 
+    std::vector<double> arg19;
+    app.add_option("--arg19", arg19);
+
     [&app]() {
       CLI11_PARSE(app, argc, argv);
       return 0;
@@ -133,7 +130,10 @@ static void argparseParser(benchmark::State& state) {
     program.add_argument("-l", "--arg14").default_value(false);
     program.add_argument("-m", "--arg15").default_value(false);
     program.add_argument("-n", "--arg16").default_value(false);
-    program.add_argument("--arg18").nargs(100).scan<'d', int>();
+    program.add_argument("--arg18")
+        .nargs(argparse::nargs_pattern::at_least_one)
+        .scan<'d', int>();
+    program.add_argument("--arg19").nargs(3).scan<'g', float>();
 
     program.parse_args(argc, argv);
 

@@ -102,7 +102,7 @@ if(${CMAKE_SOURCE_DIR} STREQUAL ${CMAKE_CURRENT_LIST_DIR})
       target_link_libraries(${debug_target_name} benchmark::benchmark Argo
                             ${CLI11_LIBRARY} ${argparse_LIBRARY})
       set_target_properties(${debug_target_name} PROPERTIES CXX_STANDARD 23)
-      target_compile_options(${debug_target_name} PRIVATE -Wno-writable-strings
+      target_compile_options(${debug_target_name} PRIVATE -Wno-writable-strings -fbracket-depth=1024
                                                           -DDEBUG_BUILD)
       ############################## RELEASE TARGET ###########################
       set(release_target_name "bench-${target_name}-release")
@@ -111,7 +111,7 @@ if(${CMAKE_SOURCE_DIR} STREQUAL ${CMAKE_CURRENT_LIST_DIR})
                             ${CLI11_LIBRARY})
       set_target_properties(${release_target_name} PROPERTIES CXX_STANDARD 23)
       target_compile_options(${release_target_name}
-                             PRIVATE -Wno-writable-strings -O3 -Os -save-temps)
+                             PRIVATE -Wno-writable-strings -O3 -Os -save-temps -fbracket-depth=1024)
     endforeach()
   endif()
 endif()

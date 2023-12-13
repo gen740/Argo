@@ -7,11 +7,9 @@ using Argo::description;
 using Argo::nargs;
 
 auto main([[maybe_unused]] int argc, [[maybe_unused]] char** argv) -> int {
-  __asm__("# Creating parser");
   auto parser1 = Argo::Parser<"P1">()  //
                      .addArg<"p1a1", int>()
                      .addArg<"p1a2", int>();
-  __asm__("# Created parser");
 
   auto parser2 = Argo::Parser<"Parser2">()
                      .addArg<"p2a1", int>(description("Hello\nWorld!"))
