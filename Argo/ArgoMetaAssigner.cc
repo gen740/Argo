@@ -42,7 +42,7 @@ ARGO_ALWAYS_INLINE constexpr auto ArgCaster(const string_view& value) -> Type {
     return ret;
   } else if constexpr (is_floating_point_v<Type>) {
     return static_cast<Type>(stod(string(value)));
-  } else if constexpr (is_same_v<Type, char*>) {
+  } else if constexpr (is_same_v<Type, const char*>) {
     return value.data();
   } else {
     return static_cast<Type>(value);

@@ -13,7 +13,7 @@ TEST(ArgoTest, AllTypes) {
       "--arg3", "42.1234567890",            // float
       "--arg4", "42.12345678901234567890",  // double
       "--arg5", "Hello,World!",             // string
-      "--arg5", "Hello,World!const char*"   // const char*
+      "--arg6", "Hello,World!const char*"   // const char*
   );
 
   auto argo = Argo::Parser<10>();
