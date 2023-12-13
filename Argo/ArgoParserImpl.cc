@@ -210,29 +210,27 @@ struct AnsiEscapeCode {
 };
 
 inline constexpr auto createUsageSection(const auto& program_name,
-                                         [[maybe_unused]] const auto& help_info,
+                                         const auto& help_info,
+                                         const auto& pargs_info,
                                          const auto& sub_commands) {
   string ret;
   ret.append(program_name);
-
-  // for (const auto& i : help_info) {
-  //   ret.push_back(' ');
-  //   if (!i.required) {
-  //     ret.push_back('[');
-  //   }
-  //   ret.append("--");
-  //   ret.append(i.name);
-  //   if (!i.typeName.empty()) {
-  //     ret.push_back(' ');
-  //     ret.append(i.typeName);
-  //   }
-  //   if (!i.required) {
-  //     ret.push_back(']');
-  //   }
-  // }
-
+  for (const auto& i : help_info) {
+    if (i.required) {
+      ret.append(format(" {} {}",
+                        i.shortName != '\0' ? format("-{}", i.shortName)
+                                            : format("--{}", i.name),
+                        i.typeName));
+    }
+  }
   ret.append(" [options...]");
-
+  for (const auto& i : pargs_info) {
+    if (i.required) {
+      ret.append(format(" {}", i.name));
+    } else {
+      ret.append(format(" [{}]", i.name));
+    }
+  }
   if (!sub_commands.empty()) {
     ret.append(" {");
     for (const auto& command : sub_commands) {
@@ -308,13 +306,10 @@ inline constexpr auto createOptionsSection(const auto& ansi,
   return ret;
 }
 
-template <class PArgs>
-inline constexpr auto createPositionalArgumentSection(const auto& ansi) {
+inline constexpr auto createPositionalArgumentSection(const auto& ansi,
+                                                      const auto& pargs_info) {
   string ret;
-
-  vector<ArgInfo> info = HelpGenerator<PArgs>::generate();
-
-  for (const auto& i : info) {
+  for (const auto& i : pargs_info) {
     ret.push_back('\n');
     auto desc = splitStringView(i.description, '\n');
     ret.append(format("  {}{}{}  {}", ansi.getBold(), string_view(i.name),
@@ -345,6 +340,7 @@ constexpr auto Parser<ID, Args, PArgs, HArg, SubParsers>::formatHelp(
   } else {
     help_info = HelpGenerator<tuple_append_t<Args, HArg>>::generate();
   }
+  vector<ArgInfo> pargs_info = HelpGenerator<PArgs>::generate();
 
   auto sub_commands = SubParserInfo(subParsers);
 
@@ -365,7 +361,7 @@ constexpr auto Parser<ID, Args, PArgs, HArg, SubParsers>::formatHelp(
 
     ret.append(this->info_->usage.value_or(
         createUsageSection(this->info_->program_name.value_or("no_name"),
-                           help_info, sub_commands)));
+                           help_info, pargs_info, sub_commands)));
 
     // Subcommand Section
     if constexpr (!is_same_v<SubParsers, tuple<>>) {
@@ -379,8 +375,9 @@ constexpr auto Parser<ID, Args, PArgs, HArg, SubParsers>::formatHelp(
       ret.push_back('\n');
       ret.append(ansi.getBoldUnderline() +
                  "Positional Argument:" + ansi.getReset());
+
       ret.append(this->info_->positional_argument_help.value_or(
-          createPositionalArgumentSection<PArgs>(ansi)));
+          createPositionalArgumentSection(ansi, pargs_info)));
     }
 
     // Options section

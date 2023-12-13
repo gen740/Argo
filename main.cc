@@ -21,15 +21,19 @@ auto main(int argc, char** argv) -> int {
           .addParser<"cmd1">(parser1, description("subparser of 1\nsome help"))
           .addParser<"cmd2">(parser2, description("subparser of 2\nsome help"))
           .addPositionalArg<"test", std::array<int, 3>>(
-              description(R"(positional argument\nlong desc)"))
-          .addArg<"test1", bool>()
+              description(R"(positional argument
+long desc)"))
+          .addPositionalArg<"ptest", std::string, Argo::Required>(
+              description(R"(positional argument
+long desc 2)"))
+          .addArg<"test1,a", bool>()
           .addArg<"test2", int>()
           .addArg<"test3", double>()
-          .addArg<"test5", std::string>()
-          .addArg<"test6", const char*>()
+          .addArg<"test5,b", std::string, Argo::Required>()
+          .addArg<"test6,c", const char*>()
           .addArg<"test7", std::string_view>()
           // nargs
-          .addArg<"test8", bool, nargs(3)>()
+          .addArg<"test8", bool, nargs(3), Argo::Required>()
           .addArg<"test9", int, nargs('+')>()
           .addArg<"test10", double, nargs('*')>()
           // STL

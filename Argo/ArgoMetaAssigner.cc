@@ -129,7 +129,15 @@ ARGO_ALWAYS_INLINE constexpr auto PArgAssigner(span<string_view> values)
         ValiadicArgAssign<Arg>(values);
         return true;
       }
-      if constexpr (Arg::nargs.getNargs() > 0) {
+      if constexpr (Arg::nargs.getNargs() == 1) {
+        if (values.empty()) {
+          throw Argo::InvalidArgument(format(
+              "Argument {} should take exactly one value but zero", Arg::name));
+        }
+        ZeroOrOneArgAssign<Arg>(values);
+        return values.empty();
+      }
+      if constexpr (Arg::nargs.getNargs() > 1) {
         NLengthArgAssign<Arg>(values);
         return values.empty();
       }
