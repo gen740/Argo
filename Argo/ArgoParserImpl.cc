@@ -58,8 +58,7 @@ constexpr auto Parser<ID, Args, PArgs, HArg, SubParsers>::setArg(
 template <ParserID ID, class Args, class PArgs, class HArg, class SubParsers>
   requires(is_tuple_v<Args> && is_tuple_v<SubParsers>)
 constexpr auto Parser<ID, Args, PArgs, HArg, SubParsers>::setArg(
-    [[maybe_unused]] span<char> key,
-    [[maybe_unused]] span<string_view> val) const -> void {
+    span<char> key, span<string_view> val) const -> void {
   if constexpr (!is_same_v<HArg, void>) {
     for (const auto& i : key) {
       if constexpr (HArg::name.shortName != '\0') {
@@ -92,7 +91,7 @@ constexpr auto Parser<ID, Args, PArgs, HArg, SubParsers>::parse(int argc,
     throw ParseError(format("keys {} already assigned", assigned_keys));
   }
 
-  [[maybe_unused]] string_view key{};
+  string_view key{};
   vector<char> short_keys{};
   short_keys.reserve(8);
   vector<string_view> values{};
@@ -117,8 +116,8 @@ constexpr auto Parser<ID, Args, PArgs, HArg, SubParsers>::parse(int argc,
       }
     }
   }
-  [[maybe_unused]] bool is_flag = false;
-  [[maybe_unused]] string_view arg;
+  bool is_flag = false;
+  string_view arg;
 
   for (int i = 1; i < cmd_end_pos + 1; i++) {
     if (i != cmd_end_pos) {
