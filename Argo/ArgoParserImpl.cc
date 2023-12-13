@@ -3,6 +3,8 @@ module;
 #include <cassert>
 #include <print>
 
+#include "Argo/ArgoMacros.hh"
+
 export module Argo:ParserImpl;
 
 import :TypeTraits;
@@ -21,7 +23,7 @@ namespace Argo {
 
 using namespace std;
 
-inline auto splitStringView(string_view str, char delimeter)
+ARGO_ALWAYS_INLINE auto splitStringView(string_view str, char delimeter)
     -> vector<string_view> {
   vector<string_view> ret;
   while (str.contains(delimeter)) {
@@ -42,7 +44,8 @@ constexpr auto Parser<ID, Args, PArgs, HArg, SubParsers>::resetArgs() -> void {
 template <ParserID ID, class Args, class PArgs, class HArg, class SubParsers>
   requires(is_tuple_v<Args> && is_tuple_v<SubParsers>)
 constexpr auto Parser<ID, Args, PArgs, HArg, SubParsers>::setArg(
-    string_view key, span<string_view> val) const -> void {
+    [[maybe_unused]] string_view key,
+    [[maybe_unused]] span<string_view> val) const -> void {
   if constexpr (!is_same_v<HArg, void>) {
     if (key == HArg::name) {
       std::cout << formatHelp() << '\n';
@@ -55,7 +58,8 @@ constexpr auto Parser<ID, Args, PArgs, HArg, SubParsers>::setArg(
 template <ParserID ID, class Args, class PArgs, class HArg, class SubParsers>
   requires(is_tuple_v<Args> && is_tuple_v<SubParsers>)
 constexpr auto Parser<ID, Args, PArgs, HArg, SubParsers>::setArg(
-    span<char> key, span<string_view> val) const -> void {
+    [[maybe_unused]] span<char> key,
+    [[maybe_unused]] span<string_view> val) const -> void {
   if constexpr (!is_same_v<HArg, void>) {
     for (const auto& i : key) {
       if constexpr (HArg::name.shortName != '\0') {
@@ -71,8 +75,9 @@ constexpr auto Parser<ID, Args, PArgs, HArg, SubParsers>::setArg(
 
 template <ParserID ID, class Args, class PArgs, class HArg, class SubParsers>
   requires(is_tuple_v<Args> && is_tuple_v<SubParsers>)
-inline constexpr auto Parser<ID, Args, PArgs, HArg, SubParsers>::parse(
-    int argc, char* argv[]) -> void {
+constexpr auto Parser<ID, Args, PArgs, HArg, SubParsers>::parse(int argc,
+                                                                char* argv[])
+    -> void {
   if (this->parsed_) [[unlikely]] {
     throw ParseError("Cannot parse twice");
   }
@@ -87,7 +92,7 @@ inline constexpr auto Parser<ID, Args, PArgs, HArg, SubParsers>::parse(
     throw ParseError(format("keys {} already assigned", assigned_keys));
   }
 
-  string_view key{};
+  [[maybe_unused]] string_view key{};
   vector<char> short_keys{};
   short_keys.reserve(10);
   vector<string_view> values{};
@@ -112,17 +117,20 @@ inline constexpr auto Parser<ID, Args, PArgs, HArg, SubParsers>::parse(
       }
     }
   }
-  bool flag = false;
-  string_view arg;
+  [[maybe_unused]] bool is_flag = false;
+  [[maybe_unused]] string_view arg;
 
   for (int i = 1; i < cmd_end_pos + 1; i++) {
     if (i != cmd_end_pos) {
       arg = argv[i];
-      flag = arg.starts_with('-');
+      is_flag = arg.starts_with('-');
+      if (arg.size() > 1 and arg.at(1) >= '0' and arg.at(1) <= '9') {
+        is_flag = false;
+      }
     } else {
-      flag = true;
+      is_flag = true;
     }
-    if (i != 1 and flag) {
+    if (i != 1 and is_flag) {
       if (!key.empty()) {
         this->setArg(key, values);
         key = "";
@@ -140,16 +148,16 @@ inline constexpr auto Parser<ID, Args, PArgs, HArg, SubParsers>::parse(
         }
       }
     }
-    if (i == cmd_end_pos) {
+    if (i == cmd_end_pos) [[unlikely]] {
       break;
     }
-    if (flag) {
+    if (is_flag) {
       if (arg.size() > 1 and arg.at(1) == '-') {
         if (arg.contains('=')) [[unlikely]] {
           auto equal_pos = arg.find('=');
           key = arg.substr(2, equal_pos - 2);
           values.push_back(arg.substr(equal_pos + 1));
-          flag = true;
+          is_flag = true;
         } else {
           key = arg.substr(2);
         }
