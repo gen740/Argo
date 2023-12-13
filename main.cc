@@ -57,9 +57,7 @@ long desc 2)"))
               [](auto&&...) {})
           .addHelp<"help,h">();
 
-  __asm__("# Parse_ Start");
   parser.parse(argc, argv);
-  __asm__("# Parse_ End");
 
   return 0;
 }
