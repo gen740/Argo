@@ -49,12 +49,18 @@ if(${CMAKE_SOURCE_DIR} STREQUAL ${CMAKE_CURRENT_LIST_DIR})
     set(CMAKE_CXX_FLAGS_RELEASE "")
     set(CMAKE_CXX_FLAGS_DEBUG "")
 
-    find_package(GTest REQUIRED)
+    include(FetchContent)
+    FetchContent_Declare(
+      googletest
+      URL https://github.com/google/googletest/archive/03597a01ee50ed33e9dfd640b249b4be3799d395.zip
+    )
+    FetchContent_MakeAvailable(googletest)
+
     file(GLOB ARGO_TEST_SOURCES ${CMAKE_CURRENT_LIST_DIR}/tests/*.cc)
 
     ############################### DEBUG TARGET ##############################
     add_executable(test-argo-debug ${ARGO_TEST_SOURCES})
-    target_link_libraries(test-argo-debug GTest::GTest GTest::Main GTest::gmock
+    target_link_libraries(test-argo-debug GTest::gtest GTest::gtest_main GTest::gmock
                           Argo)
     set_target_properties(test-argo-debug PROPERTIES CXX_STANDARD 23)
     target_compile_options(test-argo-debug PRIVATE -Wno-writable-strings
@@ -62,7 +68,7 @@ if(${CMAKE_SOURCE_DIR} STREQUAL ${CMAKE_CURRENT_LIST_DIR})
 
     ############################### RELEASE TARGET ############################
     add_executable(test-argo-release ${ARGO_TEST_SOURCES})
-    target_link_libraries(test-argo-release GTest::GTest GTest::Main
+    target_link_libraries(test-argo-release GTest::gtest GTest::gtest_main
                           GTest::gmock Argo)
     set_target_properties(test-argo-release PROPERTIES CXX_STANDARD 23)
     target_compile_options(test-argo-release PRIVATE -Wno-writable-strings -O3)

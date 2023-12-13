@@ -19,18 +19,18 @@ std::tuple<int, char**> createArgcArgv(Args... args) {
   return std::make_tuple(static_cast<int>(N), array);
 }
 
-auto [argc, argv] = createArgcArgv(                    //
-    "./main",                                          //
-    "--arg1", "1", "2", "3", "4", "5", "6", "7", "8",  //
-    "--arg2", "42.23",                                 //
-    "--arg3",                                          //
-    "--arg4", "Hello,World",                           //
-    "-bc", "-d", "3.14",                               // 17
-    "-efgijklmn",                                      //
-    "--arg18",                                         //
-    "0", "1", "2", "3", "4",                           //
-    "--arg19",                                         //
-    "0.1", "0.2", "0.3"                                //
+auto [argc, argv] = createArgcArgv(  //
+    "./main",                        //
+    "--arg1", "1", "2", "3",         //
+    "--arg2", "42.23",               //
+    "--arg3",                        //
+    "--arg4", "Hello,World",         //
+    "-bc", "-d", "3.14",             // 17
+    "-efgijklmn",                    //
+    "--arg18",                       //
+    "0", "1", "2", "3", "4",         //
+    "--arg19",                       //
+    "0.1", "0.2", "0.3"              //
 );
 
 using Argo::nargs;
@@ -39,7 +39,7 @@ using Argo::Parser;
 static void ArgoParser(benchmark::State& state) {
   for (auto _ : state) {
     auto parser = Parser<1>()  //
-                      .addArg<"arg1", int, nargs(8)>()
+                      .addArg<"arg1", int, nargs(3)>()
                       .addArg<"arg2", float>()
                       .addFlag<"arg3">()
                       .addArg<"arg4", std::string, nargs(1)>()
@@ -69,8 +69,9 @@ static void CLI11Parser(benchmark::State& state) {
   for (auto _ : state) {
     auto app = CLI::App{"App description"};
 
-    std::array<int, 8> arg1;
+    std::array<int, 3> arg1;
     app.add_option("--arg1", arg1);
+
     float arg2;
     app.add_option("--arg2", arg2);
     app.add_flag("--arg3");
@@ -114,7 +115,7 @@ BENCHMARK(CLI11Parser);
 static void argparseParser(benchmark::State& state) {
   for (auto _ : state) {
     auto program = argparse::ArgumentParser("program_name");
-    program.add_argument("--arg1").nargs(8).scan<'d', int>();
+    program.add_argument("--arg1").nargs(3).scan<'d', int>();
     program.add_argument("--arg2").scan<'g', double>();
     program.add_argument("--arg3").default_value(false);
     program.add_argument("--arg4").nargs(1);
