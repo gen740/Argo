@@ -38,8 +38,10 @@ long desc 2)"))
           .addArg<"test3_very_very_very_long_long_long_long_option_name",
                   double>(description("test3"))
           .addArg<"test5,b", std::string, Argo::Required>(description("test4"))
-          .addArg<"test6,c", const char*>(description("test5"))
-          .addArg<"test7", std::string_view>(description("test6"))
+          .addArg<"test6,c", const char*>(  //
+              description("test5"))
+          .addArg<"test7", std::string_view>(  //
+              description("test6"))
           // nargs
           .addArg<"test8", bool, nargs(3), Argo::Required>(description("test7"))
           .addArg<"test9", int, nargs('+')>(description("test8"))

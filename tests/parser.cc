@@ -264,13 +264,14 @@ TEST(ArgoTest, Help) {  // TODO(gen740): more help
                           Argo::description("This is arg2"));
 
     const auto* expect_help = R"(
-USAGE:
+Usage:
   program [options...]
 
 Options:
   -k, --arg0 [<NUMBER>]
   -a, --arg1 <NUMBER,...>
-      --arg2 <NUMBER,...>  This is arg2)";
+      --arg2 <NUMBER,...>                       This is arg2
+)";
 
     EXPECT_EQ(parser.formatHelp(true), expect_help);
   }
