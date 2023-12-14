@@ -220,14 +220,11 @@ struct Arg : ArgTag {
           >                                                    //
       >;
   static constexpr auto name = Name;
-  static constexpr auto id = ID;
   inline static string_view description{};
   inline static bool assigned = false;
   inline static bool required = Required;
-
   inline static type value = {};
   inline static type defaultValue = {};
-
   inline static constexpr NArgs nargs = TNArgs;
   inline static function<type(string_view)> caster = nullptr;
   inline static function<void(const type& value, span<string_view>,
@@ -243,15 +240,10 @@ template <ArgName Name, ParserID ID>
 struct FlagArg : FlagArgTag {
   using type = bool;
   using baseType = bool;
-
   static constexpr auto name = Name;
-  static constexpr auto id = ID;
   inline static bool assigned = false;
   inline static string_view description{};
-
-  inline static type value = {};
-
-  inline static constexpr NArgs nargs = NArgs(-1);
+  inline static type value = false;
   inline static function<void()> callback = nullptr;
   inline static constexpr auto typeName = String("");
 };
@@ -263,30 +255,11 @@ struct HelpArg : HelpArgTag, FlagArgTag {
   using type = bool;
   using baseType = bool;
   static constexpr auto name = Name;
-  static constexpr auto id = ID;
-
   inline static bool assigned = false;
   inline static string_view description = "Print help information";
-  inline static type value = {};
-
-  inline static constexpr NArgs nargs = NArgs(-1);
+  inline static type value = false;
   inline static function<void()> callback = nullptr;
   inline static constexpr auto typeName = String("");
-};
-
-template <class T>
-concept ArgType = requires(T& x) {
-  typename T::baseType;
-  typename T::type;
-
-  not is_same_v<decltype(T::value), void>;
-
-  { T::name } -> ArgNameType;
-  is_same_v<decltype(T::nargs), NArgs>;
-  is_same_v<decltype(T::assigned), bool>;
-  is_same_v<decltype(T::description), string_view>;
-  is_convertible_v<decltype(T::typeName), string>;
-  is_convertible_v<decltype(T::typeName), string_view>;
 };
 
 }  // namespace Argo

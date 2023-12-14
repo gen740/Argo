@@ -57,7 +57,7 @@ ARGO_ALWAYS_INLINE constexpr auto TupleAssign(tuple<T...>& t,
   ((get<N>(t) = ArgCaster<remove_cvref_t<decltype(get<N>(t))>>(v[N])), ...);
 }
 
-template <ArgType Arg>
+template <class Arg>
 ARGO_ALWAYS_INLINE constexpr auto AfterAssign(const span<string_view>& values)
     -> void {
   Arg::assigned = true;
@@ -69,7 +69,7 @@ ARGO_ALWAYS_INLINE constexpr auto AfterAssign(const span<string_view>& values)
   }
 }
 
-template <ArgType Arg>
+template <class Arg>
 ARGO_ALWAYS_INLINE constexpr auto ValiadicArgAssign(
     const span<string_view>& values) -> void {
   Arg::value.resize(values.size());
@@ -277,7 +277,7 @@ ARGO_ALWAYS_INLINE constexpr auto ShortArgAssigner(
 template <class Args>
 ARGO_ALWAYS_INLINE constexpr auto ValueReset() -> void {
   []<size_t... Is>(index_sequence<Is...>) ARGO_ALWAYS_INLINE {
-    (..., []<ArgType T>() ARGO_ALWAYS_INLINE {
+    (..., []<class T>() ARGO_ALWAYS_INLINE {
       if (T::assigned) {
         T::value = typename T::type();
         T::assigned = false;
