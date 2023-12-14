@@ -140,7 +140,8 @@ constexpr auto Parser<ID, Args, PArgs, HArg, SubParsers>::parse(int argc,
           this->setArg(key, values);
           values.clear();
         } else {
-          throw InvalidArgument("No keys specified");
+          throw InvalidArgument(
+              format("Invalid positional argument: {}", values));
         }
       }
     }

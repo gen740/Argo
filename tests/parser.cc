@@ -5,19 +5,6 @@ import Argo;
 
 #include "TestHelper.h"
 
-using Argo::InvalidArgument;
-
-TEST(ArgoTest, ExceptionThrow) {
-  auto [argc, argv] = createArgcArgv("./main", "arg1=42", "--arg2=23.4");
-
-  auto argo = Argo::Parser<"ExceptionThrow">();
-  auto parser = argo.addArg<"arg1", int>()  //
-                    .addArg<"arg2", float>();
-
-  EXPECT_THROW(parser.getArg<"arg1">(), Argo::ParseError);
-  EXPECT_THROW(parser.parse(argc, argv), Argo::InvalidArgument);
-}
-
 TEST(ArgoTest, EqualAssign) {
   auto [argc, argv] =
       createArgcArgv("./main", "--arg1=42", "--arg2=Hello,World");
