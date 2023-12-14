@@ -13,6 +13,15 @@ namespace Argo {
 
 using namespace std;
 
+/*!
+ * ParserID which holds parser id
+ * You can set int or string as id
+ * Example:
+ *      // int id
+ *      auto parser = Parser<42>();
+ *      // string id
+ *      auto parser = Parser<"ID">();
+ */
 export template <size_t N>
 struct ParserID {
   union {
@@ -37,10 +46,15 @@ export template <size_t N>
 ParserID(const char (&)[N]) -> ParserID<N - 1>;
 
 /*!
- * (default)?  : If value specified use it else use default -> ValueType
- *          int: Exactly (n > 1)                     -> array<ValueType, N>
- *          *  : Any number of argument if zero use default -> vector<ValueType>
- *          +  : Any number of argument except zero         -> vector<ValueType>
+ * NArgs which holds number of argument
+ * Available argument:
+ *   ?  : If value specified use it else use default -> ValueType
+ *   int: Exactly (n > 1)                            -> array<ValueType, N>
+ *   *  : Any number of argument if zero use default -> vector<ValueType>
+ *   +  : Any number of argument except zero         -> vector<ValueType>
+ *
+ * Note:
+ *   default value is "?".
  */
 struct NArgs {
   int nargs = -1;
@@ -51,6 +65,9 @@ struct NArgs {
   constexpr explicit NArgs(int arg) : nargs(arg) {}
 };
 
+/*!
+ * consteval String
+ */
 template <size_t N>
 struct String {
   char str_[N] = {};
@@ -103,6 +120,9 @@ struct String {
 template <size_t N>
 String(const char (&)[N]) -> String<N - 1>;
 
+/*!
+ * Convert typename to consteval String
+ */
 template <class T>
 consteval auto get_type_name_base_type([[maybe_unused]] size_t n = 0) {
   if constexpr (is_same_v<T, bool>) {
