@@ -771,7 +771,7 @@ struct HelpGenerator<tuple<Args...>> {
   ARGO_ALWAYS_INLINE constexpr static auto generate() -> vector<ArgInfo> {
     vector<ArgInfo> ret;
     (
-        [&ret]<class T>() ARGO_ALWAYS_INLINE {
+        [&ret]() ARGO_ALWAYS_INLINE {
           if constexpr (derived_from<Args, ArgTag>) {
             ret.emplace_back(
                 Args::name.getKey().substr(0, Args::name.getKeyLen()),  //
@@ -787,7 +787,7 @@ struct HelpGenerator<tuple<Args...>> {
                 false,                                                  //
                 string_view(Args::typeName));
           }
-        }.template operator()<Args>(),
+        }(),
         ...);
     return ret;
   }
@@ -1640,22 +1640,29 @@ constexpr auto Parser<ID, Args, PArgs, HArg, SubParsers>::parse(int argc,
     }
     if (i != 1 and is_flag) {
       if (!key.empty()) {
-        this->setArg(key, values);
-        key = "";
-        values.clear();
-      } else if (!short_keys.empty()) {
-        this->setShortKeyArg(short_keys, values);
-        short_keys = "";
-        values.clear();
-      } else if (!values.empty()) {
+        goto SetArgSection;
+      }
+      if (!short_keys.empty()) {
+        goto SetShortArgSection;
+      }
+      if (!values.empty()) {
         if constexpr (!is_same_v<PArgs, tuple<>>) {
-          this->setArg(key, values);
-          values.clear();
+          goto SetArgSection;
         } else {
           throw InvalidArgument(
               format("Invalid positional argument: {}", values));
         }
       }
+    SetArgSection:
+      this->setArg(key, values);
+      key = "";
+      values.clear();
+      goto End;
+    SetShortArgSection:
+      this->setShortKeyArg(short_keys, values);
+      short_keys = "";
+      values.clear();
+    End:
     }
     if (i == cmd_end_pos) [[unlikely]] {
       break;
@@ -1681,7 +1688,7 @@ constexpr auto Parser<ID, Args, PArgs, HArg, SubParsers>::parse(int argc,
   auto required_keys = vector<string_view>();
   tuple_type_visit<decltype(tuple_cat(declval<Args>(), declval<PArgs>()))>(
       [&required_keys]<class T>(T) {
-        if constexpr (derived_from<T, ArgTag>) {
+        if constexpr (derived_from<typename T::type, ArgTag>) {
           if ((T::type::required && !T::type::assigned)) {
             required_keys.push_back(T::type::name.getKey());
           }

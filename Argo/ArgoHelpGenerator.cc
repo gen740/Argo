@@ -28,7 +28,7 @@ struct HelpGenerator<tuple<Args...>> {
   ARGO_ALWAYS_INLINE constexpr static auto generate() -> vector<ArgInfo> {
     vector<ArgInfo> ret;
     (
-        [&ret]<class T>() ARGO_ALWAYS_INLINE {
+        [&ret]() ARGO_ALWAYS_INLINE {
           if constexpr (derived_from<Args, ArgTag>) {
             ret.emplace_back(
                 Args::name.getKey().substr(0, Args::name.getKeyLen()),  //
@@ -44,7 +44,7 @@ struct HelpGenerator<tuple<Args...>> {
                 false,                                                  //
                 string_view(Args::typeName));
           }
-        }.template operator()<Args>(),
+        }(),
         ...);
     return ret;
   }
