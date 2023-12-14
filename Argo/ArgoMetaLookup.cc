@@ -31,7 +31,7 @@ ARGO_ALWAYS_INLINE constexpr auto GetkeyFromShortKey(char key) {
           }
           return false;
         }() || ...);
-      }(make_type_sequence_t<Arguments>())) {
+      }(make_type_sequence_t<Arguments>())) [[likely]] {
     return make_tuple(name, is_flag);
   }
   throw ParserInternalError("Fail to lookup");

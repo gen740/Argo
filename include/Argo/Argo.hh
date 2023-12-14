@@ -199,7 +199,7 @@ struct ValidationBase {
   template <class T>
   auto operator()(const T& value, span<string_view> values,
                   string_view option_name) -> void {
-    if (!this->isValid(value, values)) {
+    if (!this->isValid(value, values)) [[unlikely]] {
       throw ValidationError(
           format("Option {} has invalid value {}", option_name, value));
     }
@@ -284,7 +284,7 @@ struct Range final : public ValidationBase {
   template <class U>
   auto operator()(const U& value, span<string_view> values,
                   string_view option_name) -> void {
-    if (!this->isValid(value, values)) {
+    if (!this->isValid(value, values)) [[unlikely]] {
       throw ValidationError(
           format("Option {} has invalid value {}", option_name, value));
     }
@@ -833,7 +833,7 @@ ARGO_ALWAYS_INLINE constexpr auto GetkeyFromShortKey(char key) {
           }
           return false;
         }() || ...);
-      }(make_type_sequence_t<Arguments>())) {
+      }(make_type_sequence_t<Arguments>())) [[likely]] {
     return make_tuple(name, is_flag);
   }
   throw ParserInternalError("Fail to lookup");
@@ -956,7 +956,7 @@ ARGO_ALWAYS_INLINE constexpr auto ValiadicArgAssign(
 template <class Arg>
 ARGO_ALWAYS_INLINE constexpr auto NLengthArgAssign(span<string_view>& values)
     -> void {
-  if (Arg::nargs.nargs > values.size()) {
+  if (Arg::nargs.nargs > values.size()) [[unlikely]] {
     throw Argo::InvalidArgument(
         format("Argument {}: invalid argument {}", Arg::name.getKey(), values));
   }
@@ -1004,7 +1004,7 @@ ARGO_ALWAYS_INLINE constexpr auto PArgAssigner(span<string_view> values)
         return true;
       }
       if constexpr (Arg::nargs.nargs == 1) {
-        if (values.empty()) {
+        if (values.empty()) [[unlikely]] {
           throw Argo::InvalidArgument(
               format("Argument {} should take exactly one value but zero",
                      Arg::name.getKey()));
@@ -1034,10 +1034,12 @@ ARGO_ALWAYS_INLINE constexpr auto AssignOneArg(const string_view& key,
     throw Argo::InvalidArgument(format("Duplicated argument {}", key));
   }
   if constexpr (derived_from<Head, FlagArgTag>) {
-    if (!values.empty()) {
-      if constexpr (is_same_v<PArgs, tuple<>>) {
+    if constexpr (is_same_v<PArgs, tuple<>>) {
+      if (!values.empty()) [[unlikely]] {
         throw Argo::InvalidArgument(format("Flag {} can not take value", key));
-      } else {
+      }
+    } else {
+      if (!values.empty()) {
         PArgAssigner<PArgs>(values);
       }
     }
@@ -1063,14 +1065,14 @@ ARGO_ALWAYS_INLINE constexpr auto AssignOneArg(const string_view& key,
       ValiadicArgAssign<Head>(values);
       return true;
     } else if constexpr (Head::nargs.nargs_char == '+') {
-      if (values.empty()) {
+      if (values.empty()) [[unlikely]] {
         throw Argo::InvalidArgument(
             format("Argument {} should take more than one value", key));
       }
       ValiadicArgAssign<Head>(values);
       return true;
     } else if constexpr (Head::nargs.nargs == 1) {
-      if (values.empty()) {
+      if (values.empty()) [[unlikely]] {
         throw Argo::InvalidArgument(
             format("Argument {} should take exactly one value but zero", key));
       }
@@ -1093,27 +1095,29 @@ ARGO_ALWAYS_INLINE constexpr auto AssignOneArg(const string_view& key,
 template <class Args, class PArgs>
 ARGO_ALWAYS_INLINE constexpr auto assignArg(const string_view& key,
                                             const span<string_view>& values) {
-  [&key, &values]<size_t... Is>(index_sequence<Is...>)
-      ARGO_ALWAYS_INLINE -> void {
-        if (!(... ||
-              (tuple_element_t<Is, Args>::name.getKey() == key and
-               AssignOneArg<tuple_element_t<Is, Args>, PArgs>(key, values)))) {
-          throw Argo::InvalidArgument(format("Invalid argument {}", key));
-        }
-      }(make_index_sequence<tuple_size_v<Args>>());
+  [&key,
+   &values]<size_t... Is>(index_sequence<Is...>) ARGO_ALWAYS_INLINE -> void {
+    if (!(... || (tuple_element_t<Is, Args>::name.getKey() == key and
+                  AssignOneArg<tuple_element_t<Is, Args>, PArgs>(key, values))))
+        [[unlikely]] {
+      throw Argo::InvalidArgument(format("Invalid argument {}", key));
+    }
+  }(make_index_sequence<tuple_size_v<Args>>());
 }
 
 template <class Arguments, class PArgs>
 ARGO_ALWAYS_INLINE constexpr auto Assigner(string_view key,
                                            const span<string_view>& values)
     -> void {
-  if (key.empty()) {
-    if constexpr (!is_same_v<PArgs, tuple<>>) {
-      if (!PArgAssigner<PArgs>(values)) {
+  if constexpr (!is_same_v<PArgs, tuple<>>) {
+    if (key.empty()) {
+      if (!PArgAssigner<PArgs>(values)) [[unlikely]] {
         throw InvalidArgument("Duplicated positional argument");
       }
       return;
-    } else {
+    }
+  } else {
+    if (key.empty()) [[unlikely]] {
       throw Argo::InvalidArgument(format("Invalid argument {}", key));
     }
   }
@@ -1135,7 +1139,7 @@ ARGO_ALWAYS_INLINE constexpr auto ShortArgAssigner(
       auto value = vector<string_view>{key.substr(i + 1)};
       assignArg<Arguments, PArgs>(found_key, value);
       return has_help;
-    } else {
+    } else [[unlikely]] {
       throw Argo::InvalidArgument(
           format("Invalid Flag argument {} {}", key[i], key.substr(i + 1)));
     }
@@ -1439,7 +1443,7 @@ class Parser {
 
   template <ArgName Name>
   constexpr auto getArg() {
-    if (!this->parsed_) {
+    if (!this->parsed_) [[unlikely]] {
       throw ParseError("Parser did not parse argument, call parse first");
     }
     if constexpr (!is_same_v<PArgs, tuple<>>) {
@@ -1470,7 +1474,7 @@ class Parser {
 
   template <ArgName Name>
   constexpr auto isAssigned() {
-    if (!this->parsed_) {
+    if (!this->parsed_) [[unlikely]] {
       throw ParseError("Parser did not parse argument, call parse first");
     }
     if constexpr (!is_same_v<PArgs, tuple<>>) {
@@ -1638,6 +1642,7 @@ constexpr auto Parser<ID, Args, PArgs, HArg, SubParsers>::parse(int argc,
     } else {
       is_flag = true;
     }
+
     if (i != 1 and is_flag) {
       if (!key.empty()) {
         goto SetArgSection;
@@ -1645,10 +1650,12 @@ constexpr auto Parser<ID, Args, PArgs, HArg, SubParsers>::parse(int argc,
       if (!short_keys.empty()) {
         goto SetShortArgSection;
       }
-      if (!values.empty()) {
-        if constexpr (!is_same_v<PArgs, tuple<>>) {
+      if constexpr (!is_same_v<PArgs, tuple<>>) {
+        if (!values.empty()) {
           goto SetArgSection;
-        } else {
+        }
+      } else {
+        if (!values.empty()) [[unlikely]] {
           throw InvalidArgument(
               format("Invalid positional argument: {}", values));
         }
@@ -1664,9 +1671,11 @@ constexpr auto Parser<ID, Args, PArgs, HArg, SubParsers>::parse(int argc,
       values.clear();
     End:
     }
-    if (i == cmd_end_pos) [[unlikely]] {
+
+    if (i == cmd_end_pos) {
       break;
     }
+
     if (is_flag) {
       if (arg.size() > 1 and arg.at(1) == '-') {
         if (arg.contains('=')) [[unlikely]] {
@@ -1695,7 +1704,7 @@ constexpr auto Parser<ID, Args, PArgs, HArg, SubParsers>::parse(int argc,
         }
       });
 
-  if (!required_keys.empty()) {
+  if (!required_keys.empty()) [[unlikely]] {
     throw InvalidArgument(format("Requried {}", required_keys));
   }
   if (subcmd_found_idx != -1) {

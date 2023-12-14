@@ -82,7 +82,7 @@ ARGO_ALWAYS_INLINE constexpr auto ValiadicArgAssign(
 template <class Arg>
 ARGO_ALWAYS_INLINE constexpr auto NLengthArgAssign(span<string_view>& values)
     -> void {
-  if (Arg::nargs.nargs > values.size()) {
+  if (Arg::nargs.nargs > values.size()) [[unlikely]] {
     throw Argo::InvalidArgument(
         format("Argument {}: invalid argument {}", Arg::name.getKey(), values));
   }
@@ -130,7 +130,7 @@ ARGO_ALWAYS_INLINE constexpr auto PArgAssigner(span<string_view> values)
         return true;
       }
       if constexpr (Arg::nargs.nargs == 1) {
-        if (values.empty()) {
+        if (values.empty()) [[unlikely]] {
           throw Argo::InvalidArgument(
               format("Argument {} should take exactly one value but zero",
                      Arg::name.getKey()));
@@ -160,10 +160,12 @@ ARGO_ALWAYS_INLINE constexpr auto AssignOneArg(const string_view& key,
     throw Argo::InvalidArgument(format("Duplicated argument {}", key));
   }
   if constexpr (derived_from<Head, FlagArgTag>) {
-    if (!values.empty()) {
-      if constexpr (is_same_v<PArgs, tuple<>>) {
+    if constexpr (is_same_v<PArgs, tuple<>>) {
+      if (!values.empty()) [[unlikely]] {
         throw Argo::InvalidArgument(format("Flag {} can not take value", key));
-      } else {
+      }
+    } else {
+      if (!values.empty()) {
         PArgAssigner<PArgs>(values);
       }
     }
@@ -189,14 +191,14 @@ ARGO_ALWAYS_INLINE constexpr auto AssignOneArg(const string_view& key,
       ValiadicArgAssign<Head>(values);
       return true;
     } else if constexpr (Head::nargs.nargs_char == '+') {
-      if (values.empty()) {
+      if (values.empty()) [[unlikely]] {
         throw Argo::InvalidArgument(
             format("Argument {} should take more than one value", key));
       }
       ValiadicArgAssign<Head>(values);
       return true;
     } else if constexpr (Head::nargs.nargs == 1) {
-      if (values.empty()) {
+      if (values.empty()) [[unlikely]] {
         throw Argo::InvalidArgument(
             format("Argument {} should take exactly one value but zero", key));
       }
@@ -219,27 +221,29 @@ ARGO_ALWAYS_INLINE constexpr auto AssignOneArg(const string_view& key,
 template <class Args, class PArgs>
 ARGO_ALWAYS_INLINE constexpr auto assignArg(const string_view& key,
                                             const span<string_view>& values) {
-  [&key, &values]<size_t... Is>(index_sequence<Is...>)
-      ARGO_ALWAYS_INLINE -> void {
-        if (!(... ||
-              (tuple_element_t<Is, Args>::name.getKey() == key and
-               AssignOneArg<tuple_element_t<Is, Args>, PArgs>(key, values)))) {
-          throw Argo::InvalidArgument(format("Invalid argument {}", key));
-        }
-      }(make_index_sequence<tuple_size_v<Args>>());
+  [&key,
+   &values]<size_t... Is>(index_sequence<Is...>) ARGO_ALWAYS_INLINE -> void {
+    if (!(... || (tuple_element_t<Is, Args>::name.getKey() == key and
+                  AssignOneArg<tuple_element_t<Is, Args>, PArgs>(key, values))))
+        [[unlikely]] {
+      throw Argo::InvalidArgument(format("Invalid argument {}", key));
+    }
+  }(make_index_sequence<tuple_size_v<Args>>());
 }
 
 template <class Arguments, class PArgs>
 ARGO_ALWAYS_INLINE constexpr auto Assigner(string_view key,
                                            const span<string_view>& values)
     -> void {
-  if (key.empty()) {
-    if constexpr (!is_same_v<PArgs, tuple<>>) {
-      if (!PArgAssigner<PArgs>(values)) {
+  if constexpr (!is_same_v<PArgs, tuple<>>) {
+    if (key.empty()) {
+      if (!PArgAssigner<PArgs>(values)) [[unlikely]] {
         throw InvalidArgument("Duplicated positional argument");
       }
       return;
-    } else {
+    }
+  } else {
+    if (key.empty()) [[unlikely]] {
       throw Argo::InvalidArgument(format("Invalid argument {}", key));
     }
   }
@@ -261,7 +265,7 @@ ARGO_ALWAYS_INLINE constexpr auto ShortArgAssigner(
       auto value = vector<string_view>{key.substr(i + 1)};
       assignArg<Arguments, PArgs>(found_key, value);
       return has_help;
-    } else {
+    } else [[unlikely]] {
       throw Argo::InvalidArgument(
           format("Invalid Flag argument {} {}", key[i], key.substr(i + 1)));
     }

@@ -251,7 +251,7 @@ class Parser {
 
   template <ArgName Name>
   constexpr auto getArg() {
-    if (!this->parsed_) {
+    if (!this->parsed_) [[unlikely]] {
       throw ParseError("Parser did not parse argument, call parse first");
     }
     if constexpr (!is_same_v<PArgs, tuple<>>) {
@@ -282,7 +282,7 @@ class Parser {
 
   template <ArgName Name>
   constexpr auto isAssigned() {
-    if (!this->parsed_) {
+    if (!this->parsed_) [[unlikely]] {
       throw ParseError("Parser did not parse argument, call parse first");
     }
     if constexpr (!is_same_v<PArgs, tuple<>>) {

@@ -16,7 +16,7 @@ export struct ValidationBase {
   template <class T>
   auto operator()(const T& value, span<string_view> values,
                   string_view option_name) -> void {
-    if (!this->isValid(value, values)) {
+    if (!this->isValid(value, values)) [[unlikely]] {
       throw ValidationError(
           format("Option {} has invalid value {}", option_name, value));
     }
@@ -101,7 +101,7 @@ struct Range final : public ValidationBase {
   template <class U>
   auto operator()(const U& value, span<string_view> values,
                   string_view option_name) -> void {
-    if (!this->isValid(value, values)) {
+    if (!this->isValid(value, values)) [[unlikely]] {
       throw ValidationError(
           format("Option {} has invalid value {}", option_name, value));
     }

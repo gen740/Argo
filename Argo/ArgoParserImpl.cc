@@ -119,6 +119,7 @@ constexpr auto Parser<ID, Args, PArgs, HArg, SubParsers>::parse(int argc,
     } else {
       is_flag = true;
     }
+
     if (i != 1 and is_flag) {
       if (!key.empty()) {
         goto SetArgSection;
@@ -126,10 +127,12 @@ constexpr auto Parser<ID, Args, PArgs, HArg, SubParsers>::parse(int argc,
       if (!short_keys.empty()) {
         goto SetShortArgSection;
       }
-      if (!values.empty()) {
-        if constexpr (!is_same_v<PArgs, tuple<>>) {
+      if constexpr (!is_same_v<PArgs, tuple<>>) {
+        if (!values.empty()) {
           goto SetArgSection;
-        } else {
+        }
+      } else {
+        if (!values.empty()) [[unlikely]] {
           throw InvalidArgument(
               format("Invalid positional argument: {}", values));
         }
@@ -145,9 +148,11 @@ constexpr auto Parser<ID, Args, PArgs, HArg, SubParsers>::parse(int argc,
       values.clear();
     End:
     }
-    if (i == cmd_end_pos) [[unlikely]] {
+
+    if (i == cmd_end_pos) {
       break;
     }
+
     if (is_flag) {
       if (arg.size() > 1 and arg.at(1) == '-') {
         if (arg.contains('=')) [[unlikely]] {
@@ -176,7 +181,7 @@ constexpr auto Parser<ID, Args, PArgs, HArg, SubParsers>::parse(int argc,
         }
       });
 
-  if (!required_keys.empty()) {
+  if (!required_keys.empty()) [[unlikely]] {
     throw InvalidArgument(format("Requried {}", required_keys));
   }
   if (subcmd_found_idx != -1) {
