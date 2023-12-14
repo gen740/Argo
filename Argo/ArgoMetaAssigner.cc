@@ -51,7 +51,7 @@ ARGO_ALWAYS_INLINE constexpr auto ArgCaster(const string_view& value) -> Type {
 
 template <class... T, size_t... N>
 ARGO_ALWAYS_INLINE constexpr auto TupleAssign(tuple<T...>& t,
-                                              span<string_view> v,
+                                              const span<string_view>& v,
                                               index_sequence<N...> /* unused */)
     -> void {
   ((get<N>(t) = ArgCaster<remove_cvref_t<decltype(get<N>(t))>>(v[N])), ...);
@@ -231,7 +231,8 @@ ARGO_ALWAYS_INLINE constexpr auto assignArg(const string_view& key,
 
 template <class Arguments, class PArgs>
 ARGO_ALWAYS_INLINE constexpr auto Assigner(string_view key,
-                                           span<string_view> values) -> void {
+                                           const span<string_view>& values)
+    -> void {
   if (key.empty()) {
     if constexpr (!is_same_v<PArgs, tuple<>>) {
       if (!PArgAssigner<PArgs>(values)) {
@@ -239,23 +240,38 @@ ARGO_ALWAYS_INLINE constexpr auto Assigner(string_view key,
       }
       return;
     } else {
-      throw Argo::InvalidArgument(format("Assigner: Invalid argument {}", key));
+      throw Argo::InvalidArgument(format("Invalid argument {}", key));
     }
   }
   assignArg<Arguments, PArgs>(key, values);
 }
 
-template <class Arguments, class PArgs>
-ARGO_ALWAYS_INLINE constexpr auto Assigner(span<char> key,
-                                           span<string_view> values) -> void {
+template <class Arguments, class PArgs, class HArg>
+ARGO_ALWAYS_INLINE constexpr auto ShortArgAssigner(
+    string_view key, const span<string_view>& values) {
+  bool has_help = false;
   for (size_t i = 0; i < key.size(); i++) {
-    auto found_key = GetNameFromShortName<Arguments>(key[i]);
-    if (i == key.size() - 1) {
-      assignArg<Arguments, PArgs>(found_key, values);
-    } else {
+    auto [found_key, is_flag] = GetkeyFromShortKey<Arguments>(key[i]);
+    if (is_flag) {
       assignArg<Arguments, PArgs>(found_key, {});
+    } else if ((key.size() - 1 == i) and !values.empty()) {
+      assignArg<Arguments, PArgs>(found_key, values);
+      return has_help;
+    } else if ((key.size() - 1 == i) and values.empty()) {
+      auto value = vector<string_view>{key.substr(i + 1)};
+      assignArg<Arguments, PArgs>(found_key, value);
+      return has_help;
+    } else {
+      throw Argo::InvalidArgument(
+          format("Invalid Flag argument {} {}", key[i], key.substr(i + 1)));
+    }
+    if constexpr (!is_same_v<HArg, void>) {
+      if (found_key == HArg::name.getKey()) [[unlikely]] {
+        has_help = true;
+      }
     }
   }
+  return has_help;
 }
 
 template <class Args>

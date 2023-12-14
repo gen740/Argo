@@ -17,18 +17,22 @@ namespace Argo {
 using namespace std;
 
 template <class Arguments>
-ARGO_ALWAYS_INLINE constexpr inline auto GetNameFromShortName(char key) {
+ARGO_ALWAYS_INLINE constexpr auto GetkeyFromShortKey(char key) {
   auto name = string_view();
-  if ([&name, &key]<class... T>(type_sequence<T...>) ARGO_ALWAYS_INLINE {
-        return ([&name, &key] {
+  auto is_flag = true;
+  if ([&]<class... T>(type_sequence<T...>) ARGO_ALWAYS_INLINE {
+        return ([&] {
           if (T::name.getShortName() == key) {
             name = T::name.getKey();
+            if constexpr (!derived_from<T, FlagArgTag>) {
+              is_flag = false;
+            }
             return true;
           }
           return false;
         }() || ...);
       }(make_type_sequence_t<Arguments>())) {
-    return name;
+    return make_tuple(name, is_flag);
   }
   throw ParserInternalError("Fail to lookup");
 }

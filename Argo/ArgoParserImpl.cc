@@ -44,7 +44,7 @@ constexpr auto Parser<ID, Args, PArgs, HArg, SubParsers>::resetArgs() -> void {
 template <ParserID ID, class Args, class PArgs, class HArg, class SubParsers>
   requires(is_tuple_v<Args> && is_tuple_v<SubParsers>)
 constexpr auto Parser<ID, Args, PArgs, HArg, SubParsers>::setArg(
-    string_view key, span<string_view> val) const -> void {
+    string_view key, const span<string_view>& val) const -> void {
   if constexpr (!is_same_v<HArg, void>) {
     if (key == HArg::name.getKey()) {
       std::cout << formatHelp() << std::endl;
@@ -56,19 +56,12 @@ constexpr auto Parser<ID, Args, PArgs, HArg, SubParsers>::setArg(
 
 template <ParserID ID, class Args, class PArgs, class HArg, class SubParsers>
   requires(is_tuple_v<Args> && is_tuple_v<SubParsers>)
-constexpr auto Parser<ID, Args, PArgs, HArg, SubParsers>::setArg(
-    span<char> key, span<string_view> val) const -> void {
-  if constexpr (!is_same_v<HArg, void>) {
-    for (const auto& i : key) {
-      if constexpr (HArg::name.getShortName() != '\0') {
-        if (i == HArg::name.getShortName()) {
-          std::cout << formatHelp() << std::endl;
-          exit(0);
-        }
-      }
-    }
-  }
-  Assigner<Args, PArgs>(key, val);
+constexpr auto Parser<ID, Args, PArgs, HArg, SubParsers>::setShortKeyArg(
+    string_view key, const span<string_view>& val) const -> void {
+  if (ShortArgAssigner<Args, PArgs, HArg>(key, val)) [[unlikely]] {
+    std::cout << formatHelp() << std::endl;
+    exit(0);
+  };
 }
 
 template <ParserID ID, class Args, class PArgs, class HArg, class SubParsers>
@@ -91,7 +84,7 @@ constexpr auto Parser<ID, Args, PArgs, HArg, SubParsers>::parse(int argc,
   }
 
   string_view key{};
-  vector<char> short_keys{};
+  string_view short_keys{};
   vector<string_view> values{};
 
   assert(this->info_);  // this->info_ cannot be nullptr
@@ -132,8 +125,8 @@ constexpr auto Parser<ID, Args, PArgs, HArg, SubParsers>::parse(int argc,
         key = "";
         values.clear();
       } else if (!short_keys.empty()) {
-        this->setArg(short_keys, values);
-        short_keys.clear();
+        this->setShortKeyArg(short_keys, values);
+        short_keys = "";
         values.clear();
       } else if (!values.empty()) {
         if constexpr (!is_same_v<PArgs, tuple<>>) {
@@ -159,9 +152,7 @@ constexpr auto Parser<ID, Args, PArgs, HArg, SubParsers>::parse(int argc,
           key = arg.substr(2);
         }
       } else {
-        for (const auto& j : arg.substr(1)) {
-          short_keys.push_back(j);
-        }
+        short_keys = arg.substr(1);
       }
     } else {
       values.push_back(arg);

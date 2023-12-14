@@ -91,7 +91,7 @@ class Parser {
 
   template <class Type, ArgName Name, auto arg1 = Unspecified(),
             auto arg2 = Unspecified(), bool ISPArgs, class... T>
-  constexpr auto createArg(T... args) {
+  ARGO_ALWAYS_INLINE constexpr auto createArg(T... args) {
     static_assert(Name.hasValidNameLength(),
                   "Short name can't be more than one charactor");
 
@@ -145,7 +145,6 @@ class Parser {
                   "Array size must be more than one");
     static_assert(!(is_tuple_v<Type> and nargs.nargs == 1),
                   "Tuple size must be more than one");
-
     static constexpr auto required = []() {
       if constexpr (is_same_v<remove_cvref_t<decltype(arg1)>, RequiredFlag>) {
         return static_cast<bool>(arg1);
@@ -156,6 +155,7 @@ class Parser {
         return false;
       }
     }();
+
     if constexpr (!is_same_v<PArgs, tuple<>>) {
       static_assert(SearchIndex<PArgs, Name>() == -1, "Duplicated name");
     }
@@ -333,9 +333,10 @@ class Parser {
 
  private:
   ARGO_ALWAYS_INLINE constexpr auto setArg(string_view key,
-                                           span<string_view> val) const -> void;
-  ARGO_ALWAYS_INLINE constexpr auto setArg(span<char> key,
-                                           span<string_view> val) const -> void;
+                                           const span<string_view>& val) const
+      -> void;
+  ARGO_ALWAYS_INLINE constexpr auto setShortKeyArg(
+      string_view short_key, const span<string_view>& val) const -> void;
 
  public:
   ARGO_ALWAYS_INLINE constexpr auto parse(int argc, char* argv[]) -> void;

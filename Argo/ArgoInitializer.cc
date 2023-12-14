@@ -1,5 +1,7 @@
 module;
 
+#include "Argo/ArgoMacros.hh"
+
 export module Argo:Initializer;
 
 import :Validation;
@@ -32,25 +34,28 @@ struct Description {
   string_view description;
 };
 
-export inline constexpr auto description(string_view desc) -> Description {
+export ARGO_ALWAYS_INLINE constexpr auto description(string_view desc)
+    -> Description {
   return {.description = desc};
 }
 
 export template <class T>
-inline constexpr auto explicitDefault(T value) -> ExlicitDefaultValue<T> {
+ARGO_ALWAYS_INLINE constexpr auto explicitDefault(T value)
+    -> ExlicitDefaultValue<T> {
   return {.explicit_default_value = value};
 }
 
 export template <class T>
-inline constexpr auto implicitDefault(T value) -> ImplicitDefaultValue<T> {
+ARGO_ALWAYS_INLINE constexpr auto implicitDefault(T value)
+    -> ImplicitDefaultValue<T> {
   return {.implicit_default_value = value};
 }
 
 template <class Type, ArgName Name, NArgs nargs, bool Required, ParserID ID,
           class... Args>
-inline constexpr auto ArgInitializer(Args... args) {
+ARGO_ALWAYS_INLINE constexpr auto ArgInitializer(Args... args) {
   (
-      [&args]() {
+      [&args]() ARGO_ALWAYS_INLINE {
         using Arg = Arg<Type, Name, nargs, Required, ID>;
         if constexpr (is_same_v<Args, Description>) {
           Arg::description = args.description;
@@ -77,9 +82,9 @@ inline constexpr auto ArgInitializer(Args... args) {
 }
 
 template <ArgName Name, ParserID ID, class... Args>
-inline constexpr auto FlagArgInitializer(Args... args) {
+ARGO_ALWAYS_INLINE constexpr auto FlagArgInitializer(Args... args) {
   (
-      [&args]() {
+      [&args]() ARGO_ALWAYS_INLINE {
         using FlagArg = FlagArg<Name, ID>;
         if constexpr (is_same_v<Args, Description>) {
           FlagArg::description = args.description;
