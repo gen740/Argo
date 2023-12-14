@@ -162,8 +162,10 @@ constexpr auto Parser<ID, Args, PArgs, HArg, SubParsers>::parse(int argc,
   auto required_keys = vector<string_view>();
   tuple_type_visit<decltype(tuple_cat(declval<Args>(), declval<PArgs>()))>(
       [&required_keys]<class T>(T) {
-        if ((T::type::required && !T::type::assigned)) {
-          required_keys.push_back(T::type::name.getKey());
+        if constexpr (derived_from<T, ArgTag>) {
+          if ((T::type::required && !T::type::assigned)) {
+            required_keys.push_back(T::type::name.getKey());
+          }
         }
       });
 

@@ -248,10 +248,8 @@ struct FlagArg : FlagArgTag {
   static constexpr auto id = ID;
   inline static bool assigned = false;
   inline static string_view description{};
-  inline static bool required = false;
 
   inline static type value = {};
-  inline static type defaultValue = {};
 
   inline static constexpr NArgs nargs = NArgs(-1);
   inline static function<void()> callback = nullptr;
@@ -269,10 +267,7 @@ struct HelpArg : HelpArgTag, FlagArgTag {
 
   inline static bool assigned = false;
   inline static string_view description = "Print help information";
-  inline static bool required = false;
-
   inline static type value = {};
-  inline static type defaultValue = {};
 
   inline static constexpr NArgs nargs = NArgs(-1);
   inline static function<void()> callback = nullptr;
@@ -292,7 +287,6 @@ concept ArgType = requires(T& x) {
   is_same_v<decltype(T::description), string_view>;
   is_convertible_v<decltype(T::typeName), string>;
   is_convertible_v<decltype(T::typeName), string_view>;
-  is_same_v<decltype(T::required), bool>;
 };
 
 }  // namespace Argo

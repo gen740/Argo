@@ -53,7 +53,7 @@ ARGO_ALWAYS_INLINE constexpr auto implicitDefault(T value)
 
 template <class Type, ArgName Name, NArgs nargs, bool Required, ParserID ID,
           class... Args>
-ARGO_ALWAYS_INLINE constexpr auto ArgInitializer(Args... args) {
+ARGO_ALWAYS_INLINE constexpr auto ArgInitializer(Args... args) -> void {
   (
       [&args]() ARGO_ALWAYS_INLINE {
         using Arg = Arg<Type, Name, nargs, Required, ID>;
@@ -82,7 +82,7 @@ ARGO_ALWAYS_INLINE constexpr auto ArgInitializer(Args... args) {
 }
 
 template <ArgName Name, ParserID ID, class... Args>
-ARGO_ALWAYS_INLINE constexpr auto FlagArgInitializer(Args... args) {
+ARGO_ALWAYS_INLINE constexpr auto FlagArgInitializer(Args... args) -> void {
   (
       [&args]() ARGO_ALWAYS_INLINE {
         using FlagArg = FlagArg<Name, ID>;

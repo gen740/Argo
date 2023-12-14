@@ -3,6 +3,7 @@ module;
 #include "Argo/ArgoMacros.hh"
 
 export module Argo:HelpGenerator;
+import :Arg;
 import :std_module;
 
 // generator start here
@@ -28,12 +29,21 @@ struct HelpGenerator<tuple<Args...>> {
     vector<ArgInfo> ret;
     (
         [&ret]<class T>() ARGO_ALWAYS_INLINE {
-          ret.emplace_back(
-              Args::name.getKey().substr(0, Args::name.getKeyLen()),  //
-              Args::name.getShortName(),                               //
-              Args::description,                                       //
-              Args::required,                                          //
-              string_view(Args::typeName));
+          if constexpr (derived_from<Args, ArgTag>) {
+            ret.emplace_back(
+                Args::name.getKey().substr(0, Args::name.getKeyLen()),  //
+                Args::name.getShortName(),                              //
+                Args::description,                                      //
+                Args::required,                                         //
+                string_view(Args::typeName));
+          } else {
+            ret.emplace_back(
+                Args::name.getKey().substr(0, Args::name.getKeyLen()),  //
+                Args::name.getShortName(),                              //
+                Args::description,                                      //
+                false,                                                  //
+                string_view(Args::typeName));
+          }
         }.template operator()<Args>(),
         ...);
     return ret;
