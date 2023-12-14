@@ -33,7 +33,6 @@ int main([[maybe_unused]] int argc, [[maybe_unused]] char** argv) {
   std::vector<int> arg18;
   app.add_option("--arg18", arg18);
 
-  // CLI11_PARSE(app, argc, argv);
-  std::cout << app.help() << '\n';
+  CLI11_PARSE(app, argc, argv);
 #endif
 }

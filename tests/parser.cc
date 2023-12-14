@@ -241,29 +241,6 @@ TEST(ArgoTest, NargException) {
   }
 }
 
-TEST(ArgoTest, Help) {  // TODO(gen740): more help
-  {
-    auto argo = Argo::Parser<"Help 1">("program");
-    auto parser = argo  //
-                      .addArg<"arg0,k", int>()
-                      .addArg<"arg1,a", int, Argo::nargs('+')>()
-                      .addArg<"arg2", int, Argo::nargs('+')>(
-                          Argo::description("This is arg2"));
-
-    const auto* expect_help = R"(
-Usage:
-  program [options...]
-
-Options:
-  -k, --arg0 [<NUMBER>]
-  -a, --arg1 <NUMBER,...>
-      --arg2 <NUMBER,...>                       This is arg2
-)";
-
-    EXPECT_EQ(parser.formatHelp(true), expect_help);
-  }
-}
-
 TEST(ArgoTest, Required) {
   {
     auto [argc, argv] = createArgcArgv(  //

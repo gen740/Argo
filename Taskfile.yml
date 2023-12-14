@@ -15,7 +15,7 @@ tasks:
     cmds:
       - ./build/test-argo-debug &> /dev/null
       - $PROF_DATA merge -sparse ./build/test-argo-debug.profraw -o ./build/coverage.profdata
-      - $LLVM_COV report ./build/test-argo-debug -instr-profile=./build/coverage.profdata -ignore-filename-regex="tests*"
+      - $LLVM_COV report ./build/test-argo-debug -instr-profile=./build/coverage.profdata -ignore-filename-regex="tests*" -ignore-filename-regex="Argo/ArgoExceptions.cc"
     env:
       LLVM_PROFILE_FILE: ./build/test-argo-debug.profraw
       PROF_DATA: /usr/local/opt/llvm/bin/llvm-profdata

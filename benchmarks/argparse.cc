@@ -23,9 +23,7 @@ auto main([[maybe_unused]] int argc, [[maybe_unused]] char** argv) -> int {
   program.add_argument("-n", "--arg16").default_value(false);
   program.add_argument("--arg18").nargs(100).scan<'d', int>();
 
-  // program.parse_args(argc, argv);
-
-  std::cout << program << '\n';
+  program.parse_args(argc, argv);
 #endif
   return 0;
 }

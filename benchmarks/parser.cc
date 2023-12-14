@@ -100,6 +100,7 @@ BENCHMARK(ArgoParser);
 static void CLI11Parser(benchmark::State& state) {
   for (auto _ : state) {
     auto app = CLI::App{"App description"};
+
     int arg1;
     app.add_option("--arg1", arg1);
     double arg2;
@@ -174,9 +175,8 @@ BENCHMARK(CLI11Parser);
 #if argparse_FOUND
 
 static void argparseParser(benchmark::State& state) {
+  auto program = argparse::ArgumentParser("program_name");
   for (auto _ : state) {
-    auto program = argparse::ArgumentParser("program_name");
-
     program.add_argument("--arg1", "-a1").scan<'i', int>();
     program.add_argument("--arg2", "-a2").scan<'g', double>();
     program.add_argument("--arg3", "-a3");
@@ -207,8 +207,37 @@ static void argparseParser(benchmark::State& state) {
     program.add_argument("--arg28", "-a28");
     program.add_argument("--arg29", "-a29");
     program.add_argument("--arg30", "-a30");
-
     program.parse_args(argc, argv);
+    benchmark::DoNotOptimize(program.get<int>("--arg1"));
+    benchmark::DoNotOptimize(program.get<double>("--arg2"));
+    benchmark::DoNotOptimize(program.get<std::string>("--arg3"));
+    benchmark::DoNotOptimize(program.get<std::string>("--arg4"));
+    benchmark::DoNotOptimize(program.get<int>("--arg5"));
+    benchmark::DoNotOptimize(program.get<double>("--arg6"));
+    benchmark::DoNotOptimize(program.get<std::string>("--arg7"));
+    benchmark::DoNotOptimize(program.get<std::string>("--arg8"));
+    benchmark::DoNotOptimize(program.get<int>("--arg9"));
+    benchmark::DoNotOptimize(program.get<int>("--arg10"));
+    benchmark::DoNotOptimize(program.get<std::vector<std::string>>("--arg11"));
+    benchmark::DoNotOptimize(program.get<std::vector<std::string>>("--arg12"));
+    benchmark::DoNotOptimize(program.get<int64_t>("--arg13"));
+    benchmark::DoNotOptimize(program.get<double>("--arg14"));
+    benchmark::DoNotOptimize(program.get<std::string>("--arg15"));
+    benchmark::DoNotOptimize(program.get<double>("--arg16"));
+    benchmark::DoNotOptimize(program.get<int>("--arg17"));
+    benchmark::DoNotOptimize(program.get<std::vector<std::string>>("--arg18"));
+    benchmark::DoNotOptimize(program.get<std::string>("--arg19"));
+    benchmark::DoNotOptimize(program.get<uint8_t>("--arg20"));
+    benchmark::DoNotOptimize(program.get<double>("--arg21"));
+    benchmark::DoNotOptimize(program.get<std::vector<std::string>>("--arg22"));
+    benchmark::DoNotOptimize(program.get<int>("--arg23"));
+    benchmark::DoNotOptimize(program.get<int>("--arg24"));
+    benchmark::DoNotOptimize(program.get<std::string>("--arg25"));
+    benchmark::DoNotOptimize(program.get<int>("--arg26"));
+    benchmark::DoNotOptimize(program.get<std::vector<std::string>>("--arg27"));
+    benchmark::DoNotOptimize(program.get<std::string>("--arg28"));
+    benchmark::DoNotOptimize(program.get<std::string>("--arg29"));
+    benchmark::DoNotOptimize(program.get<std::string>("--arg30"));
   }
 }
 

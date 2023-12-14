@@ -142,19 +142,19 @@ consteval auto get_type_name_base_type([[maybe_unused]] size_t n = 0) {
 template <class T, NArgs TNArgs>
 consteval auto get_base_type_name_form_stl() {
   if constexpr (is_array_v<T>) {
-    return []<size_t... Is>(index_sequence<Is...>) {
+    return []<size_t... Is>(index_sequence<Is...>) consteval {
       return ((get_type_name_base_type<array_base_t<T>>(Is) + String(",")) +
               ...);
     }(make_index_sequence<TNArgs.nargs>())
                .removeTrail();
   } else if constexpr (is_vector_v<T>) {
-    return []<size_t... Is>(index_sequence<Is...>) {
+    return []<size_t... Is>(index_sequence<Is...>) consteval {
       return ((get_type_name_base_type<vector_base_t<T>>(Is) + String(",")) +
               ...)
           .removeTrail();
     }(make_index_sequence<TNArgs.nargs>());
   } else if constexpr (is_tuple_v<T>) {
-    return []<class... U>(type_sequence<U...>) {
+    return []<class... U>(type_sequence<U...>) consteval {
       return (((get_type_name_base_type<vector_base_t<U>>()) + String(",")) +
               ...);
     }(make_type_sequence_t<T>())

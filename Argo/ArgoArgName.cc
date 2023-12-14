@@ -46,7 +46,7 @@ struct ArgName {
   }
 
   template <size_t M>
-  [[nodiscard]] ARGO_ALWAYS_INLINE constexpr auto operator==(
+  [[nodiscard]] ARGO_ALWAYS_INLINE consteval auto operator==(
       const ArgName<M>& lhs) const -> bool {
     return this->getKey() == lhs.getKey();
   }
