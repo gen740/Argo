@@ -609,14 +609,11 @@ struct Arg : ArgTag {
           >                                                    //
       >;
   static constexpr auto name = Name;
-  static constexpr auto id = ID;
   inline static string_view description{};
   inline static bool assigned = false;
   inline static bool required = Required;
-
   inline static type value = {};
   inline static type defaultValue = {};
-
   inline static constexpr NArgs nargs = TNArgs;
   inline static function<type(string_view)> caster = nullptr;
   inline static function<void(const type& value, span<string_view>,
@@ -632,17 +629,10 @@ template <ArgName Name, ParserID ID>
 struct FlagArg : FlagArgTag {
   using type = bool;
   using baseType = bool;
-
   static constexpr auto name = Name;
-  static constexpr auto id = ID;
   inline static bool assigned = false;
   inline static string_view description{};
-  inline static bool required = false;
-
-  inline static type value = {};
-  inline static type defaultValue = {};
-
-  inline static constexpr NArgs nargs = NArgs(-1);
+  inline static type value = false;
   inline static function<void()> callback = nullptr;
   inline static constexpr auto typeName = String("");
 };
@@ -654,34 +644,11 @@ struct HelpArg : HelpArgTag, FlagArgTag {
   using type = bool;
   using baseType = bool;
   static constexpr auto name = Name;
-  static constexpr auto id = ID;
-
   inline static bool assigned = false;
   inline static string_view description = "Print help information";
-  inline static bool required = false;
-
-  inline static type value = {};
-  inline static type defaultValue = {};
-
-  inline static constexpr NArgs nargs = NArgs(-1);
+  inline static type value = false;
   inline static function<void()> callback = nullptr;
   inline static constexpr auto typeName = String("");
-};
-
-template <class T>
-concept ArgType = requires(T& x) {
-  typename T::baseType;
-  typename T::type;
-
-  not is_same_v<decltype(T::value), void>;
-
-  { T::name } -> ArgNameType;
-  is_same_v<decltype(T::nargs), NArgs>;
-  is_same_v<decltype(T::assigned), bool>;
-  is_same_v<decltype(T::description), string_view>;
-  is_convertible_v<decltype(T::typeName), string>;
-  is_convertible_v<decltype(T::typeName), string_view>;
-  is_same_v<decltype(T::required), bool>;
 };
 
 }  // namespace Argo
@@ -728,7 +695,7 @@ ARGO_ALWAYS_INLINE constexpr auto implicitDefault(T value)
 
 template <class Type, ArgName Name, NArgs nargs, bool Required, ParserID ID,
           class... Args>
-ARGO_ALWAYS_INLINE constexpr auto ArgInitializer(Args... args) {
+ARGO_ALWAYS_INLINE constexpr auto ArgInitializer(Args... args) -> void {
   (
       [&args]() ARGO_ALWAYS_INLINE {
         using Arg = Arg<Type, Name, nargs, Required, ID>;
@@ -757,7 +724,7 @@ ARGO_ALWAYS_INLINE constexpr auto ArgInitializer(Args... args) {
 }
 
 template <ArgName Name, ParserID ID, class... Args>
-ARGO_ALWAYS_INLINE constexpr auto FlagArgInitializer(Args... args) {
+ARGO_ALWAYS_INLINE constexpr auto FlagArgInitializer(Args... args) -> void {
   (
       [&args]() ARGO_ALWAYS_INLINE {
         using FlagArg = FlagArg<Name, ID>;
@@ -805,12 +772,21 @@ struct HelpGenerator<tuple<Args...>> {
     vector<ArgInfo> ret;
     (
         [&ret]<class T>() ARGO_ALWAYS_INLINE {
-          ret.emplace_back(
-              Args::name.getKey().substr(0, Args::name.getKeyLen()),  //
-              Args::name.getShortName(),                               //
-              Args::description,                                       //
-              Args::required,                                          //
-              string_view(Args::typeName));
+          if constexpr (derived_from<Args, ArgTag>) {
+            ret.emplace_back(
+                Args::name.getKey().substr(0, Args::name.getKeyLen()),  //
+                Args::name.getShortName(),                              //
+                Args::description,                                      //
+                Args::required,                                         //
+                string_view(Args::typeName));
+          } else {
+            ret.emplace_back(
+                Args::name.getKey().substr(0, Args::name.getKeyLen()),  //
+                Args::name.getShortName(),                              //
+                Args::description,                                      //
+                false,                                                  //
+                string_view(Args::typeName));
+          }
         }.template operator()<Args>(),
         ...);
     return ret;
@@ -955,7 +931,7 @@ ARGO_ALWAYS_INLINE constexpr auto TupleAssign(tuple<T...>& t,
   ((get<N>(t) = ArgCaster<remove_cvref_t<decltype(get<N>(t))>>(v[N])), ...);
 }
 
-template <ArgType Arg>
+template <class Arg>
 ARGO_ALWAYS_INLINE constexpr auto AfterAssign(const span<string_view>& values)
     -> void {
   Arg::assigned = true;
@@ -967,7 +943,7 @@ ARGO_ALWAYS_INLINE constexpr auto AfterAssign(const span<string_view>& values)
   }
 }
 
-template <ArgType Arg>
+template <class Arg>
 ARGO_ALWAYS_INLINE constexpr auto ValiadicArgAssign(
     const span<string_view>& values) -> void {
   Arg::value.resize(values.size());
@@ -1175,7 +1151,7 @@ ARGO_ALWAYS_INLINE constexpr auto ShortArgAssigner(
 template <class Args>
 ARGO_ALWAYS_INLINE constexpr auto ValueReset() -> void {
   []<size_t... Is>(index_sequence<Is...>) ARGO_ALWAYS_INLINE {
-    (..., []<ArgType T>() ARGO_ALWAYS_INLINE {
+    (..., []<class T>() ARGO_ALWAYS_INLINE {
       if (T::assigned) {
         T::value = typename T::type();
         T::assigned = false;
@@ -1705,8 +1681,10 @@ constexpr auto Parser<ID, Args, PArgs, HArg, SubParsers>::parse(int argc,
   auto required_keys = vector<string_view>();
   tuple_type_visit<decltype(tuple_cat(declval<Args>(), declval<PArgs>()))>(
       [&required_keys]<class T>(T) {
-        if ((T::type::required && !T::type::assigned)) {
-          required_keys.push_back(T::type::name.getKey());
+        if constexpr (derived_from<T, ArgTag>) {
+          if ((T::type::required && !T::type::assigned)) {
+            required_keys.push_back(T::type::name.getKey());
+          }
         }
       });
 
