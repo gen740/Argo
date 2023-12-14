@@ -141,9 +141,9 @@ class Parser {
       }
     }();
 
-    static_assert(!(is_array_v<Type> and nargs.getNargs() == 1),
+    static_assert(!(is_array_v<Type> and nargs.nargs == 1),
                   "Array size must be more than one");
-    static_assert(!(is_tuple_v<Type> and nargs.getNargs() == 1),
+    static_assert(!(is_tuple_v<Type> and nargs.nargs == 1),
                   "Tuple size must be more than one");
 
     static constexpr auto required = []() {
@@ -165,11 +165,11 @@ class Parser {
     static_assert(                        //
         SearchIndex<Args, Name>() == -1,  //
         "Duplicated name");
-    static_assert(                         //
-        (nargs.getNargs() > 0              //
-         || nargs.getNargsChar() == '?'    //
-         || nargs.getNargsChar() == '+'    //
-         || nargs.getNargsChar() == '*'),  //
+    static_assert(                     //
+        (nargs.nargs > 0               //
+         || nargs.nargs_char == '?'    //
+         || nargs.nargs_char == '+'    //
+         || nargs.nargs_char == '*'),  //
         "nargs must be '?', '+', '*' or int");
 
     ArgInitializer<Type, Name, nargs, required, ID>(std::forward<T>(args)...);
@@ -205,9 +205,9 @@ class Parser {
     auto arg =
         createArg<Type, Name, arg1, arg2, true>(std::forward<T>(args)...);
 
-    static_assert(decltype(arg)::type::nargs.getNargsChar() != '?',
+    static_assert(decltype(arg)::type::nargs.nargs_char != '?',
                   "Cannot assign narg: ? to the positional argument");
-    static_assert(decltype(arg)::type::nargs.getNargsChar() != '*',
+    static_assert(decltype(arg)::type::nargs.nargs_char != '*',
                   "Cannot assign narg: * to the positional argument");
 
     return Parser<ID, Args, tuple_append_t<PArgs, typename decltype(arg)::type>,

@@ -82,17 +82,17 @@ ARGO_ALWAYS_INLINE constexpr auto ValiadicArgAssign(
 template <class Arg>
 ARGO_ALWAYS_INLINE constexpr auto NLengthArgAssign(span<string_view>& values)
     -> void {
-  if (Arg::nargs.getNargs() > values.size()) {
+  if (Arg::nargs.nargs > values.size()) {
     throw Argo::InvalidArgument(format("Argument {}: invalid argument {}",
                                        string_view(Arg::name), values));
   }
   if constexpr (is_array_v<typename Arg::type>) {
-    for (size_t i = 0; i < Arg::nargs.getNargs(); i++) {
+    for (size_t i = 0; i < Arg::nargs.nargs; i++) {
       Arg::value[i] = ArgCaster<typename Arg::baseType>(values[i]);
     }
   } else if constexpr (is_vector_v<typename Arg::type>) {
-    Arg::value.resize(Arg::nargs.getNargs());
-    for (size_t i = 0; i < Arg::nargs.getNargs(); i++) {
+    Arg::value.resize(Arg::nargs.nargs);
+    for (size_t i = 0; i < Arg::nargs.nargs; i++) {
       Arg::value[i] = ArgCaster<typename Arg::baseType>(values[i]);
     }
   } else if constexpr (is_tuple_v<typename Arg::type>) {
@@ -101,8 +101,8 @@ ARGO_ALWAYS_INLINE constexpr auto NLengthArgAssign(span<string_view>& values)
   } else {
     static_assert(false, "Invalid Type");
   }
-  AfterAssign<Arg>(values.subspan(0, Arg::nargs.getNargs()));
-  values = values.subspan(Arg::nargs.getNargs());
+  AfterAssign<Arg>(values.subspan(0, Arg::nargs.nargs));
+  values = values.subspan(Arg::nargs.nargs);
 }
 
 template <class Arg>
@@ -125,11 +125,11 @@ ARGO_ALWAYS_INLINE constexpr auto PArgAssigner(span<string_view> values)
       if (Arg::assigned) {
         return false;
       }
-      if constexpr (Arg::nargs.getNargsChar() == '+') {
+      if constexpr (Arg::nargs.nargs_char == '+') {
         ValiadicArgAssign<Arg>(values);
         return true;
       }
-      if constexpr (Arg::nargs.getNargs() == 1) {
+      if constexpr (Arg::nargs.nargs == 1) {
         if (values.empty()) {
           throw Argo::InvalidArgument(format(
               "Argument {} should take exactly one value but zero", Arg::name));
@@ -137,7 +137,7 @@ ARGO_ALWAYS_INLINE constexpr auto PArgAssigner(span<string_view> values)
         ZeroOrOneArgAssign<Arg>(values);
         return values.empty();
       }
-      if constexpr (Arg::nargs.getNargs() > 1) {
+      if constexpr (Arg::nargs.nargs > 1) {
         NLengthArgAssign<Arg>(values);
         return values.empty();
       }
@@ -173,13 +173,13 @@ ARGO_ALWAYS_INLINE constexpr auto AssignOneArg(const string_view& key,
     }
     return true;
   } else {
-    if constexpr (Head::nargs.getNargsChar() == '?') {
+    if constexpr (Head::nargs.nargs_char == '?') {
       ZeroOrOneArgAssign<Head>(values);
       if (values.empty()) {
         return true;
       }
       return PArgAssigner<PArgs>(values);
-    } else if constexpr (Head::nargs.getNargsChar() == '*') {
+    } else if constexpr (Head::nargs.nargs_char == '*') {
       if (values.empty()) {
         Head::value = Head::defaultValue;
         Head::assigned = true;
@@ -187,14 +187,14 @@ ARGO_ALWAYS_INLINE constexpr auto AssignOneArg(const string_view& key,
       }
       ValiadicArgAssign<Head>(values);
       return true;
-    } else if constexpr (Head::nargs.getNargsChar() == '+') {
+    } else if constexpr (Head::nargs.nargs_char == '+') {
       if (values.empty()) {
         throw Argo::InvalidArgument(
             format("Argument {} should take more than one value", key));
       }
       ValiadicArgAssign<Head>(values);
       return true;
-    } else if constexpr (Head::nargs.getNargs() == 1) {
+    } else if constexpr (Head::nargs.nargs == 1) {
       if (values.empty()) {
         throw Argo::InvalidArgument(
             format("Argument {} should take exactly one value but zero", key));

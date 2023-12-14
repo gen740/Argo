@@ -42,8 +42,7 @@ if(${CMAKE_SOURCE_DIR} STREQUAL ${CMAKE_CURRENT_LIST_DIR})
   target_link_libraries(main Argo)
   target_compile_options(main PRIVATE -O3)
 
-
-  ################################ TESTS ######################################
+  # ############################### TESTS ######################################
   if(${ARGO_TESTS_ENABLE})
     # Reset all optimization flags
     set(CMAKE_CXX_FLAGS_RELEASE "")
@@ -58,26 +57,28 @@ if(${CMAKE_SOURCE_DIR} STREQUAL ${CMAKE_CURRENT_LIST_DIR})
 
     file(GLOB ARGO_TEST_SOURCES ${CMAKE_CURRENT_LIST_DIR}/tests/*.cc)
 
-    ############################### DEBUG TARGET ##############################
+    # ############################## DEBUG TARGET ##############################
     add_executable(test-argo-debug ${ARGO_TEST_SOURCES})
-    target_link_libraries(test-argo-debug GTest::gtest GTest::gtest_main GTest::gmock
-                          Argo)
+    target_link_libraries(
+      test-argo-debug PRIVATE GTest::gtest GTest::gtest_main GTest::gmock Argo)
     set_target_properties(test-argo-debug PROPERTIES CXX_STANDARD 23)
-    target_compile_options(test-argo-debug #
+    target_compile_options(
+      test-argo-debug #
       PRIVATE -Wno-writable-strings -DDEBUG_BUILD -O1 -g
               -fprofile-instr-generate -fcoverage-mapping)
-    target_link_options(test-argo-debug
-      PRIVATE -fprofile-instr-generate -fcoverage-mapping)
+    target_link_options(test-argo-debug PRIVATE -fprofile-instr-generate
+                        -fcoverage-mapping)
 
-    ############################### RELEASE TARGET ############################
+    # ############################## RELEASE TARGET ############################
     add_executable(test-argo-release ${ARGO_TEST_SOURCES})
-    target_link_libraries(test-argo-release GTest::gtest GTest::gtest_main
-                          GTest::gmock Argo)
+    target_link_libraries(
+      test-argo-release PRIVATE GTest::gtest GTest::gtest_main GTest::gmock
+                                Argo)
     set_target_properties(test-argo-release PROPERTIES CXX_STANDARD 23)
     target_compile_options(test-argo-release PRIVATE -Wno-writable-strings -O3)
   endif()
 
-  ############################### BENCHMARKS #################################
+  # ############################## BENCHMARKS #################################
   if(${ARGO_BENCHMARKS_ENABLE})
     set(CMAKE_CXX_FLAGS_RELEASE "")
     set(CMAKE_CXX_FLAGS_DEBUG "")
@@ -106,22 +107,24 @@ if(${CMAKE_SOURCE_DIR} STREQUAL ${CMAKE_CURRENT_LIST_DIR})
     foreach(target ${ARGO_BENCHMARK_SOURCES})
       get_filename_component(target_name ${target} NAME_WE)
 
-      ############################## DEBUG TARGET #############################
+      # ############################# DEBUG TARGET #############################
       set(debug_target_name "bench-${target_name}-debug")
       add_executable(${debug_target_name} ${target})
       target_link_libraries(${debug_target_name} benchmark::benchmark Argo
                             ${CLI11_LIBRARY} ${argparse_LIBRARY})
       set_target_properties(${debug_target_name} PROPERTIES CXX_STANDARD 23)
-      target_compile_options(${debug_target_name} PRIVATE -Wno-writable-strings -fbracket-depth=1024
-                                                          -DDEBUG_BUILD)
-      ############################## RELEASE TARGET ###########################
+      target_compile_options(
+        ${debug_target_name} PRIVATE -Wno-writable-strings -fbracket-depth=1024
+                                     -DDEBUG_BUILD)
+      # ############################# RELEASE TARGET ###########################
       set(release_target_name "bench-${target_name}-release")
       add_executable(${release_target_name} ${target})
       target_link_libraries(${release_target_name} benchmark::benchmark Argo
                             ${CLI11_LIBRARY})
       set_target_properties(${release_target_name} PROPERTIES CXX_STANDARD 23)
-      target_compile_options(${release_target_name}
-                             PRIVATE -Wno-writable-strings -O3 -Os -fbracket-depth=1024)
+      target_compile_options(
+        ${release_target_name} PRIVATE -Wno-writable-strings -O3 -Os
+                                       -fbracket-depth=1024)
     endforeach()
   endif()
 endif()

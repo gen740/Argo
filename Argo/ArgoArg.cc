@@ -49,14 +49,6 @@ struct NArgs {
   constexpr explicit NArgs(char arg) : nargs_char(arg) {}
 
   constexpr explicit NArgs(int arg) : nargs(arg) {}
-
-  [[nodiscard]] constexpr int getNargs() const {
-    return nargs;
-  }
-
-  [[nodiscard]] constexpr char getNargsChar() const {
-    return nargs_char;
-  }
 };
 
 template <size_t N>
@@ -133,14 +125,14 @@ consteval auto get_base_type_name_form_stl() {
     return []<size_t... Is>(index_sequence<Is...>) {
       return ((get_type_name_base_type<array_base_t<T>>(Is) + String(",")) +
               ...);
-    }(make_index_sequence<TNArgs.getNargs()>())
+    }(make_index_sequence<TNArgs.nargs>())
                .removeTrail();
   } else if constexpr (is_vector_v<T>) {
     return []<size_t... Is>(index_sequence<Is...>) {
       return ((get_type_name_base_type<vector_base_t<T>>(Is) + String(",")) +
               ...)
           .removeTrail();
-    }(make_index_sequence<TNArgs.getNargs()>());
+    }(make_index_sequence<TNArgs.nargs>());
   } else if constexpr (is_tuple_v<T>) {
     return []<class... U>(type_sequence<U...>) {
       return (((get_type_name_base_type<vector_base_t<U>>()) + String(",")) +
