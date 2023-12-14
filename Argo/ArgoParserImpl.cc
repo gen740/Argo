@@ -46,7 +46,7 @@ template <ParserID ID, class Args, class PArgs, class HArg, class SubParsers>
 constexpr auto Parser<ID, Args, PArgs, HArg, SubParsers>::setArg(
     string_view key, span<string_view> val) const -> void {
   if constexpr (!is_same_v<HArg, void>) {
-    if (key == HArg::name) {
+    if (key == HArg::name.getKey()) {
       std::cout << formatHelp() << std::endl;
       exit(0);
     }
@@ -60,8 +60,8 @@ constexpr auto Parser<ID, Args, PArgs, HArg, SubParsers>::setArg(
     span<char> key, span<string_view> val) const -> void {
   if constexpr (!is_same_v<HArg, void>) {
     for (const auto& i : key) {
-      if constexpr (HArg::name.shortName != '\0') {
-        if (i == HArg::name.shortName) {
+      if constexpr (HArg::name.getShortName() != '\0') {
+        if (i == HArg::name.getShortName()) {
           std::cout << formatHelp() << std::endl;
           exit(0);
         }
@@ -83,7 +83,7 @@ constexpr auto Parser<ID, Args, PArgs, HArg, SubParsers>::parse(int argc,
   tuple_type_visit<decltype(tuple_cat(declval<Args>(), declval<PArgs>()))>(
       [&assigned_keys]<class T>(T) {
         if (T::type::assigned) {
-          assigned_keys.push_back(string_view(T::type::name));
+          assigned_keys.push_back(T::type::name.getKey());
         }
       });
   if (!assigned_keys.empty()) [[unlikely]] {
@@ -171,7 +171,7 @@ constexpr auto Parser<ID, Args, PArgs, HArg, SubParsers>::parse(int argc,
   tuple_type_visit<decltype(tuple_cat(declval<Args>(), declval<PArgs>()))>(
       [&required_keys]<class T>(T) {
         if ((T::type::required && !T::type::assigned)) {
-          required_keys.push_back(string_view(T::type::name));
+          required_keys.push_back(T::type::name.getKey());
         }
       });
 

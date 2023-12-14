@@ -29,8 +29,10 @@ struct HelpGenerator<tuple<Args...>> {
     (
         [&ret]<class T>() ARGO_ALWAYS_INLINE {
           ret.emplace_back(
-              string_view(Args::name).substr(0, Args::name.nameLen),
-              Args::name.shortName, Args::description, Args::required,
+              Args::name.getKey().substr(0, Args::name.getKeyLen()),  //
+              Args::name.getShortName(),                               //
+              Args::description,                                       //
+              Args::required,                                          //
               string_view(Args::typeName));
         }.template operator()<Args>(),
         ...);
@@ -49,7 +51,7 @@ ARGO_ALWAYS_INLINE constexpr auto SubParserInfo(T subparsers) {
   if constexpr (!is_same_v<T, tuple<>>) {
     apply(
         [&ret]<class... Parser>(Parser... parser) ARGO_ALWAYS_INLINE {
-          (..., ret.emplace_back(parser.name, parser.description));
+          (..., ret.emplace_back(parser.name.getKey(), parser.description));
         },
         subparsers);
   }

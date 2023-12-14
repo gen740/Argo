@@ -62,7 +62,7 @@ ARGO_ALWAYS_INLINE constexpr auto AfterAssign(const span<string_view>& values)
     -> void {
   Arg::assigned = true;
   if (Arg::validator) {
-    Arg::validator(Arg::value, values, string_view(Arg::name));
+    Arg::validator(Arg::value, values, Arg::name.getKey());
   }
   if (Arg::callback) {
     Arg::callback(Arg::value, values);
@@ -83,8 +83,8 @@ template <class Arg>
 ARGO_ALWAYS_INLINE constexpr auto NLengthArgAssign(span<string_view>& values)
     -> void {
   if (Arg::nargs.nargs > values.size()) {
-    throw Argo::InvalidArgument(format("Argument {}: invalid argument {}",
-                                       string_view(Arg::name), values));
+    throw Argo::InvalidArgument(
+        format("Argument {}: invalid argument {}", Arg::name.getKey(), values));
   }
   if constexpr (is_array_v<typename Arg::type>) {
     for (size_t i = 0; i < Arg::nargs.nargs; i++) {
@@ -131,8 +131,9 @@ ARGO_ALWAYS_INLINE constexpr auto PArgAssigner(span<string_view> values)
       }
       if constexpr (Arg::nargs.nargs == 1) {
         if (values.empty()) {
-          throw Argo::InvalidArgument(format(
-              "Argument {} should take exactly one value but zero", Arg::name));
+          throw Argo::InvalidArgument(
+              format("Argument {} should take exactly one value but zero",
+                     Arg::name.getKey()));
         }
         ZeroOrOneArgAssign<Arg>(values);
         return values.empty();
@@ -221,7 +222,7 @@ ARGO_ALWAYS_INLINE constexpr auto assignArg(const string_view& key,
   [&key, &values]<size_t... Is>(index_sequence<Is...>)
       ARGO_ALWAYS_INLINE -> void {
         if (!(... ||
-              (string_view(tuple_element_t<Is, Args>::name) == key and
+              (tuple_element_t<Is, Args>::name.getKey() == key and
                AssignOneArg<tuple_element_t<Is, Args>, PArgs>(key, values)))) {
           throw Argo::InvalidArgument(format("Invalid argument {}", key));
         }

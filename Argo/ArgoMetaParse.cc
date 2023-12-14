@@ -41,7 +41,7 @@ ARGO_ALWAYS_INLINE constexpr auto ParserIndex(SubParsers sub_parsers,  //
   return apply(
       [&](auto&&... s) ARGO_ALWAYS_INLINE {
         int64_t index = -1;
-        bool found = (... || (index++, s.name == key));
+        bool found = (... || (index++, s.name.getKey() == key));
         return found ? index : -1;
       },
       sub_parsers);

@@ -343,93 +343,46 @@ using namespace std;
  */
 template <size_t N>
 struct ArgName {
-  char name[N] = {};
-  char shortName = '\0';
-  size_t nameLen = N;
+  char short_key_ = '\0';
+  char key_[N] = {};
+  size_t key_len_ = N;
 
   // NOLINTNEXTLINE(google-explicit-constructor)
   consteval ArgName(const char (&lhs)[N + 1]) {
     for (size_t i = 0; i < N; i++) {
       if (lhs[i] == ',') {
-        nameLen = i;
-        shortName = lhs[i + 1];
+        this->key_len_ = i;
+        this->short_key_ = lhs[i + 1];
         return;
       }
-      this->name[i] = lhs[i];
+      this->key_[i] = lhs[i];
     }
   };
 
-  [[nodiscard]] constexpr char operator[](size_t idx) const {
-    return this->name[idx];
+  [[nodiscard]] ARGO_ALWAYS_INLINE constexpr char getShortName() const {
+    return this->short_key_;
   }
 
-  constexpr char& operator[](size_t idx) {
-    return this->name[idx];
+  [[nodiscard]] ARGO_ALWAYS_INLINE constexpr auto getKey() const {
+    return string_view(this->key_, this->key_len_);
   }
 
-  [[nodiscard]] constexpr auto begin() const {
-    return &this->name[0];
-  }
-
-  [[nodiscard]] constexpr auto end() const {
-    return &this->name[this->nameLen];
-  }
-
-  [[nodiscard]] constexpr auto size() const {
-    return N;
-  }
-
-  [[nodiscard]] friend constexpr auto begin(const ArgName& lhs) {
-    return lhs.begin();
-  }
-
-  [[nodiscard]] friend constexpr auto end(const ArgName& lhs) {
-    return lhs.end();
-  }
-
-  template <size_t M>
-  [[nodiscard]] ARGO_ALWAYS_INLINE constexpr auto operator==(
-      const ArgName<M>& lhs) -> bool {
-    if constexpr (M != N) {
-      return false;
-    } else {
-      for (size_t i = 0; i < N; i++) {
-        if ((*this)[i] != lhs[i]) {
-          return false;
-        }
-      }
-      return true;
-    }
+  [[nodiscard]] constexpr auto getKeyLen() const {
+    return this->key_len_;
   }
 
   template <size_t M>
   [[nodiscard]] ARGO_ALWAYS_INLINE constexpr auto operator==(
       const ArgName<M>& lhs) const -> bool {
-    auto NV = this->nameLen;
-    auto MV = lhs.nameLen;
-
-    if (MV != NV) {
-      return false;
-    }
-    for (size_t i = 0; i < NV; i++) {
-      if ((*this)[i] != lhs[i]) {
-        return false;
-      }
-    }
-    return true;
-  }
-
-  // NOLINTNEXTLINE(google-explicit-constructor)
-  [[nodiscard]] ARGO_ALWAYS_INLINE constexpr operator string_view() const {
-    return string_view(this->begin(), this->end());
+    return this->getKey() == lhs.getKey();
   }
 
   [[nodiscard]] ARGO_ALWAYS_INLINE consteval auto hasValidNameLength() const
       -> bool {
-    if (this->shortName == '\0') {
+    if (this->getShortName() == '\0') {
       return true;
     }
-    return (N - this->nameLen) == 2;
+    return (N - this->key_len_) == 2;
   }
 };
 
@@ -438,8 +391,8 @@ ArgName(const char (&)[N]) -> ArgName<N - 1>;
 
 template <class T>
 concept ArgNameType = requires(T& x) {
-  static_cast<string_view>(x);
-  is_same_v<decltype(x.shortName), char>;
+  is_same_v<decltype(x.getKey()), string_view>;
+  is_same_v<decltype(x.getShortName()), char>;
 };
 
 }  // namespace Argo
@@ -830,8 +783,10 @@ struct HelpGenerator<tuple<Args...>> {
     (
         [&ret]<class T>() ARGO_ALWAYS_INLINE {
           ret.emplace_back(
-              string_view(Args::name).substr(0, Args::name.nameLen),
-              Args::name.shortName, Args::description, Args::required,
+              Args::name.getKey().substr(0, Args::name.getKeyLen()),  //
+              Args::name.getShortName(),                               //
+              Args::description,                                       //
+              Args::required,                                          //
               string_view(Args::typeName));
         }.template operator()<Args>(),
         ...);
@@ -850,7 +805,7 @@ ARGO_ALWAYS_INLINE constexpr auto SubParserInfo(T subparsers) {
   if constexpr (!is_same_v<T, tuple<>>) {
     apply(
         [&ret]<class... Parser>(Parser... parser) ARGO_ALWAYS_INLINE {
-          (..., ret.emplace_back(parser.name, parser.description));
+          (..., ret.emplace_back(parser.name.getKey(), parser.description));
         },
         subparsers);
   }
@@ -869,8 +824,8 @@ ARGO_ALWAYS_INLINE constexpr inline auto GetNameFromShortName(char key) {
   auto name = string_view();
   if ([&name, &key]<class... T>(type_sequence<T...>) ARGO_ALWAYS_INLINE {
         return ([&name, &key] {
-          if (T::name.shortName == key) {
-            name = string_view(T::name);
+          if (T::name.getShortName() == key) {
+            name = T::name.getKey();
             return true;
           }
           return false;
@@ -902,7 +857,7 @@ template <class Tuple, char C>
 consteval auto SearchIndexFromShortName() {
   int value = -1;
   if (![&value]<class... T>(type_sequence<T...>) {
-        return ((value++, C == T::name.shortName) || ...);
+        return ((value++, C == T::name.getShortName()) || ...);
       }(make_type_sequence_t<Tuple>())) {
     return -1;
   }
@@ -916,9 +871,9 @@ template <class Tuple>
 ARGO_ALWAYS_INLINE constexpr auto SearchIndexFromShortName(char c) {
   int value = -1;
   if (![&value, &c]<class... T>(type_sequence<T...>) ARGO_ALWAYS_INLINE {
-        return ((value++,
-                 (T::name.shortName >= '0' and T::name.shortName <= '9') and
-                     (c == T::name.shortName)) ||
+        return ((value++, (T::name.getShortName() >= '0' and
+                           T::name.getShortName() <= '9') and
+                              (c == T::name.getShortName())) ||
                 ...);
       }(make_type_sequence_t<Tuple>())) {
     return -1;
@@ -978,7 +933,7 @@ ARGO_ALWAYS_INLINE constexpr auto AfterAssign(const span<string_view>& values)
     -> void {
   Arg::assigned = true;
   if (Arg::validator) {
-    Arg::validator(Arg::value, values, string_view(Arg::name));
+    Arg::validator(Arg::value, values, Arg::name.getKey());
   }
   if (Arg::callback) {
     Arg::callback(Arg::value, values);
@@ -999,8 +954,8 @@ template <class Arg>
 ARGO_ALWAYS_INLINE constexpr auto NLengthArgAssign(span<string_view>& values)
     -> void {
   if (Arg::nargs.nargs > values.size()) {
-    throw Argo::InvalidArgument(format("Argument {}: invalid argument {}",
-                                       string_view(Arg::name), values));
+    throw Argo::InvalidArgument(
+        format("Argument {}: invalid argument {}", Arg::name.getKey(), values));
   }
   if constexpr (is_array_v<typename Arg::type>) {
     for (size_t i = 0; i < Arg::nargs.nargs; i++) {
@@ -1047,8 +1002,9 @@ ARGO_ALWAYS_INLINE constexpr auto PArgAssigner(span<string_view> values)
       }
       if constexpr (Arg::nargs.nargs == 1) {
         if (values.empty()) {
-          throw Argo::InvalidArgument(format(
-              "Argument {} should take exactly one value but zero", Arg::name));
+          throw Argo::InvalidArgument(
+              format("Argument {} should take exactly one value but zero",
+                     Arg::name.getKey()));
         }
         ZeroOrOneArgAssign<Arg>(values);
         return values.empty();
@@ -1137,7 +1093,7 @@ ARGO_ALWAYS_INLINE constexpr auto assignArg(const string_view& key,
   [&key, &values]<size_t... Is>(index_sequence<Is...>)
       ARGO_ALWAYS_INLINE -> void {
         if (!(... ||
-              (string_view(tuple_element_t<Is, Args>::name) == key and
+              (tuple_element_t<Is, Args>::name.getKey() == key and
                AssignOneArg<tuple_element_t<Is, Args>, PArgs>(key, values)))) {
           throw Argo::InvalidArgument(format("Invalid argument {}", key));
         }
@@ -1219,7 +1175,7 @@ ARGO_ALWAYS_INLINE constexpr auto ParserIndex(SubParsers sub_parsers,  //
   return apply(
       [&](auto&&... s) ARGO_ALWAYS_INLINE {
         int64_t index = -1;
-        bool found = (... || (index++, s.name == key));
+        bool found = (... || (index++, s.name.getKey() == key));
         return found ? index : -1;
       },
       sub_parsers);
@@ -1372,12 +1328,11 @@ class Parser {
     if constexpr (!is_same_v<PArgs, tuple<>>) {
       static_assert(SearchIndex<PArgs, Name>() == -1, "Duplicated name");
     }
-    static_assert((Name.shortName == '\0') ||
-                      (SearchIndexFromShortName<Args, Name.shortName>() == -1),
-                  "Duplicated short name");
-    static_assert(                        //
-        SearchIndex<Args, Name>() == -1,  //
-        "Duplicated name");
+    static_assert(
+        (Name.getShortName() == '\0') ||
+            (SearchIndexFromShortName<Args, Name.getShortName()>() == -1),
+        "Duplicated short name");
+    static_assert(SearchIndex<Args, Name>() == -1, "Duplicated name");
     static_assert(                     //
         (nargs.nargs > 0               //
          || nargs.nargs_char == '?'    //
@@ -1413,7 +1368,7 @@ class Parser {
   template <ArgName Name, class Type, auto arg1 = Unspecified(),
             auto arg2 = Unspecified(), class... T>
   constexpr auto addPositionalArg(T... args) {
-    static_assert(Name.shortName == '\0',
+    static_assert(Name.getShortName() == '\0',
                   "Positional argment cannot have short name");
     auto arg =
         createArg<Type, Name, arg1, arg2, true>(std::forward<T>(args)...);
@@ -1432,9 +1387,10 @@ class Parser {
     if constexpr (!is_same_v<PArgs, tuple<>>) {
       static_assert(SearchIndex<PArgs, Name>() == -1, "Duplicated name");
     }
-    static_assert((Name.shortName == '\0') ||
-                      (SearchIndexFromShortName<Args, Name.shortName>() == -1),
-                  "Duplicated short name");
+    static_assert(
+        (Name.getShortName() == '\0') ||
+            (SearchIndexFromShortName<Args, Name.getShortName()>() == -1),
+        "Duplicated short name");
     static_assert(SearchIndex<Args, Name>() == -1, "Duplicated name");
     FlagArgInitializer<Name, ID>(std::forward<T>(args)...);
     return Parser<ID, tuple_append_t<Args, FlagArg<Name, ID>>, PArgs, HArg,
@@ -1443,7 +1399,7 @@ class Parser {
 
   template <ArgName Name = "help,h">
   constexpr auto addHelp() {
-    static_assert((SearchIndexFromShortName<Args, Name.shortName>() == -1),
+    static_assert((SearchIndexFromShortName<Args, Name.getShortName()>() == -1),
                   "Duplicated short name");
     static_assert(Argo::SearchIndex<Args, Name>() == -1, "Duplicated name");
     return Parser<ID, Args, PArgs, HelpArg<Name, ID>, SubParsers>(
@@ -1452,7 +1408,7 @@ class Parser {
 
   template <ArgName Name = "help,h">
   constexpr auto addHelp(string_view help) {
-    static_assert((SearchIndexFromShortName<Args, Name.shortName>() == -1),
+    static_assert((SearchIndexFromShortName<Args, Name.getShortName()>() == -1),
                   "Duplicated short name");
     static_assert(Argo::SearchIndex<Args, Name>() == -1, "Duplicated name");
     static_assert(Name.hasValidNameLength(),
@@ -1499,7 +1455,7 @@ class Parser {
       throw ParseError("Parser did not parse argument, call parse first");
     }
     if constexpr (!is_same_v<PArgs, tuple<>>) {
-      if constexpr (string_view(Name) == string_view(PArgs::name)) {
+      if constexpr (Name.getKey() == PArgs::name.getKey()) {
         return PArgs::assigned;
       } else {
         return remove_cvref_t<decltype(get<SearchIndex<Args, Name>()>(
@@ -1589,7 +1545,7 @@ template <ParserID ID, class Args, class PArgs, class HArg, class SubParsers>
 constexpr auto Parser<ID, Args, PArgs, HArg, SubParsers>::setArg(
     string_view key, span<string_view> val) const -> void {
   if constexpr (!is_same_v<HArg, void>) {
-    if (key == HArg::name) {
+    if (key == HArg::name.getKey()) {
       std::cout << formatHelp() << std::endl;
       exit(0);
     }
@@ -1603,8 +1559,8 @@ constexpr auto Parser<ID, Args, PArgs, HArg, SubParsers>::setArg(
     span<char> key, span<string_view> val) const -> void {
   if constexpr (!is_same_v<HArg, void>) {
     for (const auto& i : key) {
-      if constexpr (HArg::name.shortName != '\0') {
-        if (i == HArg::name.shortName) {
+      if constexpr (HArg::name.getShortName() != '\0') {
+        if (i == HArg::name.getShortName()) {
           std::cout << formatHelp() << std::endl;
           exit(0);
         }
@@ -1626,7 +1582,7 @@ constexpr auto Parser<ID, Args, PArgs, HArg, SubParsers>::parse(int argc,
   tuple_type_visit<decltype(tuple_cat(declval<Args>(), declval<PArgs>()))>(
       [&assigned_keys]<class T>(T) {
         if (T::type::assigned) {
-          assigned_keys.push_back(string_view(T::type::name));
+          assigned_keys.push_back(T::type::name.getKey());
         }
       });
   if (!assigned_keys.empty()) [[unlikely]] {
@@ -1714,7 +1670,7 @@ constexpr auto Parser<ID, Args, PArgs, HArg, SubParsers>::parse(int argc,
   tuple_type_visit<decltype(tuple_cat(declval<Args>(), declval<PArgs>()))>(
       [&required_keys]<class T>(T) {
         if ((T::type::required && !T::type::assigned)) {
-          required_keys.push_back(string_view(T::type::name));
+          required_keys.push_back(T::type::name.getKey());
         }
       });
 

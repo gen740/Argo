@@ -21,8 +21,8 @@ ARGO_ALWAYS_INLINE constexpr inline auto GetNameFromShortName(char key) {
   auto name = string_view();
   if ([&name, &key]<class... T>(type_sequence<T...>) ARGO_ALWAYS_INLINE {
         return ([&name, &key] {
-          if (T::name.shortName == key) {
-            name = string_view(T::name);
+          if (T::name.getShortName() == key) {
+            name = T::name.getKey();
             return true;
           }
           return false;
@@ -54,7 +54,7 @@ template <class Tuple, char C>
 consteval auto SearchIndexFromShortName() {
   int value = -1;
   if (![&value]<class... T>(type_sequence<T...>) {
-        return ((value++, C == T::name.shortName) || ...);
+        return ((value++, C == T::name.getShortName()) || ...);
       }(make_type_sequence_t<Tuple>())) {
     return -1;
   }
@@ -68,9 +68,9 @@ template <class Tuple>
 ARGO_ALWAYS_INLINE constexpr auto SearchIndexFromShortName(char c) {
   int value = -1;
   if (![&value, &c]<class... T>(type_sequence<T...>) ARGO_ALWAYS_INLINE {
-        return ((value++,
-                 (T::name.shortName >= '0' and T::name.shortName <= '9') and
-                     (c == T::name.shortName)) ||
+        return ((value++, (T::name.getShortName() >= '0' and
+                           T::name.getShortName() <= '9') and
+                              (c == T::name.getShortName())) ||
                 ...);
       }(make_type_sequence_t<Tuple>())) {
     return -1;

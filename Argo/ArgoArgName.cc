@@ -17,93 +17,46 @@ using namespace std;
  */
 template <size_t N>
 struct ArgName {
-  char name[N] = {};
-  char shortName = '\0';
-  size_t nameLen = N;
+  char short_key_ = '\0';
+  char key_[N] = {};
+  size_t key_len_ = N;
 
   // NOLINTNEXTLINE(google-explicit-constructor)
   consteval ArgName(const char (&lhs)[N + 1]) {
     for (size_t i = 0; i < N; i++) {
       if (lhs[i] == ',') {
-        nameLen = i;
-        shortName = lhs[i + 1];
+        this->key_len_ = i;
+        this->short_key_ = lhs[i + 1];
         return;
       }
-      this->name[i] = lhs[i];
+      this->key_[i] = lhs[i];
     }
   };
 
-  [[nodiscard]] constexpr char operator[](size_t idx) const {
-    return this->name[idx];
+  [[nodiscard]] ARGO_ALWAYS_INLINE constexpr char getShortName() const {
+    return this->short_key_;
   }
 
-  constexpr char& operator[](size_t idx) {
-    return this->name[idx];
+  [[nodiscard]] ARGO_ALWAYS_INLINE constexpr auto getKey() const {
+    return string_view(this->key_, this->key_len_);
   }
 
-  [[nodiscard]] constexpr auto begin() const {
-    return &this->name[0];
-  }
-
-  [[nodiscard]] constexpr auto end() const {
-    return &this->name[this->nameLen];
-  }
-
-  [[nodiscard]] constexpr auto size() const {
-    return N;
-  }
-
-  [[nodiscard]] friend constexpr auto begin(const ArgName& lhs) {
-    return lhs.begin();
-  }
-
-  [[nodiscard]] friend constexpr auto end(const ArgName& lhs) {
-    return lhs.end();
-  }
-
-  template <size_t M>
-  [[nodiscard]] ARGO_ALWAYS_INLINE constexpr auto operator==(
-      const ArgName<M>& lhs) -> bool {
-    if constexpr (M != N) {
-      return false;
-    } else {
-      for (size_t i = 0; i < N; i++) {
-        if ((*this)[i] != lhs[i]) {
-          return false;
-        }
-      }
-      return true;
-    }
+  [[nodiscard]] constexpr auto getKeyLen() const {
+    return this->key_len_;
   }
 
   template <size_t M>
   [[nodiscard]] ARGO_ALWAYS_INLINE constexpr auto operator==(
       const ArgName<M>& lhs) const -> bool {
-    auto NV = this->nameLen;
-    auto MV = lhs.nameLen;
-
-    if (MV != NV) {
-      return false;
-    }
-    for (size_t i = 0; i < NV; i++) {
-      if ((*this)[i] != lhs[i]) {
-        return false;
-      }
-    }
-    return true;
-  }
-
-  // NOLINTNEXTLINE(google-explicit-constructor)
-  [[nodiscard]] ARGO_ALWAYS_INLINE constexpr operator string_view() const {
-    return string_view(this->begin(), this->end());
+    return this->getKey() == lhs.getKey();
   }
 
   [[nodiscard]] ARGO_ALWAYS_INLINE consteval auto hasValidNameLength() const
       -> bool {
-    if (this->shortName == '\0') {
+    if (this->getShortName() == '\0') {
       return true;
     }
-    return (N - this->nameLen) == 2;
+    return (N - this->key_len_) == 2;
   }
 };
 
@@ -112,8 +65,8 @@ ArgName(const char (&)[N]) -> ArgName<N - 1>;
 
 template <class T>
 concept ArgNameType = requires(T& x) {
-  static_cast<string_view>(x);
-  is_same_v<decltype(x.shortName), char>;
+  is_same_v<decltype(x.getKey()), string_view>;
+  is_same_v<decltype(x.getShortName()), char>;
 };
 
 }  // namespace Argo
