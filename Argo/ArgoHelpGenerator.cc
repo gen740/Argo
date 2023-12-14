@@ -3,7 +3,9 @@ module;
 #include "Argo/ArgoMacros.hh"
 
 export module Argo:HelpGenerator;
+
 import :Arg;
+import :TypeTraits;
 import :std_module;
 
 // generator start here
@@ -21,33 +23,26 @@ struct ArgInfo {
 };
 
 template <class Args>
-struct HelpGenerator {};
-
-template <class... Args>
-struct HelpGenerator<tuple<Args...>> {
-  ARGO_ALWAYS_INLINE constexpr static auto generate() -> vector<ArgInfo> {
-    vector<ArgInfo> ret;
-    (
-        [&ret]() ARGO_ALWAYS_INLINE {
-          if constexpr (derived_from<Args, ArgTag>) {
-            ret.emplace_back(
-                Args::name.getKey().substr(0, Args::name.getKeyLen()),  //
-                Args::name.getShortName(),                              //
-                Args::description,                                      //
-                Args::required,                                         //
-                string_view(Args::typeName));
-          } else {
-            ret.emplace_back(
-                Args::name.getKey().substr(0, Args::name.getKeyLen()),  //
-                Args::name.getShortName(),                              //
-                Args::description,                                      //
-                false,                                                  //
-                string_view(Args::typeName));
-          }
-        }(),
-        ...);
-    return ret;
-  }
+ARGO_ALWAYS_INLINE constexpr auto HelpGenerator() {
+  vector<ArgInfo> ret;
+  tuple_type_visit<Args>([&ret]<class T>(T) {
+    if constexpr (derived_from<typename T::type, ArgTag>) {
+      ret.emplace_back(
+          T::type::name.getKey().substr(0, T::type::name.getKeyLen()),  //
+          T::type::name.getShortName(),                                 //
+          T::type::description,                                         //
+          T::type::required,                                            //
+          string_view(T::type::typeName));
+    } else {
+      ret.emplace_back(
+          T::type::name.getKey().substr(0, T::type::name.getKeyLen()),  //
+          T::type::name.getShortName(),                                 //
+          T::type::description,                                         //
+          false,                                                        //
+          string_view(T::type::typeName));
+    }
+  });
+  return ret;
 };
 
 struct SubCommandInfo {

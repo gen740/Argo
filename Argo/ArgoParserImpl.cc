@@ -371,11 +371,11 @@ constexpr auto Parser<ID, Args, PArgs, HArg, SubParsers>::formatHelp(
 
   vector<ArgInfo> help_info;
   if constexpr (is_same_v<HArg, void>) {
-    help_info = HelpGenerator<Args>::generate();
+    help_info = HelpGenerator<Args>();
   } else {
-    help_info = HelpGenerator<tuple_append_t<Args, HArg>>::generate();
+    help_info = HelpGenerator<tuple_append_t<Args, HArg>>();
   }
-  vector<ArgInfo> pargs_info = HelpGenerator<PArgs>::generate();
+  vector<ArgInfo> pargs_info = HelpGenerator<PArgs>();
 
   auto sub_commands = SubParserInfo(subParsers);
 
