@@ -24,9 +24,10 @@ TEST(ArgoTest, FlagArgument) {
   auto [argc, argv] = createArgcArgv(  //
       "./main",                        //
       "--arg1", "--arg2=true",
-      "--arg3=1",  //
-      "--arg4", "true", "--arg5",
-      "1"  //
+      "--arg3=1",         //
+      "--arg4", "true",   //
+      "--arg5", "false",  //
+      "--arg6", "1"       //
   );
 
   auto argo = Argo::Parser<"Flag arguments">();
@@ -34,7 +35,8 @@ TEST(ArgoTest, FlagArgument) {
                     .addArg<"arg2", bool>()
                     .addArg<"arg3", bool>()
                     .addArg<"arg4", bool>()
-                    .addArg<"arg5", bool>();
+                    .addArg<"arg5", bool>()
+                    .addArg<"arg6", bool>();
 
   parser.parse(argc, argv);
 
@@ -42,7 +44,8 @@ TEST(ArgoTest, FlagArgument) {
   EXPECT_EQ(parser.getArg<"arg2">(), true);
   EXPECT_EQ(parser.getArg<"arg3">(), true);
   EXPECT_EQ(parser.getArg<"arg4">(), true);
-  EXPECT_EQ(parser.getArg<"arg5">(), true);
+  EXPECT_EQ(parser.getArg<"arg5">(), false);
+  EXPECT_EQ(parser.getArg<"arg6">(), true);
 }
 
 TEST(ArgoTest, ShortArgument) {

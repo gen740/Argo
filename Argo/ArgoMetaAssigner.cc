@@ -264,7 +264,9 @@ ARGO_ALWAYS_INLINE constexpr auto ShortArgAssigner(
         return true;
       }
     }
-    if (is_flag) {
+    if (is_flag and (key.size() - 1 == i) and !values.empty()) {
+      assignArg<Arguments, PArgs>(found_key, values);
+    } else if (is_flag) {
       assignArg<Arguments, PArgs>(found_key, {});
     } else if ((key.size() - 1 == i) and !values.empty()) {
       assignArg<Arguments, PArgs>(found_key, values);

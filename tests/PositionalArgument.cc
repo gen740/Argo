@@ -21,19 +21,21 @@ TEST(ArgoTest, Positional) {
   }
   {
     auto [argc, argv] = createArgcArgv(  //
-        "./main", "1", "2", "3",         //
+        "./main", "-a", "1", "2", "3",   //
         "--arg2", "42.195"               //
     );
 
     auto argo = Argo::Parser<"positional argument2">("Sample Program");
     auto parser = argo  //
                       .addPositionalArg<"arg1", int, Argo::nargs(3)>()
-                      .addArg<"arg2", float>();
+                      .addArg<"arg2", float>()
+                      .addFlag<"arg3,a">();
 
     parser.parse(argc, argv);
 
     EXPECT_THAT(parser.getArg<"arg1">(), testing::ElementsAre(1, 2, 3));
     EXPECT_FLOAT_EQ(parser.getArg<"arg2">(), 42.195);
+    EXPECT_EQ(parser.getArg<"arg3">(), true);
   }
   {
     auto [argc, argv] = createArgcArgv(  //
