@@ -17,7 +17,8 @@ auto parser1 = Parser<"ExceptionParseError">()
                    .addArg<"arg2", float>()
                    .addArg<"arg3", bool>()
                    .addArg<"arg4", int, nargs(3)>()
-                   .addArg<"arg5", int, nargs(1)>();
+                   .addArg<"arg5", int, nargs(1)>()
+                   .addFlag<"arg6">();
 
 TEST(ArgoTest, ExceptionParseError) {
   auto [argc, argv] = createArgcArgv("./main", "foo");
@@ -34,6 +35,14 @@ TEST(ArgoTest, ExceptionParseError) {
   parser1.resetArgs();
 }
 
+TEST(ArgoTest, ExceptionParseTwice) {
+  auto [argc, argv] = createArgcArgv("./main", "--arg1", "3");
+  parser1.parse(argc, argv);
+  EXPECT_THAT([&]() { parser1.parse(argc, argv); },
+              ThrowsMessage<ParseError>(HasSubstr("Cannot parse twice")));
+  parser1.resetArgs();
+}
+
 TEST(ArgoTest, ExceptionOneArg) {
   auto [argc, argv] = createArgcArgv("./main", "--arg5");
 
@@ -41,6 +50,21 @@ TEST(ArgoTest, ExceptionOneArg) {
               ThrowsMessage<InvalidArgument>(HasSubstr(
                   "Argument arg5: should take exactly one value but zero")));
   parser1.resetArgs();
+}
+
+TEST(ArgoTest, ExceptionDuplicatedArg) {
+  auto [argc, argv] = createArgcArgv("./main", "--arg1", "--arg1");
+  EXPECT_THAT([&]() { parser1.parse(argc, argv); },
+              ThrowsMessage<InvalidArgument>(
+                  HasSubstr("Argument arg1: duplicated argument")));
+  parser1.resetArgs();
+}
+
+TEST(ArgoTest, ExceptionInvalidArgumentBool) {
+  auto [argc, argv] = createArgcArgv("./main", "--arg3", "tRue");
+  EXPECT_THAT([&]() { parser1.parse(argc, argv); },
+              ThrowsMessage<InvalidArgument>(
+                  HasSubstr("Argument arg3: tRue cannot convert bool")));
 }
 
 auto parser2 = Parser<"Exception">()

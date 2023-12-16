@@ -21,7 +21,8 @@ using namespace std;
  * Helper class of assigning value
  */
 template <class Type>
-ARGO_ALWAYS_INLINE constexpr auto ArgCaster(const string_view& value) -> Type {
+ARGO_ALWAYS_INLINE constexpr auto ArgCaster(const string_view& value,
+                                            const string_view& key) -> Type {
   if constexpr (is_same_v<Type, bool>) {
     if ((value == "true")     //
         || (value == "True")  //
@@ -35,7 +36,8 @@ ARGO_ALWAYS_INLINE constexpr auto ArgCaster(const string_view& value) -> Type {
         || (value == "0")) {
       return false;
     }
-    throw InvalidArgument("Invalid argument expect bool");
+    throw InvalidArgument(
+        format("Argument {}: {} cannot convert bool", key, value));
   } else if constexpr (is_integral_v<Type>) {
     Type ret;
     from_chars(value.begin(), value.end(), ret);
@@ -52,9 +54,10 @@ ARGO_ALWAYS_INLINE constexpr auto ArgCaster(const string_view& value) -> Type {
 template <class... T, size_t... N>
 ARGO_ALWAYS_INLINE constexpr auto TupleAssign(tuple<T...>& t,
                                               const span<string_view>& v,
-                                              index_sequence<N...> /* unused */)
-    -> void {
-  ((get<N>(t) = ArgCaster<remove_cvref_t<decltype(get<N>(t))>>(v[N])), ...);
+                                              index_sequence<N...> /* unused */,
+                                              const string_view& key) -> void {
+  ((get<N>(t) = ArgCaster<remove_cvref_t<decltype(get<N>(t))>>(v[N], key)),
+   ...);
 }
 
 template <class Arg>
@@ -74,7 +77,8 @@ ARGO_ALWAYS_INLINE constexpr auto ValiadicArgAssign(
     const span<string_view>& values) -> void {
   Arg::value.resize(values.size());
   for (size_t i = 0; i < values.size(); i++) {
-    Arg::value[i] = ArgCaster<typename Arg::baseType>(values[i]);
+    Arg::value[i] =
+        ArgCaster<typename Arg::baseType>(values[i], Arg::name.getKey());
   }
   AfterAssign<Arg>(values);
 }
@@ -88,16 +92,19 @@ ARGO_ALWAYS_INLINE constexpr auto NLengthArgAssign(span<string_view>& values)
   }
   if constexpr (is_array_v<typename Arg::type>) {
     for (size_t i = 0; i < Arg::nargs.nargs; i++) {
-      Arg::value[i] = ArgCaster<typename Arg::baseType>(values[i]);
+      Arg::value[i] =
+          ArgCaster<typename Arg::baseType>(values[i], Arg::name.getKey());
     }
   } else if constexpr (is_vector_v<typename Arg::type>) {
     Arg::value.resize(Arg::nargs.nargs);
     for (size_t i = 0; i < Arg::nargs.nargs; i++) {
-      Arg::value[i] = ArgCaster<typename Arg::baseType>(values[i]);
+      Arg::value[i] =
+          ArgCaster<typename Arg::baseType>(values[i], Arg::name.getKey());
     }
   } else if constexpr (is_tuple_v<typename Arg::type>) {
     TupleAssign(Arg::value, values,
-                make_index_sequence<tuple_size_v<typename Arg::type>>());
+                make_index_sequence<tuple_size_v<typename Arg::type>>(),
+                Arg::name.getKey());
   } else {
     static_assert(false, "Invalid Type");
   }
@@ -111,7 +118,7 @@ ARGO_ALWAYS_INLINE constexpr auto ZeroOrOneArgAssign(span<string_view>& values)
   if (values.empty()) {
     Arg::value = Arg::defaultValue;
   } else {
-    Arg::value = ArgCaster<typename Arg::type>(values[0]);
+    Arg::value = ArgCaster<typename Arg::type>(values[0], Arg::name.getKey());
   }
   AfterAssign<Arg>(values.subspan(0, 1));
   values = values.subspan(1);
@@ -157,7 +164,8 @@ ARGO_ALWAYS_INLINE constexpr auto AssignOneArg(const string_view& key,
                                                span<string_view> values)
     -> bool {
   if (Head::assigned) [[unlikely]] {
-    throw Argo::InvalidArgument(format("Duplicated argument {}", key));
+    throw Argo::InvalidArgument(
+        format("Argument {}: duplicated argument", key));
   }
   if constexpr (derived_from<Head, FlagArgTag>) {
     if constexpr (is_same_v<PArgs, tuple<>>) {

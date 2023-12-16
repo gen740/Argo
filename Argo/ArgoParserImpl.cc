@@ -38,7 +38,8 @@ ARGO_ALWAYS_INLINE auto splitStringView(string_view str, char delimeter)
 template <ParserID ID, class Args, class PArgs, class HArg, class SubParsers>
   requires(is_tuple_v<Args> && is_tuple_v<SubParsers>)
 constexpr auto Parser<ID, Args, PArgs, HArg, SubParsers>::resetArgs() -> void {
-  ValueReset<Args>();
+  this->parsed_ = false;
+  ValueReset<decltype(tuple_cat(declval<Args>(), declval<PArgs>()))>();
 }
 
 template <ParserID ID, class Args, class PArgs, class HArg, class SubParsers>

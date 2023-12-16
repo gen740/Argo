@@ -882,7 +882,8 @@ using namespace std;
  * Helper class of assigning value
  */
 template <class Type>
-ARGO_ALWAYS_INLINE constexpr auto ArgCaster(const string_view& value) -> Type {
+ARGO_ALWAYS_INLINE constexpr auto ArgCaster(const string_view& value,
+                                            const string_view& key) -> Type {
   if constexpr (is_same_v<Type, bool>) {
     if ((value == "true")     //
         || (value == "True")  //
@@ -896,7 +897,8 @@ ARGO_ALWAYS_INLINE constexpr auto ArgCaster(const string_view& value) -> Type {
         || (value == "0")) {
       return false;
     }
-    throw InvalidArgument("Invalid argument expect bool");
+    throw InvalidArgument(
+        format("Argument {}: {} cannot convert bool", key, value));
   } else if constexpr (is_integral_v<Type>) {
     Type ret;
     from_chars(value.begin(), value.end(), ret);
@@ -913,9 +915,10 @@ ARGO_ALWAYS_INLINE constexpr auto ArgCaster(const string_view& value) -> Type {
 template <class... T, size_t... N>
 ARGO_ALWAYS_INLINE constexpr auto TupleAssign(tuple<T...>& t,
                                               const span<string_view>& v,
-                                              index_sequence<N...> /* unused */)
-    -> void {
-  ((get<N>(t) = ArgCaster<remove_cvref_t<decltype(get<N>(t))>>(v[N])), ...);
+                                              index_sequence<N...> /* unused */,
+                                              const string_view& key) -> void {
+  ((get<N>(t) = ArgCaster<remove_cvref_t<decltype(get<N>(t))>>(v[N], key)),
+   ...);
 }
 
 template <class Arg>
@@ -935,7 +938,8 @@ ARGO_ALWAYS_INLINE constexpr auto ValiadicArgAssign(
     const span<string_view>& values) -> void {
   Arg::value.resize(values.size());
   for (size_t i = 0; i < values.size(); i++) {
-    Arg::value[i] = ArgCaster<typename Arg::baseType>(values[i]);
+    Arg::value[i] =
+        ArgCaster<typename Arg::baseType>(values[i], Arg::name.getKey());
   }
   AfterAssign<Arg>(values);
 }
@@ -949,16 +953,19 @@ ARGO_ALWAYS_INLINE constexpr auto NLengthArgAssign(span<string_view>& values)
   }
   if constexpr (is_array_v<typename Arg::type>) {
     for (size_t i = 0; i < Arg::nargs.nargs; i++) {
-      Arg::value[i] = ArgCaster<typename Arg::baseType>(values[i]);
+      Arg::value[i] =
+          ArgCaster<typename Arg::baseType>(values[i], Arg::name.getKey());
     }
   } else if constexpr (is_vector_v<typename Arg::type>) {
     Arg::value.resize(Arg::nargs.nargs);
     for (size_t i = 0; i < Arg::nargs.nargs; i++) {
-      Arg::value[i] = ArgCaster<typename Arg::baseType>(values[i]);
+      Arg::value[i] =
+          ArgCaster<typename Arg::baseType>(values[i], Arg::name.getKey());
     }
   } else if constexpr (is_tuple_v<typename Arg::type>) {
     TupleAssign(Arg::value, values,
-                make_index_sequence<tuple_size_v<typename Arg::type>>());
+                make_index_sequence<tuple_size_v<typename Arg::type>>(),
+                Arg::name.getKey());
   } else {
     static_assert(false, "Invalid Type");
   }
@@ -972,7 +979,7 @@ ARGO_ALWAYS_INLINE constexpr auto ZeroOrOneArgAssign(span<string_view>& values)
   if (values.empty()) {
     Arg::value = Arg::defaultValue;
   } else {
-    Arg::value = ArgCaster<typename Arg::type>(values[0]);
+    Arg::value = ArgCaster<typename Arg::type>(values[0], Arg::name.getKey());
   }
   AfterAssign<Arg>(values.subspan(0, 1));
   values = values.subspan(1);
@@ -993,7 +1000,7 @@ ARGO_ALWAYS_INLINE constexpr auto PArgAssigner(span<string_view> values)
       if constexpr (Arg::nargs.nargs == 1) {
         if (values.empty()) [[unlikely]] {
           throw Argo::InvalidArgument(
-              format("Argument {} should take exactly one value but zero",
+              format("Argument {}: should take exactly one value but zero",
                      Arg::name.getKey()));
         }
         ZeroOrOneArgAssign<Arg>(values);
@@ -1018,7 +1025,8 @@ ARGO_ALWAYS_INLINE constexpr auto AssignOneArg(const string_view& key,
                                                span<string_view> values)
     -> bool {
   if (Head::assigned) [[unlikely]] {
-    throw Argo::InvalidArgument(format("Duplicated argument {}", key));
+    throw Argo::InvalidArgument(
+        format("Argument {}: duplicated argument", key));
   }
   if constexpr (derived_from<Head, FlagArgTag>) {
     if constexpr (is_same_v<PArgs, tuple<>>) {
@@ -1054,14 +1062,14 @@ ARGO_ALWAYS_INLINE constexpr auto AssignOneArg(const string_view& key,
     } else if constexpr (Head::nargs.nargs_char == '+') {
       if (values.empty()) [[unlikely]] {
         throw Argo::InvalidArgument(
-            format("Argument {} should take more than one value", key));
+            format("Argument {}: should take more than one value", key));
       }
       ValiadicArgAssign<Head>(values);
       return true;
     } else if constexpr (Head::nargs.nargs == 1) {
       if (values.empty()) [[unlikely]] {
         throw Argo::InvalidArgument(
-            format("Argument {} should take exactly one value but zero", key));
+            format("Argument {}: should take exactly one value but zero", key));
       }
       ZeroOrOneArgAssign<Head>(values);
       if (values.empty()) {
@@ -1469,17 +1477,13 @@ class Parser {
     if (!this->parsed_) [[unlikely]] {
       throw ParseError("Parser did not parse argument, call parse first");
     }
-    if constexpr (!is_same_v<PArgs, tuple<>>) {
-      if constexpr (Name.getKey() == PArgs::name.getKey()) {
-        return PArgs::assigned;
-      } else {
-        return remove_cvref_t<decltype(get<SearchIndex<Args, Name>()>(
-            declval<Args>()))>::assigned;
-      }
-    } else {
-      return remove_cvref_t<decltype(get<SearchIndex<Args, Name>()>(
-          declval<Args>()))>::assigned;
-    }
+    using AllArguments = decltype(tuple_cat(declval<Args>(), declval<PArgs>()));
+
+    static_assert(SearchIndex<AllArguments, Name>() != -1,
+                  "Argument does not exist");
+
+    return tuple_element_t<SearchIndex<AllArguments, Name>(),
+                           AllArguments>::assigned;
   }
 
   /*!
@@ -1553,7 +1557,8 @@ ARGO_ALWAYS_INLINE auto splitStringView(string_view str, char delimeter)
 template <ParserID ID, class Args, class PArgs, class HArg, class SubParsers>
   requires(is_tuple_v<Args> && is_tuple_v<SubParsers>)
 constexpr auto Parser<ID, Args, PArgs, HArg, SubParsers>::resetArgs() -> void {
-  ValueReset<Args>();
+  this->parsed_ = false;
+  ValueReset<decltype(tuple_cat(declval<Args>(), declval<PArgs>()))>();
 }
 
 template <ParserID ID, class Args, class PArgs, class HArg, class SubParsers>
