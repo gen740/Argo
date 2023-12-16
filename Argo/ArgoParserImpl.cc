@@ -114,7 +114,7 @@ constexpr auto Parser<ID, Args, PArgs, HArg, SubParsers>::parse(int argc,
       arg = argv[i];
       is_flag = arg.starts_with('-');
       if (arg.size() > 1 and arg.at(1) >= '0' and arg.at(1) <= '9') {
-        is_flag = SearchIndexFromShortName<Args>(arg.at(1)) != -1;
+        is_flag = IsFlag<Args>(arg.at(1));
       }
     } else {
       is_flag = true;

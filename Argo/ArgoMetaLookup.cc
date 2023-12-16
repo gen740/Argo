@@ -17,7 +17,8 @@ namespace Argo {
 using namespace std;
 
 template <class Arguments>
-ARGO_ALWAYS_INLINE constexpr auto GetkeyFromShortKey(char key) {
+ARGO_ALWAYS_INLINE constexpr auto GetkeyFromShortKey(char key)
+    -> tuple<string_view, bool> {
   auto name = string_view();
   auto is_flag = true;
   if ([&]<class... T>(type_sequence<T...>) ARGO_ALWAYS_INLINE {
@@ -41,45 +42,38 @@ ARGO_ALWAYS_INLINE constexpr auto GetkeyFromShortKey(char key) {
  * Index Search meta function
  */
 template <class Tuple, ArgName Name>
-consteval auto SearchIndex() {
+consteval auto SearchIndex() -> int {
   int value = -1;
-  if (![&value]<class... T>(type_sequence<T...>) ARGO_ALWAYS_INLINE {
+  if ([&value]<class... T>(type_sequence<T...>) ARGO_ALWAYS_INLINE {
         return ((value++, Name == T::name) || ...);
       }(make_type_sequence_t<Tuple>())) {
-    return -1;
+    return value;
   }
-  return value;
+  return -1;
 }
 
 /*!
  * Index Search meta function
  */
 template <class Tuple, char C>
-consteval auto SearchIndexFromShortName() {
+consteval auto SearchIndexFromShortName() -> int {
   int value = -1;
-  if (![&value]<class... T>(type_sequence<T...>) ARGO_ALWAYS_INLINE {
+  if ([&value]<class... T>(type_sequence<T...>) ARGO_ALWAYS_INLINE {
         return ((value++, C == T::name.getShortName()) || ...);
       }(make_type_sequence_t<Tuple>())) {
-    return -1;
+    return value;
   }
-  return value;
+  return -1;
 }
 
 /*!
  * Index Search meta function
  */
 template <class Tuple>
-ARGO_ALWAYS_INLINE constexpr auto SearchIndexFromShortName(char c) {
-  int value = -1;
-  if (![&value, &c]<class... T>(type_sequence<T...>) ARGO_ALWAYS_INLINE {
-        return ((value++, (T::name.getShortName() >= '0' and
-                           T::name.getShortName() <= '9') and
-                              (c == T::name.getShortName())) ||
-                ...);
-      }(make_type_sequence_t<Tuple>())) {
-    return -1;
-  }
-  return value;
+ARGO_ALWAYS_INLINE constexpr auto IsFlag(char c) -> bool {
+  return [&c]<class... T>(type_sequence<T...>) ARGO_ALWAYS_INLINE {
+    return ((c == T::name.getShortName()) || ...);
+  }(make_type_sequence_t<Tuple>());
 }
 
 };  // namespace Argo
