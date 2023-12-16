@@ -4,10 +4,14 @@ tasks:
   cmake:
     cmds:
       - cmake -B build -S . -DARGO_TESTS_ENABLE=true -DARGO_BENCHMARKS_ENABLE=true -GNinja
-  compile:
+  build:
     cmds:
       - cmake --build build
-  execute:
+  run:
+    cmds:
+      - ./build/main -h
+    silent: true
+  test:
     cmds:
       - ./build/test-argo-release
     silent: true
