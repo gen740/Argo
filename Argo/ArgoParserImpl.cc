@@ -212,7 +212,7 @@ struct AnsiEscapeCode {
   }
 
   [[nodiscard]] auto getBoldUnderline() const {
-    return isEnabled ? bold + underline : "";
+    return isEnabled ? this->getBold() + this->getUnderline() : "";
   }
 };
 
