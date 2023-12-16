@@ -372,7 +372,7 @@ struct ArgName {
   }
 
   template <size_t M>
-  [[nodiscard]] ARGO_ALWAYS_INLINE constexpr auto operator==(
+  [[nodiscard]] ARGO_ALWAYS_INLINE consteval auto operator==(
       const ArgName<M>& lhs) const -> bool {
     return this->getKey() == lhs.getKey();
   }
@@ -531,19 +531,19 @@ consteval auto get_type_name_base_type([[maybe_unused]] size_t n = 0) {
 template <class T, NArgs TNArgs>
 consteval auto get_base_type_name_form_stl() {
   if constexpr (is_array_v<T>) {
-    return []<size_t... Is>(index_sequence<Is...>) {
+    return []<size_t... Is>(index_sequence<Is...>) consteval {
       return ((get_type_name_base_type<array_base_t<T>>(Is) + String(",")) +
               ...);
     }(make_index_sequence<TNArgs.nargs>())
                .removeTrail();
   } else if constexpr (is_vector_v<T>) {
-    return []<size_t... Is>(index_sequence<Is...>) {
+    return []<size_t... Is>(index_sequence<Is...>) consteval {
       return ((get_type_name_base_type<vector_base_t<T>>(Is) + String(",")) +
               ...)
           .removeTrail();
     }(make_index_sequence<TNArgs.nargs>());
   } else if constexpr (is_tuple_v<T>) {
-    return []<class... U>(type_sequence<U...>) {
+    return []<class... U>(type_sequence<U...>) consteval {
       return (((get_type_name_base_type<vector_base_t<U>>()) + String(",")) +
               ...);
     }(make_type_sequence_t<T>())
@@ -764,33 +764,26 @@ struct ArgInfo {
 };
 
 template <class Args>
-struct HelpGenerator {};
-
-template <class... Args>
-struct HelpGenerator<tuple<Args...>> {
-  ARGO_ALWAYS_INLINE constexpr static auto generate() -> vector<ArgInfo> {
-    vector<ArgInfo> ret;
-    (
-        [&ret]() ARGO_ALWAYS_INLINE {
-          if constexpr (derived_from<Args, ArgTag>) {
-            ret.emplace_back(
-                Args::name.getKey().substr(0, Args::name.getKeyLen()),  //
-                Args::name.getShortName(),                              //
-                Args::description,                                      //
-                Args::required,                                         //
-                string_view(Args::typeName));
-          } else {
-            ret.emplace_back(
-                Args::name.getKey().substr(0, Args::name.getKeyLen()),  //
-                Args::name.getShortName(),                              //
-                Args::description,                                      //
-                false,                                                  //
-                string_view(Args::typeName));
-          }
-        }(),
-        ...);
-    return ret;
-  }
+ARGO_ALWAYS_INLINE constexpr auto HelpGenerator() {
+  vector<ArgInfo> ret;
+  tuple_type_visit<Args>([&ret]<class T>(T) {
+    if constexpr (derived_from<typename T::type, ArgTag>) {
+      ret.emplace_back(
+          T::type::name.getKey().substr(0, T::type::name.getKeyLen()),  //
+          T::type::name.getShortName(),                                 //
+          T::type::description,                                         //
+          T::type::required,                                            //
+          string_view(T::type::typeName));
+    } else {
+      ret.emplace_back(
+          T::type::name.getKey().substr(0, T::type::name.getKeyLen()),  //
+          T::type::name.getShortName(),                                 //
+          T::type::description,                                         //
+          false,                                                        //
+          string_view(T::type::typeName));
+    }
+  });
+  return ret;
 };
 
 struct SubCommandInfo {
@@ -819,7 +812,8 @@ namespace Argo {
 using namespace std;
 
 template <class Arguments>
-ARGO_ALWAYS_INLINE constexpr auto GetkeyFromShortKey(char key) {
+ARGO_ALWAYS_INLINE constexpr auto GetkeyFromShortKey(char key)
+    -> tuple<string_view, bool> {
   auto name = string_view();
   auto is_flag = true;
   if ([&]<class... T>(type_sequence<T...>) ARGO_ALWAYS_INLINE {
@@ -843,45 +837,38 @@ ARGO_ALWAYS_INLINE constexpr auto GetkeyFromShortKey(char key) {
  * Index Search meta function
  */
 template <class Tuple, ArgName Name>
-consteval auto SearchIndex() {
+consteval auto SearchIndex() -> int {
   int value = -1;
-  if (![&value]<class... T>(type_sequence<T...>) {
+  if ([&value]<class... T>(type_sequence<T...>) ARGO_ALWAYS_INLINE {
         return ((value++, Name == T::name) || ...);
       }(make_type_sequence_t<Tuple>())) {
-    return -1;
+    return value;
   }
-  return value;
+  return -1;
 }
 
 /*!
  * Index Search meta function
  */
 template <class Tuple, char C>
-consteval auto SearchIndexFromShortName() {
+consteval auto SearchIndexFromShortName() -> int {
   int value = -1;
-  if (![&value]<class... T>(type_sequence<T...>) {
+  if ([&value]<class... T>(type_sequence<T...>) ARGO_ALWAYS_INLINE {
         return ((value++, C == T::name.getShortName()) || ...);
       }(make_type_sequence_t<Tuple>())) {
-    return -1;
+    return value;
   }
-  return value;
+  return -1;
 }
 
 /*!
  * Index Search meta function
  */
 template <class Tuple>
-ARGO_ALWAYS_INLINE constexpr auto SearchIndexFromShortName(char c) {
-  int value = -1;
-  if (![&value, &c]<class... T>(type_sequence<T...>) ARGO_ALWAYS_INLINE {
-        return ((value++, (T::name.getShortName() >= '0' and
-                           T::name.getShortName() <= '9') and
-                              (c == T::name.getShortName())) ||
-                ...);
-      }(make_type_sequence_t<Tuple>())) {
-    return -1;
-  }
-  return value;
+ARGO_ALWAYS_INLINE constexpr auto IsFlag(char c) -> bool {
+  return [&c]<class... T>(type_sequence<T...>) ARGO_ALWAYS_INLINE {
+    return ((c == T::name.getShortName()) || ...);
+  }(make_type_sequence_t<Tuple>());
 }
 
 };  // namespace Argo
@@ -1129,7 +1116,15 @@ ARGO_ALWAYS_INLINE constexpr auto ShortArgAssigner(
     string_view key, const span<string_view>& values) {
   bool has_help = false;
   for (size_t i = 0; i < key.size(); i++) {
-    auto [found_key, is_flag] = GetkeyFromShortKey<Arguments>(key[i]);
+    auto [found_key, is_flag] = GetkeyFromShortKey<  //
+        conditional_t<is_same_v<HArg, void>,         //
+                      Arguments,                     //
+                      tuple_append_t<Arguments, HArg>>>(key[i]);
+    if constexpr (!is_same_v<HArg, void>) {
+      if (found_key == HArg::name.getKey()) [[unlikely]] {
+        return true;
+      }
+    }
     if (is_flag) {
       assignArg<Arguments, PArgs>(found_key, {});
     } else if ((key.size() - 1 == i) and !values.empty()) {
@@ -1142,11 +1137,6 @@ ARGO_ALWAYS_INLINE constexpr auto ShortArgAssigner(
     } else [[unlikely]] {
       throw Argo::InvalidArgument(
           format("Invalid Flag argument {} {}", key[i], key.substr(i + 1)));
-    }
-    if constexpr (!is_same_v<HArg, void>) {
-      if (found_key == HArg::name.getKey()) [[unlikely]] {
-        has_help = true;
-      }
     }
   }
   return has_help;
@@ -1637,7 +1627,7 @@ constexpr auto Parser<ID, Args, PArgs, HArg, SubParsers>::parse(int argc,
       arg = argv[i];
       is_flag = arg.starts_with('-');
       if (arg.size() > 1 and arg.at(1) >= '0' and arg.at(1) <= '9') {
-        is_flag = SearchIndexFromShortName<Args>(arg.at(1)) != -1;
+        is_flag = IsFlag<Args>(arg.at(1));
       }
     } else {
       is_flag = true;
@@ -1738,7 +1728,7 @@ struct AnsiEscapeCode {
   }
 };
 
-inline size_t max_option_width = 48;
+inline size_t max_option_width = 26;
 
 constexpr auto createUsageSection(const auto& program_name,
                                   const auto& help_info, const auto& pargs_info,
@@ -1780,7 +1770,7 @@ constexpr auto createSubcommandSection(const auto& ansi,
   ret.push_back('\n');
   for (const auto& command : sub_commands) {
     auto description = splitStringView(command.description, '\n');
-    if (command.name.size() < max_option_width and description[0] != "") {
+    if (command.name.size() < max_option_width - 2 and description[0] != "") {
       ret.append(
           format("  {0}{1}{2}{3}{4}\n",
                  ansi.getBold(),                                           // 1
@@ -1811,7 +1801,7 @@ constexpr auto createOptionsSection(const auto& ansi, const auto& help_info) {
   for (const auto& option : help_info) {
     auto description = splitStringView(option.description, '\n');
     string option_string = format(
-        "{0}{1} --{2}{3} {4}",
+        "{0}{1}--{2}{3} {4}",
         ansi.getBold(),                                                 // 0
         (option.shortName == '\0') ? "   "                              //
                                    : format("-{},", option.shortName),  // 1
@@ -1821,7 +1811,7 @@ constexpr auto createOptionsSection(const auto& ansi, const auto& help_info) {
     );
 
     if (option_string.size() - ansi.getBold().size() - ansi.getReset().size() <
-            max_option_width and
+            max_option_width - 2 and
         description[0] != "") {
       ret.append(format(
           "  {0}{1}{2}\n",
@@ -1859,7 +1849,7 @@ constexpr auto createPositionalArgumentSection(const auto& ansi,
   for (const auto& i : pargs_info) {
     auto description = splitStringView(i.description, '\n');
 
-    if (i.name.size() < max_option_width and description[0] != "") {
+    if (i.name.size() < max_option_width - 2 and description[0] != "") {
       ret.append(format("  {0}{1}{2}{3}{4}\n",
                         ansi.getBold(),                                     // 1
                         i.name,                                             // 2
@@ -1894,11 +1884,11 @@ constexpr auto Parser<ID, Args, PArgs, HArg, SubParsers>::formatHelp(
 
   vector<ArgInfo> help_info;
   if constexpr (is_same_v<HArg, void>) {
-    help_info = HelpGenerator<Args>::generate();
+    help_info = HelpGenerator<Args>();
   } else {
-    help_info = HelpGenerator<tuple_append_t<Args, HArg>>::generate();
+    help_info = HelpGenerator<tuple_append_t<Args, HArg>>();
   }
-  vector<ArgInfo> pargs_info = HelpGenerator<PArgs>::generate();
+  vector<ArgInfo> pargs_info = HelpGenerator<PArgs>();
 
   auto sub_commands = SubParserInfo(subParsers);
 

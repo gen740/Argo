@@ -215,7 +215,7 @@ struct AnsiEscapeCode {
   }
 };
 
-inline size_t max_option_width = 48;
+inline size_t max_option_width = 26;
 
 constexpr auto createUsageSection(const auto& program_name,
                                   const auto& help_info, const auto& pargs_info,
@@ -257,7 +257,7 @@ constexpr auto createSubcommandSection(const auto& ansi,
   ret.push_back('\n');
   for (const auto& command : sub_commands) {
     auto description = splitStringView(command.description, '\n');
-    if (command.name.size() < max_option_width and description[0] != "") {
+    if (command.name.size() < max_option_width - 2 and description[0] != "") {
       ret.append(
           format("  {0}{1}{2}{3}{4}\n",
                  ansi.getBold(),                                           // 1
@@ -288,7 +288,7 @@ constexpr auto createOptionsSection(const auto& ansi, const auto& help_info) {
   for (const auto& option : help_info) {
     auto description = splitStringView(option.description, '\n');
     string option_string = format(
-        "{0}{1} --{2}{3} {4}",
+        "{0}{1}--{2}{3} {4}",
         ansi.getBold(),                                                 // 0
         (option.shortName == '\0') ? "   "                              //
                                    : format("-{},", option.shortName),  // 1
@@ -298,7 +298,7 @@ constexpr auto createOptionsSection(const auto& ansi, const auto& help_info) {
     );
 
     if (option_string.size() - ansi.getBold().size() - ansi.getReset().size() <
-            max_option_width and
+            max_option_width - 2 and
         description[0] != "") {
       ret.append(format(
           "  {0}{1}{2}\n",
@@ -336,7 +336,7 @@ constexpr auto createPositionalArgumentSection(const auto& ansi,
   for (const auto& i : pargs_info) {
     auto description = splitStringView(i.description, '\n');
 
-    if (i.name.size() < max_option_width and description[0] != "") {
+    if (i.name.size() < max_option_width - 2 and description[0] != "") {
       ret.append(format("  {0}{1}{2}{3}{4}\n",
                         ansi.getBold(),                                     // 1
                         i.name,                                             // 2
