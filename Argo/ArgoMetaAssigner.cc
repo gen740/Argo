@@ -255,7 +255,15 @@ ARGO_ALWAYS_INLINE constexpr auto ShortArgAssigner(
     string_view key, const span<string_view>& values) {
   bool has_help = false;
   for (size_t i = 0; i < key.size(); i++) {
-    auto [found_key, is_flag] = GetkeyFromShortKey<Arguments>(key[i]);
+    auto [found_key, is_flag] = GetkeyFromShortKey<  //
+        conditional_t<is_same_v<HArg, void>,         //
+                      Arguments,                     //
+                      tuple_append_t<Arguments, HArg>>>(key[i]);
+    if constexpr (!is_same_v<HArg, void>) {
+      if (found_key == HArg::name.getKey()) [[unlikely]] {
+        return true;
+      }
+    }
     if (is_flag) {
       assignArg<Arguments, PArgs>(found_key, {});
     } else if ((key.size() - 1 == i) and !values.empty()) {
@@ -268,11 +276,6 @@ ARGO_ALWAYS_INLINE constexpr auto ShortArgAssigner(
     } else [[unlikely]] {
       throw Argo::InvalidArgument(
           format("Invalid Flag argument {} {}", key[i], key.substr(i + 1)));
-    }
-    if constexpr (!is_same_v<HArg, void>) {
-      if (found_key == HArg::name.getKey()) [[unlikely]] {
-        has_help = true;
-      }
     }
   }
   return has_help;
