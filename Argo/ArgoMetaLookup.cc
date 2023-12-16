@@ -43,7 +43,7 @@ ARGO_ALWAYS_INLINE constexpr auto GetkeyFromShortKey(char key) {
 template <class Tuple, ArgName Name>
 consteval auto SearchIndex() {
   int value = -1;
-  if (![&value]<class... T>(type_sequence<T...>) {
+  if (![&value]<class... T>(type_sequence<T...>) ARGO_ALWAYS_INLINE {
         return ((value++, Name == T::name) || ...);
       }(make_type_sequence_t<Tuple>())) {
     return -1;
@@ -57,7 +57,7 @@ consteval auto SearchIndex() {
 template <class Tuple, char C>
 consteval auto SearchIndexFromShortName() {
   int value = -1;
-  if (![&value]<class... T>(type_sequence<T...>) {
+  if (![&value]<class... T>(type_sequence<T...>) ARGO_ALWAYS_INLINE {
         return ((value++, C == T::name.getShortName()) || ...);
       }(make_type_sequence_t<Tuple>())) {
     return -1;

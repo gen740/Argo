@@ -58,6 +58,5 @@ long desc 2)"))
           .addHelp<"help,h">();
 
   parser.parse(argc, argv);
-
   return 0;
 }
