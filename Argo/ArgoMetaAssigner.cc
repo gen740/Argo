@@ -132,7 +132,7 @@ ARGO_ALWAYS_INLINE constexpr auto PArgAssigner(span<string_view> values)
       if constexpr (Arg::nargs.nargs == 1) {
         if (values.empty()) [[unlikely]] {
           throw Argo::InvalidArgument(
-              format("Argument {} should take exactly one value but zero",
+              format("Argument {}: should take exactly one value but zero",
                      Arg::name.getKey()));
         }
         ZeroOrOneArgAssign<Arg>(values);
@@ -193,14 +193,14 @@ ARGO_ALWAYS_INLINE constexpr auto AssignOneArg(const string_view& key,
     } else if constexpr (Head::nargs.nargs_char == '+') {
       if (values.empty()) [[unlikely]] {
         throw Argo::InvalidArgument(
-            format("Argument {} should take more than one value", key));
+            format("Argument {}: should take more than one value", key));
       }
       ValiadicArgAssign<Head>(values);
       return true;
     } else if constexpr (Head::nargs.nargs == 1) {
       if (values.empty()) [[unlikely]] {
         throw Argo::InvalidArgument(
-            format("Argument {} should take exactly one value but zero", key));
+            format("Argument {}: should take exactly one value but zero", key));
       }
       ZeroOrOneArgAssign<Head>(values);
       if (values.empty()) {

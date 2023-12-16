@@ -285,17 +285,13 @@ class Parser {
     if (!this->parsed_) [[unlikely]] {
       throw ParseError("Parser did not parse argument, call parse first");
     }
-    if constexpr (!is_same_v<PArgs, tuple<>>) {
-      if constexpr (Name.getKey() == PArgs::name.getKey()) {
-        return PArgs::assigned;
-      } else {
-        return remove_cvref_t<decltype(get<SearchIndex<Args, Name>()>(
-            declval<Args>()))>::assigned;
-      }
-    } else {
-      return remove_cvref_t<decltype(get<SearchIndex<Args, Name>()>(
-          declval<Args>()))>::assigned;
-    }
+    using AllArguments = decltype(tuple_cat(declval<Args>(), declval<PArgs>()));
+
+    static_assert(SearchIndex<AllArguments, Name>() != -1,
+                  "Argument does not exist");
+
+    return tuple_element_t<SearchIndex<AllArguments, Name>(),
+                           AllArguments>::assigned;
   }
 
   /*!
