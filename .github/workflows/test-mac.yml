@@ -31,11 +31,6 @@ jobs:
           brew install cmake
         continue-on-error: true
 
-      - name: Install googletest
-        run: |
-          brew install googletest
-        continue-on-error: true
-
       - name: Install ninja
         run: |
           brew install ninja

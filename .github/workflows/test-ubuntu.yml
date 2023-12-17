@@ -34,11 +34,6 @@ jobs:
           sudo ./cmake_install.sh --prefix=/usr/local --skip-license
           rm cmake_install.sh
 
-      - name: Install googletest
-        run: |
-          sudo apt-get install libgtest-dev
-          sudo apt-get install libgmock-dev
-
       - name: Install ninja
         run: |
           wget https://github.com/ninja-build/ninja/releases/download/v1.11.1/ninja-linux.zip
