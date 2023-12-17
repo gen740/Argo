@@ -36,7 +36,10 @@ C++ mordern and safest argument parser, using C++ modules and metaprogramming.
 6. [**Creating Multiple Parsers**](#creating-multiple-parsers)
 7. [**Adding Subcommands**](#adding-subcommands)
    - [Parsing Results](#parsing-results)
-8. [**Installation with CMake**](#installation-with-cmake)
+8. [**Help Generation**](#help-generation)
+   - [Add help flag](#add-help-flag)
+   - [Customizing help contents](#customizing-help-contents)
+9. [**Installation with CMake**](#installation-with-cmake)
    - [Using Submodule](#using-submodule)
    - [Using FetchContent](#using-fetchcontent)
 
@@ -275,6 +278,74 @@ if (parser1) {
 }
 ```
 
+## Help Generation
+
+### Add help flag
+You can easily enable a help flag by passing "addHelp".
+When the `--help` or `-h` flag is used, the program will immediately display the help message and then exit.
+```cpp
+auto parser = Argo::Parser()
+              .addArg<"arg1", int>()
+              .addHelp();
+```
+
+To customize the help flag, pass a template argument.
+```cpp
+auto parser = Argo::Parser()
+              .addArg<"arg1", int>()
+              .addHelp<"generate_help,g">();
+```
+
+## Customizing help contents
+You can fully customize the contents of the help section.
+
+```cpp
+auto parser = Argo::Parser()
+              .addArg<"arg1", int>()
+              .addHelp(R"(
+Help Description
+
+Usage:
+    ./main -h
+)");
+```
+
+The help section is divided into five parts:
+- Description
+- Usage Help
+- Subcommands Help
+- Positional Argument Help
+- Options Help
+
+```
+<description>
+
+Usage:
+    <usage help>
+
+Subcommands:
+    <subcommands help>
+
+Positional Argument:
+    <positional argument help>
+
+Options:
+    <options help>
+```
+
+You can tailor each section as follows.
+
+```cpp
+auto parser = Argo::Parser("program name", "<description>")
+              .addArg<"arg1", int>()
+              .addHelp();
+
+parser.addUsageHelp("<usage help>");
+parser.addSubcommandHelp("<subcommands help>");
+parser.addPositionalArgumentHelp("<positional argument help>");
+parser.addOptionsHelp("<options help>");
+```
+
 ## Installation(CMake)
 
 ### Using submodule
@@ -319,6 +390,6 @@ Just copy and paste `include/Argo.hh` into your library.
 - [x] Required argument
 - [x] Positional argument
 - [x] sub command
-- [ ] Description and help auto generation
+- [x] Description and help auto generation
 - [ ] Standard validations
 - [ ] Custom class casting
