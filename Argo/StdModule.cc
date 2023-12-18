@@ -7,6 +7,7 @@ module;
 #include <array>
 #include <charconv>
 #include <concepts>
+#include <expected>
 #include <format>
 #include <functional>
 #include <iostream>
@@ -126,6 +127,9 @@ using ::std::reference_wrapper;
 // optional
 using ::std::nullopt;
 using ::std::optional;
+
+// expected
+using ::std::expected;
 
 // NOLINTEND(bugprone-reserved-identifier)
 
