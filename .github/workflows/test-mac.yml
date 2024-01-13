@@ -36,10 +36,20 @@ jobs:
           brew install ninja
         continue-on-error: true
 
-      - name: Cmake and Compile
+      - name: Build Debug
         run: |
-          cmake -B build -S . -DARGO_TESTS_ENABLE=true -GNinja
-          cmake --build build
+          cmake -B build_debug -S . -DARGO_TESTS_ENABLE=true -GNinja -DCMAKE_BUILD_TYPE=Debug
+          cmake --build build_debug
+        env:
+          CC: /usr/local/opt/llvm/bin/clang
+          CXX: /usr/local/opt/llvm/bin/clang++
+          LDFLAGS: -L/usr/local/opt/llvm/lib -L/usr/local/opt/llvm/lib/c++ -Wl,-rpath,/usr/local/opt/llvm/lib/c++
+          CPPFLAGS: -I/usr/local/opt/llvm/include
+
+      - name: Build Release
+        run: |
+          cmake -B build_release -S . -DARGO_TESTS_ENABLE=true -GNinja -DCMAKE_BUILD_TYPE=Release
+          cmake --build build_release
         env:
           CC: /usr/local/opt/llvm/bin/clang
           CXX: /usr/local/opt/llvm/bin/clang++
@@ -48,17 +58,17 @@ jobs:
 
       - name: Test Release
         run: |
-          ./build/test-argo-release
+          cmake --build build_release --target test
 
       - name: Test Debug with codecov
         run: |
-          LLVM_PROFILE_FILE=./build/test-argo-debug.profraw ./build/test-argo-debug
-          /usr/local/opt/llvm/bin/llvm-profdata merge -sparse ./build/test-argo-debug.profraw -o ./build/coverage.profdata
-          /usr/local/opt/llvm/bin/llvm-cov show ./build/test-argo-debug -instr-profile=./build/coverage.profdata -ignore-filename-regex="tests*" -ignore-filename-regex="Argo/ArgoExceptions.cc" > ./build/coverage.txt
+          LLVM_PROFILE_FILE=./build_debug/test-argo.profraw ./build_debug/test-argo
+          /usr/local/opt/llvm/bin/llvm-profdata merge -sparse ./build_debug/test-argo.profraw -o ./build_debug/coverage.profdata
+          /usr/local/opt/llvm/bin/llvm-cov show ./build_debug/test-argo -instr-profile=./build_debug/coverage.profdata -ignore-filename-regex="tests*" -ignore-filename-regex="Argo/ArgoExceptions.cc" > ./build_debug/coverage.txt
 
       - name: Upload coverage reports to Codecov
         uses: codecov/codecov-action@v3
         with:
-          files: ./build/coverage.txt
+          files: ./build_debug/coverage.txt
         env:
           CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}

@@ -46,9 +46,6 @@ if(${CMAKE_SOURCE_DIR} STREQUAL ${CMAKE_CURRENT_LIST_DIR})
   # ############################### TESTS ######################################
   if(${ARGO_TESTS_ENABLE})
     # Reset all optimization flags
-    set(CMAKE_CXX_FLAGS_RELEASE "")
-    set(CMAKE_CXX_FLAGS_DEBUG "")
-
     include(FetchContent)
     FetchContent_Declare(
       googletest
@@ -59,31 +56,23 @@ if(${CMAKE_SOURCE_DIR} STREQUAL ${CMAKE_CURRENT_LIST_DIR})
     file(GLOB ARGO_TEST_SOURCES ${CMAKE_CURRENT_LIST_DIR}/tests/*.cc)
 
     # ############################## DEBUG TARGET ##############################
-    add_executable(test-argo-debug ${ARGO_TEST_SOURCES})
+    enable_testing()
+    add_executable(test-argo ${ARGO_TEST_SOURCES})
     target_link_libraries(
-      test-argo-debug PRIVATE GTest::gtest GTest::gtest_main GTest::gmock Argo)
-    set_target_properties(test-argo-debug PROPERTIES CXX_STANDARD 23)
-    target_compile_options(
-      test-argo-debug #
-      PRIVATE -Wno-writable-strings -DDEBUG_BUILD -O1 -g
-              -fprofile-instr-generate -fcoverage-mapping)
-    target_link_options(test-argo-debug PRIVATE -fprofile-instr-generate
-                        -fcoverage-mapping)
-
-    # ############################## RELEASE TARGET ############################
-    add_executable(test-argo-release ${ARGO_TEST_SOURCES})
-    target_link_libraries(
-      test-argo-release PRIVATE GTest::gtest GTest::gtest_main GTest::gmock
-                                Argo)
-    set_target_properties(test-argo-release PROPERTIES CXX_STANDARD 23)
-    target_compile_options(test-argo-release PRIVATE -Wno-writable-strings -O3)
+      test-argo PRIVATE GTest::gtest GTest::gtest_main GTest::gmock Argo)
+    if(${CMAKE_BUILD_TYPE} STREQUAL "Debug")
+      target_compile_options(
+        test-argo
+        PRIVATE -fprofile-instr-generate -fcoverage-mapping)
+      target_link_options(test-argo PRIVATE -fprofile-instr-generate -fcoverage-mapping)
+    endif()
+    set_target_properties(test-argo PROPERTIES CXX_STANDARD 23)
+    include(GoogleTest)
+    gtest_discover_tests(test-argo)
   endif()
 
   # ############################## BENCHMARKS #################################
   if(${ARGO_BENCHMARKS_ENABLE})
-    set(CMAKE_CXX_FLAGS_RELEASE "")
-    set(CMAKE_CXX_FLAGS_DEBUG "")
-
     find_package(benchmark REQUIRED)
     file(GLOB ARGO_BENCHMARK_SOURCES ${CMAKE_CURRENT_LIST_DIR}/benchmarks/*.cc)
 
@@ -107,24 +96,13 @@ if(${CMAKE_SOURCE_DIR} STREQUAL ${CMAKE_CURRENT_LIST_DIR})
 
     foreach(target ${ARGO_BENCHMARK_SOURCES})
       get_filename_component(target_name ${target} NAME_WE)
-
-      # ############################# DEBUG TARGET #############################
-      set(debug_target_name "bench-${target_name}-debug")
-      add_executable(${debug_target_name} ${target})
-      target_link_libraries(${debug_target_name} benchmark::benchmark Argo
-                            ${CLI11_LIBRARY} ${argparse_LIBRARY})
-      set_target_properties(${debug_target_name} PROPERTIES CXX_STANDARD 23)
-      target_compile_options(
-        ${debug_target_name} PRIVATE -Wno-writable-strings -fbracket-depth=1024
-                                     -DDEBUG_BUILD)
-      # ############################# RELEASE TARGET ###########################
-      set(release_target_name "bench-${target_name}-release")
-      add_executable(${release_target_name} ${target})
-      target_link_libraries(${release_target_name} benchmark::benchmark Argo
+      set(bench_target_name "bench-${target_name}")
+      add_executable(${bench_target_name} ${target})
+      target_link_libraries(${bench_target_name} benchmark::benchmark Argo
                             ${CLI11_LIBRARY})
-      set_target_properties(${release_target_name} PROPERTIES CXX_STANDARD 23)
+      set_target_properties(${bench_target_name} PROPERTIES CXX_STANDARD 23)
       target_compile_options(
-        ${release_target_name} PRIVATE -Wno-writable-strings -O3
+        ${bench_target_name} PRIVATE -Wno-writable-strings -O3
                                        -fbracket-depth=1024)
     endforeach()
   endif()

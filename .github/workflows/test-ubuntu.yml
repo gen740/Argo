@@ -39,20 +39,30 @@ jobs:
           wget https://github.com/ninja-build/ninja/releases/download/v1.11.1/ninja-linux.zip
           yes | sudo unzip ninja-linux.zip -d /usr/local/bin
 
-      - name: Cmake and Compile
+      - name: Build Debug
         run: |
-          cmake -B build -S . -DARGO_TESTS_ENABLE=true -GNinja
-          cmake --build build
+          cmake -B build_debug -S . -DARGO_TESTS_ENABLE=true -GNinja -DCMAKE_BUILD_TYPE=Debug
+          cmake --build build_debug
         env:
           CC: /usr/bin/clang-17
           CXX: /usr/bin/clang++-17
           LDFLAGS: -L/usr/lib/llvm-17/lib
           CPPFLAGS: -stdlib=libc++
 
-      - name: Test Debug
+      - name: Build Release
         run: |
-          ./build/test-argo-debug
+          cmake -B build_release -S . -DARGO_TESTS_ENABLE=true -GNinja -DCMAKE_BUILD_TYPE=Release
+          cmake --build build_release
+        env:
+          CC: /usr/bin/clang-17
+          CXX: /usr/bin/clang++-17
+          LDFLAGS: -L/usr/lib/llvm-17/lib
+          CPPFLAGS: -stdlib=libc++
 
       - name: Test Release
         run: |
-          ./build/test-argo-release
+          cmake --build build_release --target test
+
+      - name: Test Debug
+        run: |
+          cmake --build build_debug --target test

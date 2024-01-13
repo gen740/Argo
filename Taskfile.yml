@@ -15,7 +15,7 @@ tasks:
   test:
     cmds:
       - task: build
-      - ./build/test-argo-release
+      - cmake --build build --target test
     silent: true
   report:
     cmds:

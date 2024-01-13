@@ -130,6 +130,7 @@ using ::std::optional;
 
 // expected
 using ::std::expected;
+using ::std::unexpected;
 
 // NOLINTEND(bugprone-reserved-identifier)
 
