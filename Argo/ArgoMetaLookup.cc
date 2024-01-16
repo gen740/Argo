@@ -14,18 +14,16 @@ import :ArgName;
 
 namespace Argo {
 
-using namespace std;
-
 template <class Arguments>
 ARGO_ALWAYS_INLINE constexpr auto GetkeyFromShortKey(char key)
-    -> tuple<string_view, bool> {
-  auto name = string_view();
+    -> std::tuple<std::string_view, bool> {
+  auto name = std::string_view();
   auto is_flag = true;
   if ([&]<class... T>(type_sequence<T...>) ARGO_ALWAYS_INLINE {
         return ([&] {
           if (T::name.getShortName() == key) {
             name = T::name.getKey();
-            if constexpr (!derived_from<T, FlagArgTag>) {
+            if constexpr (!std::derived_from<T, FlagArgTag>) {
               is_flag = false;
             }
             return true;

@@ -10,8 +10,6 @@ import :std_module;
 
 namespace Argo {
 
-using namespace std;
-
 /*!
  * ArgName which holds argument name
  */
@@ -38,7 +36,7 @@ struct ArgName {
   }
 
   [[nodiscard]] ARGO_ALWAYS_INLINE constexpr auto getKey() const {
-    return string_view(this->key_, this->key_len_);
+    return std::string_view(this->key_, this->key_len_);
   }
 
   [[nodiscard]] constexpr auto getKeyLen() const {
@@ -65,8 +63,8 @@ ArgName(const char (&)[N]) -> ArgName<N - 1>;
 
 template <class T>
 concept ArgNameType = requires(T& x) {
-  is_same_v<decltype(x.getKey()), string_view>;
-  is_same_v<decltype(x.getShortName()), char>;
+  std::is_same_v<decltype(x.getKey()), std::string_view>;
+  std::is_same_v<decltype(x.getShortName()), char>;
 };
 
 }  // namespace Argo

@@ -12,13 +12,11 @@ import :ArgName;
 
 namespace Argo {
 
-using namespace std;
-
 template <ArgName Name, class Parser>
 struct SubParser {
   static constexpr auto name = Name;
-  reference_wrapper<Parser> parser;
-  string_view description;
+  std::reference_wrapper<Parser> parser;
+  std::string_view description;
 };
 
 template <class SubParsers>
@@ -37,7 +35,7 @@ ARGO_ALWAYS_INLINE constexpr auto MetaParse(SubParsers sub_parsers, int index,
 template <class SubParsers>
   requires(is_tuple_v<SubParsers>)
 ARGO_ALWAYS_INLINE constexpr auto ParserIndex(SubParsers sub_parsers,  //
-                                              string_view key) -> int64_t {
+                                              std::string_view key) -> int64_t {
   return apply(
       [&](auto&&... s) ARGO_ALWAYS_INLINE {
         int64_t index = -1;

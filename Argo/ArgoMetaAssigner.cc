@@ -15,15 +15,14 @@ import :std_module;
 
 namespace Argo {
 
-using namespace std;
-
 /*!
  * Helper class of assigning value
  */
 template <class Type>
-ARGO_ALWAYS_INLINE constexpr auto ArgCaster(const string_view& value,
-                                            const string_view& key) -> Type {
-  if constexpr (is_same_v<Type, bool>) {
+ARGO_ALWAYS_INLINE constexpr auto ArgCaster(const std::string_view& value,
+                                            const std::string_view& key)
+    -> Type {
+  if constexpr (std::is_same_v<Type, bool>) {
     if ((value == "true")     //
         || (value == "True")  //
         || (value == "TRUE")  //
@@ -38,13 +37,13 @@ ARGO_ALWAYS_INLINE constexpr auto ArgCaster(const string_view& value,
     }
     throw InvalidArgument(
         format("Argument {}: {} cannot convert bool", key, value));
-  } else if constexpr (is_integral_v<Type>) {
+  } else if constexpr (std::is_integral_v<Type>) {
     Type ret;
-    from_chars(value.begin(), value.end(), ret);
+    std::from_chars(value.begin(), value.end(), ret);
     return ret;
-  } else if constexpr (is_floating_point_v<Type>) {
-    return static_cast<Type>(stod(string(value)));
-  } else if constexpr (is_same_v<Type, const char*>) {
+  } else if constexpr (std::is_floating_point_v<Type>) {
+    return static_cast<Type>(std::stod(std::string(value)));
+  } else if constexpr (std::is_same_v<Type, const char*>) {
     return value.data();
   } else {
     return static_cast<Type>(value);
@@ -52,17 +51,17 @@ ARGO_ALWAYS_INLINE constexpr auto ArgCaster(const string_view& value,
 }
 
 template <class... T, size_t... N>
-ARGO_ALWAYS_INLINE constexpr auto TupleAssign(tuple<T...>& t,
-                                              const span<string_view>& v,
-                                              index_sequence<N...> /* unused */,
-                                              const string_view& key) -> void {
-  ((get<N>(t) = ArgCaster<remove_cvref_t<decltype(get<N>(t))>>(v[N], key)),
+ARGO_ALWAYS_INLINE constexpr auto TupleAssign(
+    std::tuple<T...>& t, const std::span<std::string_view>& v,
+    std::index_sequence<N...> /* unused */, const std::string_view& key)
+    -> void {
+  ((get<N>(t) = ArgCaster<std::remove_cvref_t<decltype(get<N>(t))>>(v[N], key)),
    ...);
 }
 
 template <class Arg>
-ARGO_ALWAYS_INLINE constexpr auto AfterAssign(const span<string_view>& values)
-    -> void {
+ARGO_ALWAYS_INLINE constexpr auto AfterAssign(
+    const std::span<std::string_view>& values) -> void {
   Arg::assigned = true;
   if (Arg::validator) {
     Arg::validator(Arg::value, values, Arg::name.getKey());
@@ -74,7 +73,7 @@ ARGO_ALWAYS_INLINE constexpr auto AfterAssign(const span<string_view>& values)
 
 template <class Arg>
 ARGO_ALWAYS_INLINE constexpr auto ValiadicArgAssign(
-    const span<string_view>& values) -> void {
+    const std::span<std::string_view>& values) -> void {
   Arg::value.resize(values.size());
   for (size_t i = 0; i < values.size(); i++) {
     Arg::value[i] =
@@ -84,8 +83,8 @@ ARGO_ALWAYS_INLINE constexpr auto ValiadicArgAssign(
 }
 
 template <class Arg>
-ARGO_ALWAYS_INLINE constexpr auto NLengthArgAssign(span<string_view>& values)
-    -> void {
+ARGO_ALWAYS_INLINE constexpr auto NLengthArgAssign(
+    std::span<std::string_view>& values) -> void {
   if (Arg::nargs.nargs > values.size()) [[unlikely]] {
     throw Argo::InvalidArgument(
         format("Argument {}: invalid argument {}", Arg::name.getKey(), values));
@@ -102,9 +101,10 @@ ARGO_ALWAYS_INLINE constexpr auto NLengthArgAssign(span<string_view>& values)
           ArgCaster<typename Arg::baseType>(values[i], Arg::name.getKey());
     }
   } else if constexpr (is_tuple_v<typename Arg::type>) {
-    TupleAssign(Arg::value, values,
-                make_index_sequence<tuple_size_v<typename Arg::type>>(),
-                Arg::name.getKey());
+    TupleAssign(
+        Arg::value, values,
+        std::make_index_sequence<std::tuple_size_v<typename Arg::type>>(),
+        Arg::name.getKey());
   } else {
     static_assert(false, "Invalid Type");
   }
@@ -113,8 +113,8 @@ ARGO_ALWAYS_INLINE constexpr auto NLengthArgAssign(span<string_view>& values)
 }
 
 template <class Arg>
-ARGO_ALWAYS_INLINE constexpr auto ZeroOrOneArgAssign(span<string_view>& values)
-    -> void {
+ARGO_ALWAYS_INLINE constexpr auto ZeroOrOneArgAssign(
+    std::span<std::string_view>& values) -> void {
   if (values.empty()) {
     Arg::value = Arg::defaultValue;
   } else {
@@ -125,8 +125,8 @@ ARGO_ALWAYS_INLINE constexpr auto ZeroOrOneArgAssign(span<string_view>& values)
 }
 
 template <class PArgs>
-ARGO_ALWAYS_INLINE constexpr auto PArgAssigner(span<string_view> values)
-    -> bool {
+ARGO_ALWAYS_INLINE constexpr auto PArgAssigner(
+    std::span<std::string_view> values) -> bool {
   return [&values]<class... Arg>(type_sequence<Arg...>) ARGO_ALWAYS_INLINE {
     return ([&values] ARGO_ALWAYS_INLINE {
       if (Arg::assigned) {
@@ -155,20 +155,19 @@ ARGO_ALWAYS_INLINE constexpr auto PArgAssigner(span<string_view> values)
 
 template <>
 ARGO_ALWAYS_INLINE constexpr auto PArgAssigner<std::tuple<>>(
-    span<string_view> /*unused*/) -> bool {
+    std::span<std::string_view> /*unused*/) -> bool {
   return true;
 }
 
 template <class Head, class PArgs>
-ARGO_ALWAYS_INLINE constexpr auto AssignOneArg(const string_view& key,
-                                               span<string_view> values)
-    -> bool {
+ARGO_ALWAYS_INLINE constexpr auto AssignOneArg(
+    const std::string_view& key, std::span<std::string_view> values) -> bool {
   if (Head::assigned) [[unlikely]] {
     throw Argo::InvalidArgument(
         format("Argument {}: duplicated argument", key));
   }
-  if constexpr (derived_from<Head, FlagArgTag>) {
-    if constexpr (is_same_v<PArgs, tuple<>>) {
+  if constexpr (std::derived_from<Head, FlagArgTag>) {
+    if constexpr (std::is_same_v<PArgs, std::tuple<>>) {
       if (!values.empty()) [[unlikely]] {
         throw Argo::InvalidArgument(format("Flag {} can not take value", key));
       }
@@ -227,23 +226,22 @@ ARGO_ALWAYS_INLINE constexpr auto AssignOneArg(const string_view& key,
 }
 
 template <class Args, class PArgs>
-ARGO_ALWAYS_INLINE constexpr auto assignArg(const string_view& key,
-                                            const span<string_view>& values) {
-  [&key,
-   &values]<size_t... Is>(index_sequence<Is...>) ARGO_ALWAYS_INLINE -> void {
-    if (!(... || (tuple_element_t<Is, Args>::name.getKey() == key and
-                  AssignOneArg<tuple_element_t<Is, Args>, PArgs>(key, values))))
-        [[unlikely]] {
-      throw Argo::InvalidArgument(format("Invalid argument {}", key));
-    }
-  }(make_index_sequence<tuple_size_v<Args>>());
+ARGO_ALWAYS_INLINE constexpr auto assignArg(
+    const std::string_view& key, const std::span<std::string_view>& values) {
+  [&key, &values]<size_t... Is>(std::index_sequence<Is...>)
+      ARGO_ALWAYS_INLINE -> void {
+        if (!(... || (std::tuple_element_t<Is, Args>::name.getKey() == key and
+                      AssignOneArg<std::tuple_element_t<Is, Args>, PArgs>(
+                          key, values)))) [[unlikely]] {
+          throw Argo::InvalidArgument(format("Invalid argument {}", key));
+        }
+      }(std::make_index_sequence<std::tuple_size_v<Args>>());
 }
 
 template <class Arguments, class PArgs>
-ARGO_ALWAYS_INLINE constexpr auto Assigner(string_view key,
-                                           const span<string_view>& values)
-    -> void {
-  if constexpr (!is_same_v<PArgs, tuple<>>) {
+ARGO_ALWAYS_INLINE constexpr auto Assigner(
+    std::string_view key, const std::span<std::string_view>& values) -> void {
+  if constexpr (!std::is_same_v<PArgs, std::tuple<>>) {
     if (key.empty()) {
       if (!PArgAssigner<PArgs>(values)) [[unlikely]] {
         throw InvalidArgument("Duplicated positional argument");
@@ -260,14 +258,14 @@ ARGO_ALWAYS_INLINE constexpr auto Assigner(string_view key,
 
 template <class Arguments, class PArgs, class HArg>
 ARGO_ALWAYS_INLINE constexpr auto ShortArgAssigner(
-    string_view key, const span<string_view>& values) {
+    std::string_view key, const std::span<std::string_view>& values) {
   bool has_help = false;
   for (size_t i = 0; i < key.size(); i++) {
-    auto [found_key, is_flag] = GetkeyFromShortKey<  //
-        conditional_t<is_same_v<HArg, void>,         //
-                      Arguments,                     //
-                      tuple_append_t<Arguments, HArg>>>(key[i]);
-    if constexpr (!is_same_v<HArg, void>) {
+    auto [found_key, is_flag] = GetkeyFromShortKey<     //
+        std::conditional_t<std::is_same_v<HArg, void>,  //
+                           Arguments,                   //
+                           tuple_append_t<Arguments, HArg>>>(key[i]);
+    if constexpr (!std::is_same_v<HArg, void>) {
       if (found_key == HArg::name.getKey()) [[unlikely]] {
         return true;
       }
@@ -280,7 +278,7 @@ ARGO_ALWAYS_INLINE constexpr auto ShortArgAssigner(
       assignArg<Arguments, PArgs>(found_key, values);
       return has_help;
     } else if ((key.size() - 1 == i) and values.empty()) {
-      auto value = vector<string_view>{key.substr(i + 1)};
+      auto value = std::vector<std::string_view>{key.substr(i + 1)};
       assignArg<Arguments, PArgs>(found_key, value);
       return has_help;
     } else [[unlikely]] {
@@ -293,14 +291,14 @@ ARGO_ALWAYS_INLINE constexpr auto ShortArgAssigner(
 
 template <class Args>
 ARGO_ALWAYS_INLINE constexpr auto ValueReset() -> void {
-  []<size_t... Is>(index_sequence<Is...>) ARGO_ALWAYS_INLINE {
+  []<size_t... Is>(std::index_sequence<Is...>) ARGO_ALWAYS_INLINE {
     (..., []<class T>() ARGO_ALWAYS_INLINE {
       if (T::assigned) {
         T::value = typename T::type();
         T::assigned = false;
       }
-    }.template operator()<tuple_element_t<Is, Args>>());
-  }(make_index_sequence<tuple_size_v<Args>>());
+    }.template operator()<std::tuple_element_t<Is, Args>>());
+  }(std::make_index_sequence<std::tuple_size_v<Args>>());
 }
 
 };  // namespace Argo

@@ -12,48 +12,46 @@ import :std_module;
 
 namespace Argo {
 
-using namespace std;
-
 struct ArgInfo {
-  string_view name;
+  std::string_view name;
   char shortName;
-  string_view description;
+  std::string_view description;
   bool required;
-  string_view typeName;
+  std::string_view typeName;
 };
 
 template <class Args>
 ARGO_ALWAYS_INLINE constexpr auto HelpGenerator() {
-  vector<ArgInfo> ret;
+  std::vector<ArgInfo> ret;
   tuple_type_visit<Args>([&ret]<class T>(T) {
-    if constexpr (derived_from<typename T::type, ArgTag>) {
+    if constexpr (std::derived_from<typename T::type, ArgTag>) {
       ret.emplace_back(
           T::type::name.getKey().substr(0, T::type::name.getKeyLen()),  //
           T::type::name.getShortName(),                                 //
           T::type::description,                                         //
           T::type::required,                                            //
-          string_view(T::type::typeName));
+          std::string_view(T::type::typeName));
     } else {
       ret.emplace_back(
           T::type::name.getKey().substr(0, T::type::name.getKeyLen()),  //
           T::type::name.getShortName(),                                 //
           T::type::description,                                         //
           false,                                                        //
-          string_view(T::type::typeName));
+          std::string_view(T::type::typeName));
     }
   });
   return ret;
 };
 
 struct SubCommandInfo {
-  string_view name;
-  string_view description;
+  std::string_view name;
+  std::string_view description;
 };
 
 template <class T>
 ARGO_ALWAYS_INLINE constexpr auto SubParserInfo(T subparsers) {
-  vector<SubCommandInfo> ret{};
-  if constexpr (!is_same_v<T, tuple<>>) {
+  std::vector<SubCommandInfo> ret{};
+  if constexpr (!std::is_same_v<T, std::tuple<>>) {
     apply(
         [&ret]<class... Parser>(Parser... parser) ARGO_ALWAYS_INLINE {
           (..., ret.emplace_back(parser.name.getKey(), parser.description));

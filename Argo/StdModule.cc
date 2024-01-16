@@ -8,6 +8,7 @@ module;
 #include <charconv>
 #include <concepts>
 #include <expected>
+#include <filesystem>
 #include <format>
 #include <functional>
 #include <iostream>
@@ -123,6 +124,11 @@ using ::std::unique_ptr;
 using ::std::function;
 using ::std::ref;
 using ::std::reference_wrapper;
+
+// filesystem
+namespace filesystem {
+using ::std::filesystem::path;
+}
 
 // optional
 using ::std::nullopt;
