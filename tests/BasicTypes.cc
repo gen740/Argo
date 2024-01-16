@@ -24,7 +24,7 @@ TEST(ArgoTest, AllTypes) {
                     .addArg<"arg5", std::string>()
                     .addArg<"arg6", const char*>();
 
-  parser.parse(argc, argv);
+  parser.parse(argc, argv.get());
 
   EXPECT_EQ(parser.getArg<"arg1">(), 42);
   EXPECT_EQ(parser.getArg<"arg2">(), -42);

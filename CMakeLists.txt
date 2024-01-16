@@ -6,6 +6,7 @@ set(CMAKE_CXX_STANDARD 23)
 
 option(ARGO_TESTS_ENABLE "Enable tests" OFF)
 option(ARGO_BENCHMARKS_ENABLE "Enable benchmarks" OFF)
+option(ARGO_CLANG_TIDY_ENABLE "Enable clang tidy" OFF)
 
 if(${CMAKE_SOURCE_DIR} STREQUAL ${CMAKE_CURRENT_LIST_DIR})
   # Setting Build Type
@@ -35,10 +36,15 @@ file(GLOB ARGO_LIBRARY_SOURCES ${CMAKE_CURRENT_LIST_DIR}/Argo/*.cc)
 target_sources(Argo PUBLIC FILE_SET CXX_MODULES FILES ${ARGO_LIBRARY_SOURCES})
 target_compile_features(Argo PUBLIC cxx_std_23)
 target_include_directories(Argo PUBLIC ${CMAKE_CURRENT_LIST_DIR}/include)
+if(${ARGO_CLANG_TIDY_ENABLE})
+  set_target_properties(Argo PROPERTIES CXX_CLANG_TIDY
+                                        "clang-tidy;-p;${CMAKE_BINARY_DIR}")
+endif()
 
 unset(ARGO_LIBRARY_SOURCES)
 
 if(${CMAKE_SOURCE_DIR} STREQUAL ${CMAKE_CURRENT_LIST_DIR})
+
   add_executable(main ${CMAKE_CURRENT_LIST_DIR}/main.cc)
   target_link_libraries(main Argo)
   target_compile_options(main PRIVATE -O3)
@@ -58,15 +64,21 @@ if(${CMAKE_SOURCE_DIR} STREQUAL ${CMAKE_CURRENT_LIST_DIR})
     # ############################## DEBUG TARGET ##############################
     enable_testing()
     add_executable(test-argo ${ARGO_TEST_SOURCES})
-    target_link_libraries(
-      test-argo PRIVATE GTest::gtest GTest::gtest_main GTest::gmock Argo)
+
+    target_link_libraries(test-argo PRIVATE GTest::gtest GTest::gtest_main
+                                            GTest::gmock Argo)
     if(${CMAKE_BUILD_TYPE} STREQUAL "Debug")
-      target_compile_options(
-        test-argo
-        PRIVATE -fprofile-instr-generate -fcoverage-mapping)
-      target_link_options(test-argo PRIVATE -fprofile-instr-generate -fcoverage-mapping)
+      target_compile_options(test-argo PRIVATE -fprofile-instr-generate
+                                               -fcoverage-mapping)
+      target_link_options(test-argo PRIVATE -fprofile-instr-generate
+                          -fcoverage-mapping)
     endif()
     set_target_properties(test-argo PROPERTIES CXX_STANDARD 23)
+    if(${ARGO_CLANG_TIDY_ENABLE})
+      set_target_properties(
+        test-argo PROPERTIES CXX_CLANG_TIDY
+                             "clang-tidy;--quiet;-p;${CMAKE_BINARY_DIR}")
+    endif()
     include(GoogleTest)
     gtest_discover_tests(test-argo)
   endif()
@@ -103,7 +115,7 @@ if(${CMAKE_SOURCE_DIR} STREQUAL ${CMAKE_CURRENT_LIST_DIR})
       set_target_properties(${bench_target_name} PROPERTIES CXX_STANDARD 23)
       target_compile_options(
         ${bench_target_name} PRIVATE -Wno-writable-strings -O3
-                                       -fbracket-depth=1024)
+                                     -fbracket-depth=1024)
     endforeach()
   endif()
 endif()

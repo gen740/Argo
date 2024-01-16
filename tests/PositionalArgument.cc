@@ -16,7 +16,7 @@ TEST(ArgoTest, Positional) {
     auto parser = argo  //
                       .addPositionalArg<"arg1", int, Argo::nargs(3)>();
 
-    parser.parse(argc, argv);
+    parser.parse(argc, argv.get());
     EXPECT_THAT(parser.getArg<"arg1">(), testing::ElementsAre(1, 2, 3));
   }
   {
@@ -31,7 +31,7 @@ TEST(ArgoTest, Positional) {
                       .addArg<"arg2", float>()
                       .addFlag<"arg3,a">();
 
-    parser.parse(argc, argv);
+    parser.parse(argc, argv.get());
 
     EXPECT_THAT(parser.getArg<"arg1">(), testing::ElementsAre(1, 2, 3));
     EXPECT_FLOAT_EQ(parser.getArg<"arg2">(), 42.195);
@@ -48,7 +48,7 @@ TEST(ArgoTest, Positional) {
                       .addPositionalArg<"arg1", int, Argo::nargs(3)>()
                       .addArg<"arg2", float, Argo::nargs(1)>();
 
-    parser.parse(argc, argv);
+    parser.parse(argc, argv.get());
 
     EXPECT_THAT(parser.getArg<"arg1">(), testing::ElementsAre(1, 2, 3));
     EXPECT_FLOAT_EQ(parser.getArg<"arg2">(), 42.195);
@@ -64,7 +64,7 @@ TEST(ArgoTest, Positional) {
                       .addPositionalArg<"arg1", int, Argo::nargs(3)>()
                       .addArg<"arg2", float, Argo::nargs(2)>();
 
-    parser.parse(argc, argv);
+    parser.parse(argc, argv.get());
 
     EXPECT_THAT(parser.getArg<"arg1">(), testing::ElementsAre(1, 2, 3));
     EXPECT_THAT(parser.getArg<"arg2">(), testing::ElementsAre(42, 96));
@@ -80,7 +80,7 @@ TEST(ArgoTest, Positional) {
                       .addPositionalArg<"arg1", int, Argo::nargs(3)>()
                       .addFlag<"arg2">();
 
-    parser.parse(argc, argv);
+    parser.parse(argc, argv.get());
 
     EXPECT_THAT(parser.getArg<"arg1">(), testing::ElementsAre(1, 2, 3));
     EXPECT_TRUE(parser.getArg<"arg2">());
@@ -96,7 +96,7 @@ TEST(ArgoTest, Positional) {
                       .addPositionalArg<"arg1", int, Argo::nargs(3)>()
                       .addFlag<"arg2,b">();
 
-    parser.parse(argc, argv);
+    parser.parse(argc, argv.get());
 
     EXPECT_THAT(parser.getArg<"arg1">(), testing::ElementsAre(1, 2, 3));
     EXPECT_TRUE(parser.getArg<"arg2">());
@@ -113,7 +113,7 @@ TEST(ArgoTest, Positional) {
                       .addFlag<"arg2,b">()
                       .addArg<"arg3,c", float>();
 
-    parser.parse(argc, argv);
+    parser.parse(argc, argv.get());
 
     EXPECT_THAT(parser.getArg<"arg1">(), testing::ElementsAre(1, 2, 3));
     EXPECT_TRUE(parser.getArg<"arg2">());
@@ -136,7 +136,7 @@ TEST(ArgoTest, MultiplePositional) {
                       .addPositionalArg<"arg2", int, Argo::nargs(3)>()
                       .addArg<"arg3,c", float>();
 
-    parser.parse(argc, argv);
+    parser.parse(argc, argv.get());
 
     EXPECT_THAT(parser.getArg<"arg1">(), testing::ElementsAre(1, 2, 3));
     EXPECT_THAT(parser.getArg<"arg2">(), testing::ElementsAre(4, 5, 6));
@@ -157,7 +157,7 @@ TEST(ArgoTest, MultiplePositional) {
             .addArg<"arg3,c", float>()
             .addPositionalArg<"arg2", int, Argo::nargs(3)>();
 
-    parser.parse(argc, argv);
+    parser.parse(argc, argv.get());
 
     EXPECT_THAT(parser.getArg<"arg1">(), testing::ElementsAre(1, 2, 3));
     EXPECT_THAT(parser.getArg<"arg2">(), testing::ElementsAre(4, 5, 6));
@@ -177,7 +177,7 @@ TEST(ArgoTest, MultiplePositional) {
             .addArg<"arg3,c", float>()
             .addPositionalArg<"arg2", std::tuple<float, int, std::string>>();
 
-    parser.parse(argc, argv);
+    parser.parse(argc, argv.get());
 
     EXPECT_THAT(parser.getArg<"arg1">(), testing::ElementsAre(1, 2, 3));
     EXPECT_FLOAT_EQ(std::get<0>(parser.getArg<"arg2">()), 4.2);
@@ -199,7 +199,7 @@ TEST(ArgoTest, MultiplePositional) {
             .addPositionalArg<"arg2", std::tuple<float, int, std::string>>()
             .addArg<"arg3,c", float>();
 
-    parser.parse(argc, argv);
+    parser.parse(argc, argv.get());
 
     EXPECT_THAT(parser.getArg<"arg1">(), testing::ElementsAre(1, 2, 3));
     EXPECT_FLOAT_EQ(std::get<0>(parser.getArg<"arg2">()), 4.2);

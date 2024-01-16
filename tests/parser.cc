@@ -14,7 +14,7 @@ TEST(ArgoTest, EqualAssign) {
                     .addArg<"arg1", int>()  //
                     .addArg<"arg2", std::string>();
 
-  parser.parse(argc, argv);
+  parser.parse(argc, argv.get());
 
   EXPECT_EQ(parser.getArg<"arg1">(), 42);
   EXPECT_EQ(parser.getArg<"arg2">(), "Hello,World");
@@ -38,7 +38,7 @@ TEST(ArgoTest, FlagArgument) {
                     .addArg<"arg5", bool>()
                     .addArg<"arg6", bool>();
 
-  parser.parse(argc, argv);
+  parser.parse(argc, argv.get());
 
   EXPECT_EQ(parser.getArg<"arg1">(), true);
   EXPECT_EQ(parser.getArg<"arg2">(), true);
@@ -64,7 +64,7 @@ TEST(ArgoTest, ShortArgument) {
                     .addArg<"arg2,b", int>()
                     .addArg<"arg3,c", float>();
 
-  parser.parse(argc, argv);
+  parser.parse(argc, argv.get());
 
   EXPECT_EQ(parser.getArg<"arg1">(), "Hello,World");
   EXPECT_EQ(parser.getArg<"arg2">(), 42);
@@ -84,7 +84,7 @@ TEST(ArgoTest, CombiningFlags) {
                     .addFlag<"arg4,d">()
                     .addFlag<"arg5,e">();
 
-  parser.parse(argc, argv);
+  parser.parse(argc, argv.get());
 
   EXPECT_TRUE(parser.getArg<"arg1">());
   EXPECT_TRUE(parser.getArg<"arg2">());
@@ -105,7 +105,7 @@ TEST(ArgoTest, CombiningFlagsWithOptionalArg) {
                     .addArg<"arg3,c", std::string>()
                     .addFlag<"arg4,d">();
 
-  parser.parse(argc, argv);
+  parser.parse(argc, argv.get());
 
   EXPECT_TRUE(parser.getArg<"arg1">());
   EXPECT_TRUE(parser.getArg<"arg2">());
@@ -126,7 +126,7 @@ TEST(ArgoTest, Validation) {
                       .addArg<"arg", int>(Argo::Validation::Range(0, 100))
                       .addFlag<"arg2">();
 
-    parser.parse(argc, argv);
+    parser.parse(argc, argv.get());
   }
   {
     auto [argc, argv] = createArgcArgv(  //
@@ -139,7 +139,7 @@ TEST(ArgoTest, Validation) {
                       .addArg<"arg", int>(Argo::Validation::Range(0, 100))
                       .addFlag<"arg2">();
 
-    EXPECT_THROW(parser.parse(argc, argv), Argo::ValidationError);
+    EXPECT_THROW(parser.parse(argc, argv.get()), Argo::ValidationError);
   }
   //   {
   //     auto [argc, argv] = createArgcArgv(  //
@@ -191,7 +191,7 @@ TEST(ArgoTest, Narg) {
                       .addArg<"arg3", float, Argo::nargs('*')>()
                       .addArg<"arg4", float, Argo::nargs('+')>();
 
-    parser.parse(argc, argv);
+    parser.parse(argc, argv.get());
 
     EXPECT_THAT(parser.getArg<"arg1">(), testing::ElementsAre(1, 2, 3));
     EXPECT_EQ(parser.getArg<"arg2">(), "Bar");
@@ -209,7 +209,7 @@ TEST(ArgoTest, Narg) {
     auto parser = argo  //
                       .addArg<"arg1", int, Argo::nargs(1)>();
 
-    parser.parse(argc, argv);
+    parser.parse(argc, argv.get());
   }
 }
 
@@ -225,7 +225,7 @@ TEST(ArgoTest, NargException) {
     auto parser = argo  //
                       .addArg<"arg1", int, Argo::nargs('+')>();
 
-    EXPECT_THROW(parser.parse(argc, argv), Argo::InvalidArgument);
+    EXPECT_THROW(parser.parse(argc, argv.get()), Argo::InvalidArgument);
   }
   {
     auto [argc, argv] = createArgcArgv(  //
@@ -240,7 +240,7 @@ TEST(ArgoTest, NargException) {
                       .addArg<"arg1", int, Argo::nargs('+')>()
                       .addArg<"arg2", int>();
 
-    EXPECT_THROW(parser.parse(argc, argv), Argo::InvalidArgument);
+    EXPECT_THROW(parser.parse(argc, argv.get()), Argo::InvalidArgument);
   }
 }
 
@@ -260,7 +260,7 @@ TEST(ArgoTest, Required) {
                       .addArg<"arg4,b", int, Argo::nargs(1)>()
                       .addArg<"arg5,c", int, Argo::nargs(1)>();
 
-    EXPECT_THROW(parser.parse(argc, argv), Argo::InvalidArgument);
+    EXPECT_THROW(parser.parse(argc, argv.get()), Argo::InvalidArgument);
   }
 }
 
@@ -279,7 +279,7 @@ TEST(ArgoTest, IsAssigned) {
                       .addArg<"arg3", int, Argo::nargs(1)>()  //
                       .addFlag<"arg4">();
 
-    parser.parse(argc, argv);
+    parser.parse(argc, argv.get());
 
     EXPECT_TRUE(parser.isAssigned<"arg1">());
     EXPECT_TRUE(parser.isAssigned<"arg2">());
@@ -304,7 +304,7 @@ TEST(ArgoTest, CallBack) {
             i += 5;
           }
         });
-    parser.parse(argc, argv);
+    parser.parse(argc, argv.get());
     EXPECT_THAT(parser.getArg<"arg1">(), testing::ElementsAre(7, 9, 11));
   }
 }

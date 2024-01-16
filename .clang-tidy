@@ -28,6 +28,7 @@ Checks: >-
   -readability-isolate-declaration,
   -readability-magic-numbers,
   -readability-uppercase-literal-suffix,
+  -readability-redundant-declaration,
   -google-build-using-namespace,
 WarningsAsErrors: ''
 HeaderFileExtensions:
@@ -41,9 +42,8 @@ ImplementationFileExtensions:
   - cc
   - cpp
   - cxx
-HeaderFilterRegex: ''
+HeaderFilterRegex: '^(?!.*\/build.*\/).*'
+SystemHeaders:   false
 FormatStyle: file
 CheckOptions:
   readability-identifier-naming.ClassMethodCase: 'camelBack'
-
-SystemHeaders:   false

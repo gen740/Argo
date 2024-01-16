@@ -23,7 +23,7 @@ TEST(ArgoTest, SubCommands) {
                       .addParser<"cmd1">(parser1, Argo::description("cmd1"))
                       .addParser<"cmd2">(parser2, Argo::description("cmd2"));
 
-    parser.parse(argc, argv);
+    parser.parse(argc, argv.get());
 
     // same object
     EXPECT_EQ(&parser1, &parser.getParser<"cmd1">());
@@ -61,7 +61,7 @@ TEST(ArgoTest, SubCommands) {
                       .addParser<"cmd1">(parser3, Argo::description("cmd1"))
                       .addParser<"cmd2">(parser4, Argo::description("cmd2"));
 
-    parser.parse(argc, argv);
+    parser.parse(argc, argv.get());
 
     // same object
     EXPECT_EQ(&parser1, &parser.getParser<"cmd1">().getParser<"cmd3">());

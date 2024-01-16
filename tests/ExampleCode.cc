@@ -14,7 +14,7 @@ TEST(ArgoTest, ExampleCode) {
                     .addArg<"arg2", float>(Argo::explicitDefault(12.34))
                     .addArg<"arg3", std::string>();
 
-  parser.parse(argc, argv);
+  parser.parse(argc, argv.get());
 
   EXPECT_EQ(parser.getArg<"arg1">(), 42);
   EXPECT_FLOAT_EQ(parser.getArg<"arg2">(), 12.34);

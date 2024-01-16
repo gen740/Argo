@@ -89,7 +89,7 @@ TEST(ArgoTest, HelpFlag) {
                     .addHelp();
 
   testing::internal::CaptureStdout();
-  EXPECT_EXIT(parser.parse(argc, argv), testing::ExitedWithCode(0), "");
+  EXPECT_EXIT(parser.parse(argc, argv.get()), testing::ExitedWithCode(0), "");
   testing::internal::GetCapturedStdout();
 }
 
@@ -103,7 +103,7 @@ TEST(ArgoTest, ShortHelpFlag) {
                     .addHelp();
 
   testing::internal::CaptureStdout();
-  EXPECT_EXIT(parser.parse(argc, argv), testing::ExitedWithCode(0), "");
+  EXPECT_EXIT(parser.parse(argc, argv.get()), testing::ExitedWithCode(0), "");
   testing::internal::GetCapturedStdout();
 }
 
@@ -117,6 +117,6 @@ TEST(ArgoTest, ChangeHelpFlag) {
                     .addHelp<"generate_help,g">();
 
   testing::internal::CaptureStdout();
-  EXPECT_EXIT(parser.parse(argc, argv), testing::ExitedWithCode(0), "");
+  EXPECT_EXIT(parser.parse(argc, argv.get()), testing::ExitedWithCode(0), "");
   testing::internal::GetCapturedStdout();
 }
