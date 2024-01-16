@@ -63,8 +63,8 @@ if(${CMAKE_SOURCE_DIR} STREQUAL ${CMAKE_CURRENT_LIST_DIR})
     if(${CMAKE_BUILD_TYPE} STREQUAL "Debug")
       target_compile_options(
         test-argo
-        PUBLIC -coverage)
-      target_link_options(test-argo PUBLIC -coverage)
+        PRIVATE -fprofile-instr-generate -fcoverage-mapping)
+      target_link_options(test-argo PRIVATE -fprofile-instr-generate -fcoverage-mapping)
     endif()
     set_target_properties(test-argo PROPERTIES CXX_STANDARD 23)
     include(GoogleTest)
