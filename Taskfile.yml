@@ -1,12 +1,43 @@
 version: '3'
 
+vars:
+  CXXFLAGS_DEBUG: -O0 -g
+  CXXFLAGS_RELEASE: -O3 -DNDEBUG
+
 tasks:
   cmake:
     cmds:
       - cmake -B build -S . -DARGO_TESTS_ENABLE=true -DARGO_BENCHMARKS_ENABLE=true -GNinja
+    sources:
+      - ./CMakeLists.txt
+    generates:
+      - ./build/CMakeCache.txt
+  cmake-debug:
+    cmds:
+      - cmake -B build_debug -S . -DARGO_TESTS_ENABLE=true -DARGO_BENCHMARKS_ENABLE=true -DCMAKE_BUILD_TYPE=Debug -GNinja -DCMAKE_CXX_FLAGS_DEBUG="{{.CXXFLAGS_DEBUG}}"
+    sources:
+      - ./CMakeLists.txt
+    generates:
+      - ./build_debug/CMakeCache.txt
+  cmake-release:
+    cmds:
+      - cmake -B build_release -S . -DARGO_TESTS_ENABLE=true -DARGO_BENCHMARKS_ENABLE=true -DCMAKE_BUILD_TYPE=Release -GNinja -DCMAKE_CXX_FLAGS_RELEASE="{{.CXXFLAGS_RELEASE}}"
+    sources:
+      - ./CMakeLists.txt
+    generates:
+      - ./build_release/CMakeCache.txt
   build:
     cmds:
+      - task: cmake
       - cmake --build build
+  build-debug:
+    cmds:
+      - task: cmake-debug
+      - cmake --build build_debug
+  build-release:
+    cmds:
+      - task: cmake-release
+      - cmake --build build_release
   run:
     cmds:
       - task: build
@@ -19,11 +50,18 @@ tasks:
     silent: true
   report:
     cmds:
-      - ./build/test-argo-debug &> /dev/null
-      - $PROF_DATA merge -sparse ./build/test-argo-debug.profraw -o ./build/coverage.profdata
-      - $LLVM_COV report ./build/test-argo-debug -instr-profile=./build/coverage.profdata -ignore-filename-regex="tests*" -ignore-filename-regex="Argo/ArgoExceptions.cc"
+      - task: build-debug
+      - ./build_debug/test-argo &> /dev/null
+      - $PROF_DATA merge -sparse $LLVM_PROFILE_FILE -o $LLVM_PROFDATA
+      - $LLVM_COV report ./build_debug/test-argo -instr-profile=$LLVM_PROFDATA -ignore-filename-regex="tests*" -ignore-filename-regex="Argo/ArgoExceptions.cc"
     env:
-      LLVM_PROFILE_FILE: ./build/test-argo-debug.profraw
+      LLVM_PROFILE_FILE: ./build_debug/test-argo.profraw
+      LLVM_PROFDATA: ./build_debug/coverage.profdata
       PROF_DATA: /usr/local/opt/llvm/bin/llvm-profdata
       LLVM_COV: /usr/local/opt/llvm/bin/llvm-cov
     silent: true
+  clean:
+    cmds:
+      - rm -rf ./build
+      - rm -rf ./build_debug
+      - rm -rf ./build_release

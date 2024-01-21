@@ -9,24 +9,18 @@ option(ARGO_BENCHMARKS_ENABLE "Enable benchmarks" OFF)
 option(ARGO_CLANG_TIDY_ENABLE "Enable clang tidy" OFF)
 
 if(${CMAKE_SOURCE_DIR} STREQUAL ${CMAKE_CURRENT_LIST_DIR})
-  # Setting Build Type
-  if(NOT CMAKE_BUILD_TYPE)
-    set(CMAKE_BUILD_TYPE "Debug")
-  endif()
-
-  # set release flag
-  set(CMAKE_CXX_FLAGS_RELEASE "-O3 -ffast-math")
-  set(CMAKE_CXX_FLAGS_DEBUG "-g -O0")
   set(CMAKE_CXX_EXTENSIONS OFF)
-  set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
   message(STATUS "Build Type: ${CMAKE_BUILD_TYPE}")
 
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra -Werror -Winline")
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wnon-virtual-dtor -Wfloat-equal")
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fdiagnostics-color=always")
+  # set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-deprecated-declarations")
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -stdlib=libc++") # Force to use libc++
-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-deprecated-declarations")
+
+  message(STATUS "CXX Compiler: ${CMAKE_CXX_COMPILER}")
+  message(STATUS "CXX Flags: ${CMAKE_CXX_FLAGS}")
 endif()
 
 add_library(Argo)
@@ -68,6 +62,7 @@ if(${CMAKE_SOURCE_DIR} STREQUAL ${CMAKE_CURRENT_LIST_DIR})
     target_link_libraries(test-argo PRIVATE GTest::gtest GTest::gtest_main
                                             GTest::gmock Argo)
     if(${CMAKE_BUILD_TYPE} STREQUAL "Debug")
+      message("Debug build")
       target_compile_options(test-argo PRIVATE -fprofile-instr-generate
                                                -fcoverage-mapping)
       target_link_options(test-argo PRIVATE -fprofile-instr-generate
@@ -113,9 +108,8 @@ if(${CMAKE_SOURCE_DIR} STREQUAL ${CMAKE_CURRENT_LIST_DIR})
       target_link_libraries(${bench_target_name} benchmark::benchmark Argo
                             ${CLI11_LIBRARY})
       set_target_properties(${bench_target_name} PROPERTIES CXX_STANDARD 23)
-      target_compile_options(
-        ${bench_target_name} PRIVATE -Wno-writable-strings -O3
-                                     -fbracket-depth=1024)
+      target_compile_options(${bench_target_name} PRIVATE -Wno-writable-strings
+                                                          -O3)
     endforeach()
   endif()
 endif()
