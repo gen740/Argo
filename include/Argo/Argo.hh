@@ -1475,7 +1475,7 @@ class Parser {
       throw ParseError("Parser did not parse argument, call parse first");
     }
     using AllArguments =
-        decltype(tuple_cat(std::declval<Args>(), std::declval<PArgs>()));
+        decltype(std::tuple_cat(std::declval<Args>(), std::declval<PArgs>()));
 
     static_assert(SearchIndex<AllArguments, Name>() != -1,
                   "Argument does not exist");
@@ -1492,7 +1492,7 @@ class Parser {
                                               Description description = {""}) {
     auto s = make_tuple(
         SubParser<Name, T>{ref(sub_parser), description.description});
-    auto sub_parsers = tuple_cat(subParsers, s);
+    auto sub_parsers = std::tuple_cat(subParsers, s);
     return Parser<ID, Args, PArgs, HArg, decltype(sub_parsers)>(
         std::move(this->info_), sub_parsers);
   }
