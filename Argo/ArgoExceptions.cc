@@ -1,5 +1,3 @@
-module;
-
 export module Argo:Exceptions;
 
 import :std_module;

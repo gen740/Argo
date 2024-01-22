@@ -25,13 +25,11 @@ module;
 export module Argo:std_module;
 
 // NOLINTBEGIN(bugprone-reserved-identifier)
-export {
-  using ::isatty;
-  using ::std::int64_t;
-  using ::std::size_t;
-}
+using ::isatty;
+using ::std::int64_t;
+using ::std::size_t;
 
-export namespace std {
+namespace std {
 using ::std::exit;
 
 // utility

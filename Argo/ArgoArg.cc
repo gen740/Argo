@@ -1,5 +1,3 @@
-module;
-
 export module Argo:Arg;
 
 import :ArgName;
@@ -20,7 +18,7 @@ namespace Argo {
  *      // string id
  *      auto parser = Parser<"ID">();
  */
-export template <size_t N>
+template <size_t N>
 struct ParserID {
   union {
     int idInt = 0;
@@ -38,9 +36,9 @@ struct ParserID {
   };
 };
 
-export ParserID(int) -> ParserID<1>;
+ParserID(int) -> ParserID<1>;
 
-export template <size_t N>
+template <size_t N>
 ParserID(const char (&)[N]) -> ParserID<N - 1>;
 
 /*!

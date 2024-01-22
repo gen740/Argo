@@ -1,5 +1,3 @@
-module;
-
 export module Argo:Validation;
 
 import :Exceptions;

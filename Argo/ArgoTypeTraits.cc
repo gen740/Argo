@@ -1,5 +1,3 @@
-module;
-
 export module Argo:TypeTraits;
 import :Exceptions;
 import :std_module;
@@ -8,7 +6,7 @@ import :std_module;
 
 // generator start here
 
-export namespace Argo {
+namespace Argo {
 
 template <class T>
 struct is_tuple : std::false_type {};

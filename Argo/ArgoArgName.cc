@@ -1,5 +1,3 @@
-module;
-
 export module Argo:ArgName;
 
 import :std_module;
