@@ -43,6 +43,7 @@ jobs:
         env:
           CC: /usr/local/opt/llvm/bin/clang
           CXX: /usr/local/opt/llvm/bin/clang++
+          PATH: /usr/local/opt/llvm/bin:$PATH
           LDFLAGS: -L/usr/local/opt/llvm/lib -L/usr/local/opt/llvm/lib/c++ -Wl,-rpath,/usr/local/opt/llvm/lib/c++
           CPPFLAGS: -I/usr/local/opt/llvm/include
 
