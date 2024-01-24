@@ -17,24 +17,23 @@ jobs:
         uses: actions/checkout@v3
 
       - name: Upgrade homebrew
-        run: |
-          brew update
+        run: brew update
         continue-on-error: true
 
       - name: Install llvm
-        run: |
-          brew install llvm
+        run: brew install llvm
         continue-on-error: true
 
       - name: Install cmake
-        run: |
-          brew install cmake
+        run: brew install cmake
         continue-on-error: true
 
       - name: Install ninja
-        run: |
-          brew install ninja
+        run: brew install ninja
         continue-on-error: true
+
+      - name: Add LLVM Path
+        run: echo "/usr/local/opt/llvm/bin" >> $GITHUB_PATH
 
       - name: Build Debug
         run: |
