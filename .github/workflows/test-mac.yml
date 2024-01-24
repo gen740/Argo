@@ -12,6 +12,11 @@ on:
 jobs:
   tests:
     runs-on: macos-latest
+
+    # strategy:
+    #   matrix:
+    #     build_type: [Release, Debug]
+
     steps:
       - name: Checkout
         uses: actions/checkout@v3

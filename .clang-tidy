@@ -21,6 +21,7 @@ Checks: >-
   -misc-non-private-member-variables-in-classes,
   -readability-function-cognitive-complexity,
   -readability-magic-numbers,
+  -misc-include-cleaner,
 WarningsAsErrors: ''
 HeaderFileExtensions:
   - ''

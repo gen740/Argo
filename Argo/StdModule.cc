@@ -2,7 +2,6 @@ module;
 
 // TODO(gen740): need to replace std
 // Declare all stds in this file
-// NOLINTBEGIN(misc-include-cleaner)
 #include <unistd.h>
 
 #include <array>
@@ -22,7 +21,6 @@ module;
 #include <tuple>
 #include <utility>
 #include <vector>
-// NOLINTEND(misc-include-cleaner)
 
 export module Argo:std_module;
 
