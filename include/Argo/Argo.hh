@@ -104,7 +104,7 @@ using vector_base_t = vector_base<T>::type;
 template <class T>
 struct is_array : std::false_type {};
 
-template <class T, size_t N>
+template <class T, std::size_t N>
 struct is_array<std::array<T, N>> : std::true_type {};
 
 template <class T>
@@ -112,23 +112,23 @@ constexpr bool is_array_v = is_array<T>::value;
 
 template <class T>
 struct array_len {
-  static constexpr size_t value = 0;
+  static constexpr std::size_t value = 0;
 };
 
-template <class T, size_t N>
+template <class T, std::size_t N>
 struct array_len<std::array<T, N>> {
-  static constexpr size_t value = N;
+  static constexpr std::size_t value = N;
 };
 
 template <class T>
-constexpr size_t array_len_v = array_len<T>::value;
+constexpr std::size_t array_len_v = array_len<T>::value;
 
 template <class T>
 struct array_base {
   using type = T;
 };
 
-template <class T, size_t N>
+template <class T, std::size_t N>
 struct array_base<std::array<T, N>> {
   using type = T;
 };
@@ -347,15 +347,15 @@ namespace Argo {
 /*!
  * ArgName which holds argument name
  */
-template <size_t N>
+template <std::size_t N>
 struct ArgName {
   char short_key_ = '\0';
   char key_[N] = {};
-  size_t key_len_ = N;
+  std::size_t key_len_ = N;
 
   // NOLINTNEXTLINE(google-explicit-constructor)
   consteval ArgName(const char (&lhs)[N + 1]) {
-    for (size_t i = 0; i < N; i++) {
+    for (std::size_t i = 0; i < N; i++) {
       if (lhs[i] == ',') {
         this->key_len_ = i;
         this->short_key_ = lhs[i + 1];
@@ -377,7 +377,7 @@ struct ArgName {
     return this->key_len_;
   }
 
-  template <size_t M>
+  template <std::size_t M>
   [[nodiscard]] ARGO_ALWAYS_INLINE consteval auto operator==(
       const ArgName<M>& lhs) const -> bool {
     return this->getKey() == lhs.getKey();
@@ -392,7 +392,7 @@ struct ArgName {
   }
 };
 
-template <size_t N>
+template <std::size_t N>
 ArgName(const char (&)[N]) -> ArgName<N - 1>;
 
 template <class T>
@@ -415,7 +415,7 @@ namespace Argo {
  *      // string id
  *      auto parser = Parser<"ID">();
  */
-template <size_t N>
+template <std::size_t N>
 struct ParserID {
   union {
     int idInt = 0;
@@ -427,7 +427,7 @@ struct ParserID {
 
   // NOLINTNEXTLINE(google-explicit-constructor)
   consteval ParserID(const char (&id)[N + 1]) {
-    for (size_t i = 0; i < N; i++) {
+    for (std::size_t i = 0; i < N; i++) {
       this->id.idName[i] = id[i];
     }
   };
@@ -435,7 +435,7 @@ struct ParserID {
 
 ParserID(int) -> ParserID<1>;
 
-template <size_t N>
+template <std::size_t N>
 ParserID(const char (&)[N]) -> ParserID<N - 1>;
 
 /*!
@@ -461,7 +461,7 @@ struct NArgs {
 /*!
  * consteval String
  */
-template <size_t N>
+template <std::size_t N>
 struct String {
   char str_[N] = {};
 
@@ -481,43 +481,43 @@ struct String {
     return std::string_view(str_, N);
   }
 
-  [[nodiscard]] consteval auto operator[](size_t n) const {
+  [[nodiscard]] consteval auto operator[](std::size_t n) const {
     return str_[n];
   }
 
-  consteval auto operator[](size_t n) -> char& {
+  consteval auto operator[](std::size_t n) -> char& {
     return str_[n];
   }
 
   consteval auto removeTrail() {
     String<N - 1> ret;
-    for (size_t i = 0; i < N - 1; i++) {
+    for (std::size_t i = 0; i < N - 1; i++) {
       ret[i] = str_[i];
     }
     return ret;
   }
 
-  template <size_t M>
+  template <std::size_t M>
   consteval auto operator+(const String<M>& rhs) -> String<N + M> {
     String<N + M> ret;
-    for (size_t i = 0; i < N; i++) {
+    for (std::size_t i = 0; i < N; i++) {
       ret[i] = str_[i];
     }
-    for (size_t i = 0; i < M; i++) {
+    for (std::size_t i = 0; i < M; i++) {
       ret[i + N] = rhs[i];
     }
     return ret;
   }
 };
 
-template <size_t N>
+template <std::size_t N>
 String(const char (&)[N]) -> String<N - 1>;
 
 /*!
  * Convert typename to consteval String
  */
 template <class T>
-consteval auto get_type_name_base_type([[maybe_unused]] size_t n = 0) {
+consteval auto get_type_name_base_type([[maybe_unused]] std::size_t n = 0) {
   if constexpr (std::is_same_v<T, bool>) {
     return String("BOOL");
   } else if constexpr (std::is_integral_v<T>) {
@@ -538,13 +538,13 @@ consteval auto get_type_name_base_type([[maybe_unused]] size_t n = 0) {
 template <class T, NArgs TNArgs>
 consteval auto get_base_type_name_form_stl() {
   if constexpr (is_array_v<T>) {
-    return []<size_t... Is>(std::index_sequence<Is...>) consteval {
+    return []<std::size_t... Is>(std::index_sequence<Is...>) consteval {
       return ((get_type_name_base_type<array_base_t<T>>(Is) + String(",")) +
               ...);
     }(std::make_index_sequence<TNArgs.nargs>())
                .removeTrail();
   } else if constexpr (is_vector_v<T>) {
-    return []<size_t... Is>(std::index_sequence<Is...>) consteval {
+    return []<std::size_t... Is>(std::index_sequence<Is...>) consteval {
       return ((get_type_name_base_type<vector_base_t<T>>(Is) + String(",")) +
               ...)
           .removeTrail();
@@ -602,7 +602,7 @@ struct Arg : ArgTag {
           Type,                                                     //
           std::conditional_t<                                       //
               (TNArgs.nargs > 1),                                   //
-              std::array<Type, static_cast<size_t>(TNArgs.nargs)>,  //
+              std::array<Type, static_cast<std::size_t>(TNArgs.nargs)>,  //
               std::vector<Type>                                     //
               >                                                     //
           >;                                                        //
@@ -900,7 +900,7 @@ ARGO_ALWAYS_INLINE constexpr auto ArgCaster(const std::string_view& value,
       return false;
     }
     throw InvalidArgument(
-        format("Argument {}: {} cannot convert bool", key, value));
+        std::format("Argument {}: {} cannot convert bool", key, value));
   } else if constexpr (std::is_integral_v<Type>) {
     Type ret;
     std::from_chars(value.begin(), value.end(), ret);
@@ -914,7 +914,7 @@ ARGO_ALWAYS_INLINE constexpr auto ArgCaster(const std::string_view& value,
   }
 }
 
-template <class... T, size_t... N>
+template <class... T, std::size_t... N>
 ARGO_ALWAYS_INLINE constexpr auto TupleAssign(
     std::tuple<T...>& t, const std::span<std::string_view>& v,
     std::index_sequence<N...> /* unused */, const std::string_view& key)
@@ -939,7 +939,7 @@ template <class Arg>
 ARGO_ALWAYS_INLINE constexpr auto ValiadicArgAssign(
     const std::span<std::string_view>& values) -> void {
   Arg::value.resize(values.size());
-  for (size_t i = 0; i < values.size(); i++) {
+  for (std::size_t i = 0; i < values.size(); i++) {
     Arg::value[i] =
         ArgCaster<typename Arg::baseType>(values[i], Arg::name.getKey());
   }
@@ -950,17 +950,17 @@ template <class Arg>
 ARGO_ALWAYS_INLINE constexpr auto NLengthArgAssign(
     std::span<std::string_view>& values) -> void {
   if (Arg::nargs.nargs > values.size()) [[unlikely]] {
-    throw Argo::InvalidArgument(
-        format("Argument {}: invalid argument {}", Arg::name.getKey(), values));
+    throw Argo::InvalidArgument(std::format("Argument {}: invalid argument {}",
+                                            Arg::name.getKey(), values));
   }
   if constexpr (is_array_v<typename Arg::type>) {
-    for (size_t i = 0; i < Arg::nargs.nargs; i++) {
+    for (std::size_t i = 0; i < Arg::nargs.nargs; i++) {
       Arg::value[i] =
           ArgCaster<typename Arg::baseType>(values[i], Arg::name.getKey());
     }
   } else if constexpr (is_vector_v<typename Arg::type>) {
     Arg::value.resize(Arg::nargs.nargs);
-    for (size_t i = 0; i < Arg::nargs.nargs; i++) {
+    for (std::size_t i = 0; i < Arg::nargs.nargs; i++) {
       Arg::value[i] =
           ArgCaster<typename Arg::baseType>(values[i], Arg::name.getKey());
     }
@@ -1003,8 +1003,8 @@ ARGO_ALWAYS_INLINE constexpr auto PArgAssigner(
       if constexpr (Arg::nargs.nargs == 1) {
         if (values.empty()) [[unlikely]] {
           throw Argo::InvalidArgument(
-              format("Argument {}: should take exactly one value but zero",
-                     Arg::name.getKey()));
+              std::format("Argument {}: should take exactly one value but zero",
+                          Arg::name.getKey()));
         }
         ZeroOrOneArgAssign<Arg>(values);
         return values.empty();
@@ -1028,12 +1028,13 @@ ARGO_ALWAYS_INLINE constexpr auto AssignOneArg(
     const std::string_view& key, std::span<std::string_view> values) -> bool {
   if (Head::assigned) [[unlikely]] {
     throw Argo::InvalidArgument(
-        format("Argument {}: duplicated argument", key));
+        std::format("Argument {}: duplicated argument", key));
   }
   if constexpr (std::derived_from<Head, FlagArgTag>) {
     if constexpr (std::is_same_v<PArgs, std::tuple<>>) {
       if (!values.empty()) [[unlikely]] {
-        throw Argo::InvalidArgument(format("Flag {} can not take value", key));
+        throw Argo::InvalidArgument(
+            std::format("Flag {} can not take value", key));
       }
     } else {
       if (!values.empty()) {
@@ -1064,14 +1065,14 @@ ARGO_ALWAYS_INLINE constexpr auto AssignOneArg(
     } else if constexpr (Head::nargs.nargs_char == '+') {
       if (values.empty()) [[unlikely]] {
         throw Argo::InvalidArgument(
-            format("Argument {}: should take more than one value", key));
+            std::format("Argument {}: should take more than one value", key));
       }
       ValiadicArgAssign<Head>(values);
       return true;
     } else if constexpr (Head::nargs.nargs == 1) {
       if (values.empty()) [[unlikely]] {
-        throw Argo::InvalidArgument(
-            format("Argument {}: should take exactly one value but zero", key));
+        throw Argo::InvalidArgument(std::format(
+            "Argument {}: should take exactly one value but zero", key));
       }
       ZeroOrOneArgAssign<Head>(values);
       if (values.empty()) {
@@ -1092,12 +1093,12 @@ ARGO_ALWAYS_INLINE constexpr auto AssignOneArg(
 template <class Args, class PArgs>
 ARGO_ALWAYS_INLINE constexpr auto assignArg(
     const std::string_view& key, const std::span<std::string_view>& values) {
-  [&key, &values]<size_t... Is>(std::index_sequence<Is...>)
+  [&key, &values]<std::size_t... Is>(std::index_sequence<Is...>)
       ARGO_ALWAYS_INLINE -> void {
         if (!(... || (std::tuple_element_t<Is, Args>::name.getKey() == key and
                       AssignOneArg<std::tuple_element_t<Is, Args>, PArgs>(
                           key, values)))) [[unlikely]] {
-          throw Argo::InvalidArgument(format("Invalid argument {}", key));
+          throw Argo::InvalidArgument(std::format("Invalid argument {}", key));
         }
       }(std::make_index_sequence<std::tuple_size_v<Args>>());
 }
@@ -1114,7 +1115,7 @@ ARGO_ALWAYS_INLINE constexpr auto Assigner(
     }
   } else {
     if (key.empty()) [[unlikely]] {
-      throw Argo::InvalidArgument(format("Invalid argument {}", key));
+      throw Argo::InvalidArgument(std::format("Invalid argument {}", key));
     }
   }
   assignArg<Arguments, PArgs>(key, values);
@@ -1123,8 +1124,7 @@ ARGO_ALWAYS_INLINE constexpr auto Assigner(
 template <class Arguments, class PArgs, class HArg>
 ARGO_ALWAYS_INLINE constexpr auto ShortArgAssigner(
     std::string_view key, const std::span<std::string_view>& values) {
-  bool has_help = false;
-  for (size_t i = 0; i < key.size(); i++) {
+  for (std::size_t i = 0; i < key.size(); i++) {
     auto [found_key, is_flag] = GetkeyFromShortKey<     //
         std::conditional_t<std::is_same_v<HArg, void>,  //
                            Arguments,                   //
@@ -1140,22 +1140,22 @@ ARGO_ALWAYS_INLINE constexpr auto ShortArgAssigner(
       assignArg<Arguments, PArgs>(found_key, {});
     } else if ((key.size() - 1 == i) and !values.empty()) {
       assignArg<Arguments, PArgs>(found_key, values);
-      return has_help;
+      return false;
     } else if ((key.size() - 1 == i) and values.empty()) {
       auto value = std::vector<std::string_view>{key.substr(i + 1)};
       assignArg<Arguments, PArgs>(found_key, value);
-      return has_help;
+      return false;
     } else [[unlikely]] {
-      throw Argo::InvalidArgument(
-          format("Invalid Flag argument {} {}", key[i], key.substr(i + 1)));
+      throw Argo::InvalidArgument(std::format("Invalid Flag argument {} {}",
+                                              key[i], key.substr(i + 1)));
     }
   }
-  return has_help;
+  return false;
 }
 
 template <class Args>
 ARGO_ALWAYS_INLINE constexpr auto ValueReset() -> void {
-  []<size_t... Is>(std::index_sequence<Is...>) ARGO_ALWAYS_INLINE {
+  []<std::size_t... Is>(std::index_sequence<Is...>) ARGO_ALWAYS_INLINE {
     (..., []<class T>() ARGO_ALWAYS_INLINE {
       if (T::assigned) {
         T::value = typename T::type();
@@ -1183,7 +1183,7 @@ ARGO_ALWAYS_INLINE constexpr auto MetaParse(SubParsers sub_parsers, int index,
                                             int argc, char** argv) -> bool {
   return apply(
       [&](auto&&... s) ARGO_ALWAYS_INLINE {
-        int64_t idx = -1;
+        std::int64_t idx = -1;
         return (... || (idx++, idx == index &&
                                    (s.parser.get().parse(argc, argv), true)));
       },
@@ -1193,10 +1193,11 @@ ARGO_ALWAYS_INLINE constexpr auto MetaParse(SubParsers sub_parsers, int index,
 template <class SubParsers>
   requires(is_tuple_v<SubParsers>)
 ARGO_ALWAYS_INLINE constexpr auto ParserIndex(SubParsers sub_parsers,  //
-                                              std::string_view key) -> int64_t {
+                                              std::string_view key)
+    -> std::int64_t {
   return apply(
       [&](auto&&... s) ARGO_ALWAYS_INLINE {
-        int64_t index = -1;
+        std::int64_t index = -1;
         bool found = (... || (index++, s.name.getKey() == key));
         return found ? index : -1;
       },
@@ -1468,7 +1469,7 @@ class Parser {
   }
 
   template <ArgName Name>
-  constexpr auto& getParser() {
+  constexpr auto getParser() -> auto& {
     if constexpr (std::is_same_v<SubParsers, std::tuple<>>) {
       static_assert(false, "Parser has no sub parser");
     }
@@ -1536,7 +1537,8 @@ class Parser {
 
  public:
   ARGO_ALWAYS_INLINE constexpr auto parse(int argc, char* argv[]) -> void;
-  [[nodiscard]] constexpr std::string formatHelp(bool no_color = false) const;
+  [[nodiscard]] constexpr auto formatHelp(bool no_color = false) const
+      -> std::string;
 
   explicit constexpr operator bool() const {
     return this->parsed_;
@@ -1576,7 +1578,7 @@ constexpr auto Parser<ID, Args, PArgs, HArg, SubParsers>::setArg(
   if constexpr (!std::is_same_v<HArg, void>) {
     if (key == HArg::name.getKey()) {
       std::cout << formatHelp() << std::endl;
-      exit(0);
+      std::exit(0);
     }
   }
   Assigner<Args, PArgs>(key, val);
@@ -1589,7 +1591,7 @@ constexpr auto Parser<ID, Args, PArgs, HArg, SubParsers>::setShortKeyArg(
     -> void {
   if (ShortArgAssigner<Args, PArgs, HArg>(key, val)) [[unlikely]] {
     std::cout << formatHelp() << std::endl;
-    exit(0);
+    std::exit(0);
   };
 }
 
@@ -1617,14 +1619,15 @@ constexpr auto Parser<ID, Args, PArgs, HArg, SubParsers>::parse(int argc,
   std::string_view short_keys{};
   std::vector<std::string_view> values{};
 
-  assert(this->info_);  // this->info_ cannot be nullptr
+  // [[assume(this->info_)]]; // TODO(gen740): add assume when clang supports it
+
   if (!this->info_->program_name) {
     this->info_->program_name = std::string_view(argv[0]);
   }
 
   // Search for subcommand
-  int32_t subcmd_found_idx = -1;
-  int32_t cmd_end_pos = argc;
+  std::int32_t subcmd_found_idx = -1;
+  std::int32_t cmd_end_pos = argc;
 
   for (int i = argc - 1; i > 0; i--) {
     if constexpr (!std::is_same_v<SubParsers, std::tuple<>>) {
@@ -1746,7 +1749,7 @@ struct AnsiEscapeCode {
   }
 };
 
-constexpr size_t max_option_width = 26;
+constexpr std::size_t max_option_width = 26;
 
 constexpr auto createUsageSection(const auto& program_name,
                                   const auto& help_info, const auto& pargs_info,
@@ -1805,7 +1808,7 @@ constexpr auto createSubcommandSection(const auto& ansi,
                                description[0]));
       }
     }
-    for (size_t i = 1; i < description.size(); i++) {
+    for (std::size_t i = 1; i < description.size(); i++) {
       ret.append(std::format("{0}{1}\n", std::string(max_option_width, ' '),
                              description[i]));
     }
@@ -1852,7 +1855,7 @@ constexpr auto createOptionsSection(const auto& ansi, const auto& help_info) {
                                description[0]));
       }
     }
-    for (size_t i = 1; i < description.size(); i++) {
+    for (std::size_t i = 1; i < description.size(); i++) {
       ret.append(std::format("{0}{1}\n",                          //
                              std::string(max_option_width, ' '),  // 0
                              description[i]                       // 1
@@ -1885,7 +1888,7 @@ constexpr auto createPositionalArgumentSection(const auto& ansi,
                                description[0]));
       }
     }
-    for (size_t i = 1; i < description.size(); i++) {
+    for (std::size_t i = 1; i < description.size(); i++) {
       ret.append(std::format("{0}{1}\n", std::string(max_option_width, ' '),
                              description[i]));
     }
@@ -1901,8 +1904,6 @@ constexpr auto Parser<ID, Args, PArgs, HArg, SubParsers>::formatHelp(
 
   AnsiEscapeCode ansi((::isatty(1) != 0) and !no_color);
 
-  assert(this->info_);  // this->info_ cannot be nullptr
-
   std::vector<ArgInfo> help_info;
   if constexpr (std::is_same_v<HArg, void>) {
     help_info = HelpGenerator<Args>();
@@ -1912,6 +1913,8 @@ constexpr auto Parser<ID, Args, PArgs, HArg, SubParsers>::formatHelp(
   std::vector<ArgInfo> pargs_info = HelpGenerator<PArgs>();
 
   auto sub_commands = SubParserInfo(subParsers);
+
+  // [[assume(this->info_)]]; // TODO(gen740): add assume when clang supports it
 
   if (this->info_->help) {
     ret.append(this->info_->help.value());
