@@ -76,7 +76,6 @@ if(${CMAKE_SOURCE_DIR} STREQUAL ${CMAKE_CURRENT_LIST_DIR})
                              "${CLANG_TIDY_EXE};-p;${CMAKE_BINARY_DIR}")
     endif()
     if(${CMAKE_BUILD_TYPE} STREQUAL "Debug")
-      message("Debug build")
       target_compile_options(test-argo PRIVATE -fprofile-instr-generate
                                                -fcoverage-mapping)
       target_link_options(test-argo PRIVATE -fprofile-instr-generate

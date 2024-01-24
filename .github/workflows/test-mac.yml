@@ -13,9 +13,9 @@ jobs:
   tests:
     runs-on: macos-latest
 
-    # strategy:
-    #   matrix:
-    #     build_type: [Release, Debug]
+    strategy:
+      matrix:
+        build_type: [Release, Debug]
 
     steps:
       - name: Checkout
@@ -40,39 +40,32 @@ jobs:
       - name: Add LLVM Path
         run: echo "/usr/local/opt/llvm/bin" >> $GITHUB_PATH
 
-      - name: Build Debug
+      - name: Build ${{ matrix.build_type }}
         run: |
-          cmake -B build_debug -S . -DARGO_TESTS_ENABLE=true -GNinja -DCMAKE_BUILD_TYPE=Debug -DARGO_CLANG_TIDY_ENABLE=ON
-          cmake --build build_debug
+          cmake -B build -S . -DARGO_TESTS_ENABLE=true -GNinja -DCMAKE_BUILD_TYPE=${{ matrix.build_type }}
+          cmake --build build
         env:
           CC: /usr/local/opt/llvm/bin/clang
           CXX: /usr/local/opt/llvm/bin/clang++
           LDFLAGS: -L/usr/local/opt/llvm/lib -L/usr/local/opt/llvm/lib/c++ -Wl,-rpath,/usr/local/opt/llvm/lib/c++
           CPPFLAGS: -I/usr/local/opt/llvm/include
 
-      - name: Build Release
+      - name: Test ${{ matrix.build_type }}
+        if: matrix.build_type == 'Release'
         run: |
-          cmake -B build_release -S . -DARGO_TESTS_ENABLE=true -GNinja -DCMAKE_BUILD_TYPE=Release
-          cmake --build build_release
-        env:
-          CC: /usr/local/opt/llvm/bin/clang
-          CXX: /usr/local/opt/llvm/bin/clang++
-          LDFLAGS: -L/usr/local/opt/llvm/lib -L/usr/local/opt/llvm/lib/c++ -Wl,-rpath,/usr/local/opt/llvm/lib/c++
-          CPPFLAGS: -I/usr/local/opt/llvm/include
-
-      - name: Test Release
-        run: |
-          cmake --build build_release --target test
+          cmake --build build --target test
 
       - name: Test Debug with codecov
+        if: matrix.build_type == 'Debug'
         run: |
-          LLVM_PROFILE_FILE=./build_debug/test-argo.profraw ./build_debug/test-argo
-          /usr/local/opt/llvm/bin/llvm-profdata merge -sparse ./build_debug/test-argo.profraw -o ./build_debug/coverage.profdata
-          /usr/local/opt/llvm/bin/llvm-cov show ./build_debug/test-argo -instr-profile=./build_debug/coverage.profdata -ignore-filename-regex="tests*" -ignore-filename-regex="Argo/ArgoExceptions.cc" > ./build_debug/coverage.txt
+          LLVM_PROFILE_FILE=./build/test-argo.profraw ./build/test-argo
+          /usr/local/opt/llvm/bin/llvm-profdata merge -sparse ./build/test-argo.profraw -o ./build/coverage.profdata
+          /usr/local/opt/llvm/bin/llvm-cov show ./build/test-argo -instr-profile=./build/coverage.profdata -ignore-filename-regex="tests*" -ignore-filename-regex="Argo/ArgoExceptions.cc" > ./build/coverage.txt
 
       - name: Upload coverage reports to Codecov
         uses: codecov/codecov-action@v3
+        if: matrix.build_type == 'Debug'
         with:
-          files: ./build_debug/coverage.txt
+          files: ./build/coverage.txt
         env:
           CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}

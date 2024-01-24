@@ -277,7 +277,7 @@ class Parser {
   }
 
   template <ArgName Name>
-  constexpr auto& getParser() {
+  constexpr auto getParser() -> auto& {
     if constexpr (std::is_same_v<SubParsers, std::tuple<>>) {
       static_assert(false, "Parser has no sub parser");
     }
@@ -345,7 +345,8 @@ class Parser {
 
  public:
   ARGO_ALWAYS_INLINE constexpr auto parse(int argc, char* argv[]) -> void;
-  [[nodiscard]] constexpr std::string formatHelp(bool no_color = false) const;
+  [[nodiscard]] constexpr auto formatHelp(bool no_color = false) const
+      -> std::string;
 
   explicit constexpr operator bool() const {
     return this->parsed_;

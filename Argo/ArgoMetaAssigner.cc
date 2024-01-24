@@ -259,7 +259,6 @@ ARGO_ALWAYS_INLINE constexpr auto Assigner(
 template <class Arguments, class PArgs, class HArg>
 ARGO_ALWAYS_INLINE constexpr auto ShortArgAssigner(
     std::string_view key, const std::span<std::string_view>& values) {
-  bool has_help = false;
   for (size_t i = 0; i < key.size(); i++) {
     auto [found_key, is_flag] = GetkeyFromShortKey<     //
         std::conditional_t<std::is_same_v<HArg, void>,  //
@@ -276,17 +275,17 @@ ARGO_ALWAYS_INLINE constexpr auto ShortArgAssigner(
       assignArg<Arguments, PArgs>(found_key, {});
     } else if ((key.size() - 1 == i) and !values.empty()) {
       assignArg<Arguments, PArgs>(found_key, values);
-      return has_help;
+      return false;
     } else if ((key.size() - 1 == i) and values.empty()) {
       auto value = std::vector<std::string_view>{key.substr(i + 1)};
       assignArg<Arguments, PArgs>(found_key, value);
-      return has_help;
+      return false;
     } else [[unlikely]] {
       throw Argo::InvalidArgument(
           format("Invalid Flag argument {} {}", key[i], key.substr(i + 1)));
     }
   }
-  return has_help;
+  return false;
 }
 
 template <class Args>

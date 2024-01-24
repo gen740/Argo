@@ -1,7 +1,6 @@
 module;
 
 #include <cassert>
-#include <print>
 
 #include "Argo/ArgoMacros.hh"
 
