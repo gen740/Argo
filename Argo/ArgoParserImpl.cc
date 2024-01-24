@@ -1,7 +1,5 @@
 module;
 
-#include <cassert>
-
 #include "Argo/ArgoMacros.hh"
 
 export module Argo:ParserImpl;
@@ -89,14 +87,13 @@ constexpr auto Parser<ID, Args, PArgs, HArg, SubParsers>::parse(int argc,
   std::string_view short_keys{};
   std::vector<std::string_view> values{};
 
-  assert(this->info_);  // this->info_ cannot be nullptr
   if (!this->info_->program_name) {
     this->info_->program_name = std::string_view(argv[0]);
   }
 
   // Search for subcommand
-  int32_t subcmd_found_idx = -1;
-  int32_t cmd_end_pos = argc;
+  std::int32_t subcmd_found_idx = -1;
+  std::int32_t cmd_end_pos = argc;
 
   for (int i = argc - 1; i > 0; i--) {
     if constexpr (!std::is_same_v<SubParsers, std::tuple<>>) {
@@ -218,7 +215,7 @@ struct AnsiEscapeCode {
   }
 };
 
-constexpr size_t max_option_width = 26;
+constexpr std::size_t max_option_width = 26;
 
 constexpr auto createUsageSection(const auto& program_name,
                                   const auto& help_info, const auto& pargs_info,
@@ -277,7 +274,7 @@ constexpr auto createSubcommandSection(const auto& ansi,
                                description[0]));
       }
     }
-    for (size_t i = 1; i < description.size(); i++) {
+    for (std::size_t i = 1; i < description.size(); i++) {
       ret.append(std::format("{0}{1}\n", std::string(max_option_width, ' '),
                              description[i]));
     }
@@ -324,7 +321,7 @@ constexpr auto createOptionsSection(const auto& ansi, const auto& help_info) {
                                description[0]));
       }
     }
-    for (size_t i = 1; i < description.size(); i++) {
+    for (std::size_t i = 1; i < description.size(); i++) {
       ret.append(std::format("{0}{1}\n",                          //
                              std::string(max_option_width, ' '),  // 0
                              description[i]                       // 1
@@ -357,7 +354,7 @@ constexpr auto createPositionalArgumentSection(const auto& ansi,
                                description[0]));
       }
     }
-    for (size_t i = 1; i < description.size(); i++) {
+    for (std::size_t i = 1; i < description.size(); i++) {
       ret.append(std::format("{0}{1}\n", std::string(max_option_width, ' '),
                              description[i]));
     }
@@ -372,8 +369,6 @@ constexpr auto Parser<ID, Args, PArgs, HArg, SubParsers>::formatHelp(
   std::string ret;
 
   AnsiEscapeCode ansi((::isatty(1) != 0) and !no_color);
-
-  assert(this->info_);  // this->info_ cannot be nullptr
 
   std::vector<ArgInfo> help_info;
   if constexpr (std::is_same_v<HArg, void>) {

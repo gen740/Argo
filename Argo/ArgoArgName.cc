@@ -11,15 +11,15 @@ namespace Argo {
 /*!
  * ArgName which holds argument name
  */
-template <size_t N>
+template <std::size_t N>
 struct ArgName {
   char short_key_ = '\0';
   char key_[N] = {};
-  size_t key_len_ = N;
+  std::size_t key_len_ = N;
 
   // NOLINTNEXTLINE(google-explicit-constructor)
   consteval ArgName(const char (&lhs)[N + 1]) {
-    for (size_t i = 0; i < N; i++) {
+    for (std::size_t i = 0; i < N; i++) {
       if (lhs[i] == ',') {
         this->key_len_ = i;
         this->short_key_ = lhs[i + 1];
@@ -41,7 +41,7 @@ struct ArgName {
     return this->key_len_;
   }
 
-  template <size_t M>
+  template <std::size_t M>
   [[nodiscard]] ARGO_ALWAYS_INLINE consteval auto operator==(
       const ArgName<M>& lhs) const -> bool {
     return this->getKey() == lhs.getKey();
@@ -56,7 +56,7 @@ struct ArgName {
   }
 };
 
-template <size_t N>
+template <std::size_t N>
 ArgName(const char (&)[N]) -> ArgName<N - 1>;
 
 template <class T>

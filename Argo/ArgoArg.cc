@@ -18,7 +18,7 @@ namespace Argo {
  *      // string id
  *      auto parser = Parser<"ID">();
  */
-template <size_t N>
+template <std::size_t N>
 struct ParserID {
   union {
     int idInt = 0;
@@ -30,7 +30,7 @@ struct ParserID {
 
   // NOLINTNEXTLINE(google-explicit-constructor)
   consteval ParserID(const char (&id)[N + 1]) {
-    for (size_t i = 0; i < N; i++) {
+    for (std::size_t i = 0; i < N; i++) {
       this->id.idName[i] = id[i];
     }
   };
@@ -38,7 +38,7 @@ struct ParserID {
 
 ParserID(int) -> ParserID<1>;
 
-template <size_t N>
+template <std::size_t N>
 ParserID(const char (&)[N]) -> ParserID<N - 1>;
 
 /*!
@@ -64,7 +64,7 @@ struct NArgs {
 /*!
  * consteval String
  */
-template <size_t N>
+template <std::size_t N>
 struct String {
   char str_[N] = {};
 
@@ -84,43 +84,43 @@ struct String {
     return std::string_view(str_, N);
   }
 
-  [[nodiscard]] consteval auto operator[](size_t n) const {
+  [[nodiscard]] consteval auto operator[](std::size_t n) const {
     return str_[n];
   }
 
-  consteval auto operator[](size_t n) -> char& {
+  consteval auto operator[](std::size_t n) -> char& {
     return str_[n];
   }
 
   consteval auto removeTrail() {
     String<N - 1> ret;
-    for (size_t i = 0; i < N - 1; i++) {
+    for (std::size_t i = 0; i < N - 1; i++) {
       ret[i] = str_[i];
     }
     return ret;
   }
 
-  template <size_t M>
+  template <std::size_t M>
   consteval auto operator+(const String<M>& rhs) -> String<N + M> {
     String<N + M> ret;
-    for (size_t i = 0; i < N; i++) {
+    for (std::size_t i = 0; i < N; i++) {
       ret[i] = str_[i];
     }
-    for (size_t i = 0; i < M; i++) {
+    for (std::size_t i = 0; i < M; i++) {
       ret[i + N] = rhs[i];
     }
     return ret;
   }
 };
 
-template <size_t N>
+template <std::size_t N>
 String(const char (&)[N]) -> String<N - 1>;
 
 /*!
  * Convert typename to consteval String
  */
 template <class T>
-consteval auto get_type_name_base_type([[maybe_unused]] size_t n = 0) {
+consteval auto get_type_name_base_type([[maybe_unused]] std::size_t n = 0) {
   if constexpr (std::is_same_v<T, bool>) {
     return String("BOOL");
   } else if constexpr (std::is_integral_v<T>) {
@@ -141,13 +141,13 @@ consteval auto get_type_name_base_type([[maybe_unused]] size_t n = 0) {
 template <class T, NArgs TNArgs>
 consteval auto get_base_type_name_form_stl() {
   if constexpr (is_array_v<T>) {
-    return []<size_t... Is>(std::index_sequence<Is...>) consteval {
+    return []<std::size_t... Is>(std::index_sequence<Is...>) consteval {
       return ((get_type_name_base_type<array_base_t<T>>(Is) + String(",")) +
               ...);
     }(std::make_index_sequence<TNArgs.nargs>())
                .removeTrail();
   } else if constexpr (is_vector_v<T>) {
-    return []<size_t... Is>(std::index_sequence<Is...>) consteval {
+    return []<std::size_t... Is>(std::index_sequence<Is...>) consteval {
       return ((get_type_name_base_type<vector_base_t<T>>(Is) + String(",")) +
               ...)
           .removeTrail();
@@ -205,7 +205,7 @@ struct Arg : ArgTag {
           Type,                                                     //
           std::conditional_t<                                       //
               (TNArgs.nargs > 1),                                   //
-              std::array<Type, static_cast<size_t>(TNArgs.nargs)>,  //
+              std::array<Type, static_cast<std::size_t>(TNArgs.nargs)>,  //
               std::vector<Type>                                     //
               >                                                     //
           >;                                                        //

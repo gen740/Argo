@@ -26,8 +26,6 @@ export module Argo:std_module;
 
 // NOLINTBEGIN(misc-unused-*-decls, cert-dcl58-cpp)
 using ::isatty;
-using ::std::int64_t;
-using ::std::size_t;
 
 namespace std {
 using ::std::exit;
@@ -43,6 +41,7 @@ using ::std::forward;
 using ::std::move;
 
 // cstdint
+using ::std::int32_t;
 using ::std::int64_t;
 using ::std::size_t;
 

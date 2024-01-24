@@ -25,7 +25,7 @@ ARGO_ALWAYS_INLINE constexpr auto MetaParse(SubParsers sub_parsers, int index,
                                             int argc, char** argv) -> bool {
   return apply(
       [&](auto&&... s) ARGO_ALWAYS_INLINE {
-        int64_t idx = -1;
+        std::int64_t idx = -1;
         return (... || (idx++, idx == index &&
                                    (s.parser.get().parse(argc, argv), true)));
       },
@@ -35,10 +35,11 @@ ARGO_ALWAYS_INLINE constexpr auto MetaParse(SubParsers sub_parsers, int index,
 template <class SubParsers>
   requires(is_tuple_v<SubParsers>)
 ARGO_ALWAYS_INLINE constexpr auto ParserIndex(SubParsers sub_parsers,  //
-                                              std::string_view key) -> int64_t {
+                                              std::string_view key)
+    -> std::int64_t {
   return apply(
       [&](auto&&... s) ARGO_ALWAYS_INLINE {
-        int64_t index = -1;
+        std::int64_t index = -1;
         bool found = (... || (index++, s.name.getKey() == key));
         return found ? index : -1;
       },

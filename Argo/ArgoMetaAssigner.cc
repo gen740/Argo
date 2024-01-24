@@ -36,7 +36,7 @@ ARGO_ALWAYS_INLINE constexpr auto ArgCaster(const std::string_view& value,
       return false;
     }
     throw InvalidArgument(
-        format("Argument {}: {} cannot convert bool", key, value));
+        std::format("Argument {}: {} cannot convert bool", key, value));
   } else if constexpr (std::is_integral_v<Type>) {
     Type ret;
     std::from_chars(value.begin(), value.end(), ret);
@@ -50,7 +50,7 @@ ARGO_ALWAYS_INLINE constexpr auto ArgCaster(const std::string_view& value,
   }
 }
 
-template <class... T, size_t... N>
+template <class... T, std::size_t... N>
 ARGO_ALWAYS_INLINE constexpr auto TupleAssign(
     std::tuple<T...>& t, const std::span<std::string_view>& v,
     std::index_sequence<N...> /* unused */, const std::string_view& key)
@@ -75,7 +75,7 @@ template <class Arg>
 ARGO_ALWAYS_INLINE constexpr auto ValiadicArgAssign(
     const std::span<std::string_view>& values) -> void {
   Arg::value.resize(values.size());
-  for (size_t i = 0; i < values.size(); i++) {
+  for (std::size_t i = 0; i < values.size(); i++) {
     Arg::value[i] =
         ArgCaster<typename Arg::baseType>(values[i], Arg::name.getKey());
   }
@@ -86,17 +86,17 @@ template <class Arg>
 ARGO_ALWAYS_INLINE constexpr auto NLengthArgAssign(
     std::span<std::string_view>& values) -> void {
   if (Arg::nargs.nargs > values.size()) [[unlikely]] {
-    throw Argo::InvalidArgument(
-        format("Argument {}: invalid argument {}", Arg::name.getKey(), values));
+    throw Argo::InvalidArgument(std::format("Argument {}: invalid argument {}",
+                                            Arg::name.getKey(), values));
   }
   if constexpr (is_array_v<typename Arg::type>) {
-    for (size_t i = 0; i < Arg::nargs.nargs; i++) {
+    for (std::size_t i = 0; i < Arg::nargs.nargs; i++) {
       Arg::value[i] =
           ArgCaster<typename Arg::baseType>(values[i], Arg::name.getKey());
     }
   } else if constexpr (is_vector_v<typename Arg::type>) {
     Arg::value.resize(Arg::nargs.nargs);
-    for (size_t i = 0; i < Arg::nargs.nargs; i++) {
+    for (std::size_t i = 0; i < Arg::nargs.nargs; i++) {
       Arg::value[i] =
           ArgCaster<typename Arg::baseType>(values[i], Arg::name.getKey());
     }
@@ -139,8 +139,8 @@ ARGO_ALWAYS_INLINE constexpr auto PArgAssigner(
       if constexpr (Arg::nargs.nargs == 1) {
         if (values.empty()) [[unlikely]] {
           throw Argo::InvalidArgument(
-              format("Argument {}: should take exactly one value but zero",
-                     Arg::name.getKey()));
+              std::format("Argument {}: should take exactly one value but zero",
+                          Arg::name.getKey()));
         }
         ZeroOrOneArgAssign<Arg>(values);
         return values.empty();
@@ -164,12 +164,13 @@ ARGO_ALWAYS_INLINE constexpr auto AssignOneArg(
     const std::string_view& key, std::span<std::string_view> values) -> bool {
   if (Head::assigned) [[unlikely]] {
     throw Argo::InvalidArgument(
-        format("Argument {}: duplicated argument", key));
+        std::format("Argument {}: duplicated argument", key));
   }
   if constexpr (std::derived_from<Head, FlagArgTag>) {
     if constexpr (std::is_same_v<PArgs, std::tuple<>>) {
       if (!values.empty()) [[unlikely]] {
-        throw Argo::InvalidArgument(format("Flag {} can not take value", key));
+        throw Argo::InvalidArgument(
+            std::format("Flag {} can not take value", key));
       }
     } else {
       if (!values.empty()) {
@@ -200,14 +201,14 @@ ARGO_ALWAYS_INLINE constexpr auto AssignOneArg(
     } else if constexpr (Head::nargs.nargs_char == '+') {
       if (values.empty()) [[unlikely]] {
         throw Argo::InvalidArgument(
-            format("Argument {}: should take more than one value", key));
+            std::format("Argument {}: should take more than one value", key));
       }
       ValiadicArgAssign<Head>(values);
       return true;
     } else if constexpr (Head::nargs.nargs == 1) {
       if (values.empty()) [[unlikely]] {
-        throw Argo::InvalidArgument(
-            format("Argument {}: should take exactly one value but zero", key));
+        throw Argo::InvalidArgument(std::format(
+            "Argument {}: should take exactly one value but zero", key));
       }
       ZeroOrOneArgAssign<Head>(values);
       if (values.empty()) {
@@ -228,12 +229,12 @@ ARGO_ALWAYS_INLINE constexpr auto AssignOneArg(
 template <class Args, class PArgs>
 ARGO_ALWAYS_INLINE constexpr auto assignArg(
     const std::string_view& key, const std::span<std::string_view>& values) {
-  [&key, &values]<size_t... Is>(std::index_sequence<Is...>)
+  [&key, &values]<std::size_t... Is>(std::index_sequence<Is...>)
       ARGO_ALWAYS_INLINE -> void {
         if (!(... || (std::tuple_element_t<Is, Args>::name.getKey() == key and
                       AssignOneArg<std::tuple_element_t<Is, Args>, PArgs>(
                           key, values)))) [[unlikely]] {
-          throw Argo::InvalidArgument(format("Invalid argument {}", key));
+          throw Argo::InvalidArgument(std::format("Invalid argument {}", key));
         }
       }(std::make_index_sequence<std::tuple_size_v<Args>>());
 }
@@ -250,7 +251,7 @@ ARGO_ALWAYS_INLINE constexpr auto Assigner(
     }
   } else {
     if (key.empty()) [[unlikely]] {
-      throw Argo::InvalidArgument(format("Invalid argument {}", key));
+      throw Argo::InvalidArgument(std::format("Invalid argument {}", key));
     }
   }
   assignArg<Arguments, PArgs>(key, values);
@@ -259,7 +260,7 @@ ARGO_ALWAYS_INLINE constexpr auto Assigner(
 template <class Arguments, class PArgs, class HArg>
 ARGO_ALWAYS_INLINE constexpr auto ShortArgAssigner(
     std::string_view key, const std::span<std::string_view>& values) {
-  for (size_t i = 0; i < key.size(); i++) {
+  for (std::size_t i = 0; i < key.size(); i++) {
     auto [found_key, is_flag] = GetkeyFromShortKey<     //
         std::conditional_t<std::is_same_v<HArg, void>,  //
                            Arguments,                   //
@@ -281,8 +282,8 @@ ARGO_ALWAYS_INLINE constexpr auto ShortArgAssigner(
       assignArg<Arguments, PArgs>(found_key, value);
       return false;
     } else [[unlikely]] {
-      throw Argo::InvalidArgument(
-          format("Invalid Flag argument {} {}", key[i], key.substr(i + 1)));
+      throw Argo::InvalidArgument(std::format("Invalid Flag argument {} {}",
+                                              key[i], key.substr(i + 1)));
     }
   }
   return false;
@@ -290,7 +291,7 @@ ARGO_ALWAYS_INLINE constexpr auto ShortArgAssigner(
 
 template <class Args>
 ARGO_ALWAYS_INLINE constexpr auto ValueReset() -> void {
-  []<size_t... Is>(std::index_sequence<Is...>) ARGO_ALWAYS_INLINE {
+  []<std::size_t... Is>(std::index_sequence<Is...>) ARGO_ALWAYS_INLINE {
     (..., []<class T>() ARGO_ALWAYS_INLINE {
       if (T::assigned) {
         T::value = typename T::type();
