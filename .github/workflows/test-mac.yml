@@ -38,7 +38,7 @@ jobs:
 
       - name: Build Debug
         run: |
-          cmake -B build_debug -S . -DARGO_TESTS_ENABLE=true -GNinja -DCMAKE_BUILD_TYPE=Debug
+          cmake -B build_debug -S . -DARGO_TESTS_ENABLE=true -GNinja -DCMAKE_BUILD_TYPE=Debug -DARGO_CLANG_TIDY_ENABLE=ON
           cmake --build build_debug
         env:
           CC: /usr/local/opt/llvm/bin/clang
