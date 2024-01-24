@@ -48,7 +48,7 @@ constexpr auto Parser<ID, Args, PArgs, HArg, SubParsers>::setArg(
   if constexpr (!std::is_same_v<HArg, void>) {
     if (key == HArg::name.getKey()) {
       std::cout << formatHelp() << std::endl;
-      exit(0);
+      std::exit(0);
     }
   }
   Assigner<Args, PArgs>(key, val);
@@ -61,7 +61,7 @@ constexpr auto Parser<ID, Args, PArgs, HArg, SubParsers>::setShortKeyArg(
     -> void {
   if (ShortArgAssigner<Args, PArgs, HArg>(key, val)) [[unlikely]] {
     std::cout << formatHelp() << std::endl;
-    exit(0);
+    std::exit(0);
   };
 }
 
