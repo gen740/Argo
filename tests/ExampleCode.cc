@@ -3,6 +3,9 @@ import Argo;
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
 
+#include <string>
+#include <type_traits>
+
 #include "TestHelper.h"
 
 TEST(ArgoTest, ExampleCode) {

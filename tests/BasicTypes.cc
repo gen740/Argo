@@ -3,6 +3,9 @@ import Argo;
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
 
+#include <string>
+#include <type_traits>
+
 #include "TestHelper.h"
 
 TEST(ArgoTest, AllTypes) {
@@ -28,7 +31,7 @@ TEST(ArgoTest, AllTypes) {
 
   EXPECT_EQ(parser.getArg<"arg1">(), 42);
   EXPECT_EQ(parser.getArg<"arg2">(), -42);
-  EXPECT_FLOAT_EQ(parser.getArg<"arg3">(), 42.1234567890f);
+  EXPECT_FLOAT_EQ(parser.getArg<"arg3">(), 42.1234567890F);
   EXPECT_DOUBLE_EQ(parser.getArg<"arg4">(), 42.12345678901234567890);
   EXPECT_EQ(parser.getArg<"arg5">(), "Hello,World!");
   EXPECT_TRUE(std::strcmp(parser.getArg<"arg6">(), "Hello,World!const char*") ==

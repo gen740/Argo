@@ -20,6 +20,7 @@ Checks: >-
   -cppcoreguidelines-pro-bounds-pointer-arithmetic,
   -misc-non-private-member-variables-in-classes,
   -readability-function-cognitive-complexity,
+  -readability-magic-numbers,
 WarningsAsErrors: ''
 HeaderFileExtensions:
   - ''

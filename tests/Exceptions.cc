@@ -6,11 +6,12 @@ import Argo;
 #include "TestHelper.h"
 
 using testing::HasSubstr;
-using testing::Property;
-using testing::Throws;
 using testing::ThrowsMessage;
 
-using namespace Argo;
+using Argo::ParseError;
+using Argo::InvalidArgument;
+using Argo::nargs;
+using Argo::Parser;
 
 auto parser1 = Parser<"ExceptionParseError">()
                    .addArg<"arg1", int>()

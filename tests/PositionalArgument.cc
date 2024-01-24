@@ -5,6 +5,9 @@ import Argo;
 
 #include "TestHelper.h"
 
+using Argo::nargs;
+using Argo::Parser;
+
 TEST(ArgoTest, Positional) {
   {
     auto [argc, argv] = createArgcArgv(  //
@@ -12,9 +15,9 @@ TEST(ArgoTest, Positional) {
         "1", "2", "3"                    //
     );
 
-    auto argo = Argo::Parser<"Positional arguments">("Sample Program");
+    auto argo = Parser<"Positional arguments">("Sample Program");
     auto parser = argo  //
-                      .addPositionalArg<"arg1", int, Argo::nargs(3)>();
+                      .addPositionalArg<"arg1", int, nargs(3)>();
 
     parser.parse(argc, argv.get());
     EXPECT_THAT(parser.getArg<"arg1">(), testing::ElementsAre(1, 2, 3));
@@ -25,9 +28,9 @@ TEST(ArgoTest, Positional) {
         "--arg2", "42.195"               //
     );
 
-    auto argo = Argo::Parser<"positional argument2">("Sample Program");
+    auto argo = Parser<"positional argument2">("Sample Program");
     auto parser = argo  //
-                      .addPositionalArg<"arg1", int, Argo::nargs(3)>()
+                      .addPositionalArg<"arg1", int, nargs(3)>()
                       .addArg<"arg2", float>()
                       .addFlag<"arg3,a">();
 
@@ -43,10 +46,10 @@ TEST(ArgoTest, Positional) {
         "1", "2", "3"                    //
     );
 
-    auto argo = Argo::Parser<"positional argument3">("Sample Program");
+    auto argo = Parser<"positional argument3">("Sample Program");
     auto parser = argo  //
-                      .addPositionalArg<"arg1", int, Argo::nargs(3)>()
-                      .addArg<"arg2", float, Argo::nargs(1)>();
+                      .addPositionalArg<"arg1", int, nargs(3)>()
+                      .addArg<"arg2", float, nargs(1)>();
 
     parser.parse(argc, argv.get());
 
@@ -59,10 +62,10 @@ TEST(ArgoTest, Positional) {
         "1", "2", "3"                    //
     );
 
-    auto argo = Argo::Parser<"positonal argument 4">("Sample Program");
+    auto argo = Parser<"positonal argument 4">("Sample Program");
     auto parser = argo  //
-                      .addPositionalArg<"arg1", int, Argo::nargs(3)>()
-                      .addArg<"arg2", float, Argo::nargs(2)>();
+                      .addPositionalArg<"arg1", int, nargs(3)>()
+                      .addArg<"arg2", float, nargs(2)>();
 
     parser.parse(argc, argv.get());
 
@@ -75,9 +78,9 @@ TEST(ArgoTest, Positional) {
         "1", "2", "3"                    //
     );
 
-    auto argo = Argo::Parser<"positonal argument 5">("Sample Program");
+    auto argo = Parser<"positonal argument 5">("Sample Program");
     auto parser = argo  //
-                      .addPositionalArg<"arg1", int, Argo::nargs(3)>()
+                      .addPositionalArg<"arg1", int, nargs(3)>()
                       .addFlag<"arg2">();
 
     parser.parse(argc, argv.get());
@@ -91,9 +94,9 @@ TEST(ArgoTest, Positional) {
         "1", "2", "3", "-b"              //
     );
 
-    auto argo = Argo::Parser<"positonal argument 6">("Sample Program");
+    auto argo = Parser<"positonal argument 6">("Sample Program");
     auto parser = argo  //
-                      .addPositionalArg<"arg1", int, Argo::nargs(3)>()
+                      .addPositionalArg<"arg1", int, nargs(3)>()
                       .addFlag<"arg2,b">();
 
     parser.parse(argc, argv.get());
@@ -107,9 +110,9 @@ TEST(ArgoTest, Positional) {
         "1", "2", "3", "-bc", "234.86"   //
     );
 
-    auto argo = Argo::Parser<"positonal argument 7">("Sample Program");
+    auto argo = Parser<"positonal argument 7">("Sample Program");
     auto parser = argo  //
-                      .addPositionalArg<"arg1", int, Argo::nargs(3)>()
+                      .addPositionalArg<"arg1", int, nargs(3)>()
                       .addFlag<"arg2,b">()
                       .addArg<"arg3,c", float>();
 
@@ -130,10 +133,10 @@ TEST(ArgoTest, MultiplePositional) {
         "-c", "234.86"                   //
     );
 
-    auto argo = Argo::Parser<"multiple positonal argument 0">("Sample Program");
+    auto argo = Parser<"multiple positonal argument 0">("Sample Program");
     auto parser = argo  //
-                      .addPositionalArg<"arg1", int, Argo::nargs(3)>()
-                      .addPositionalArg<"arg2", int, Argo::nargs(3)>()
+                      .addPositionalArg<"arg1", int, nargs(3)>()
+                      .addPositionalArg<"arg2", int, nargs(3)>()
                       .addArg<"arg3,c", float>();
 
     parser.parse(argc, argv.get());
@@ -150,12 +153,11 @@ TEST(ArgoTest, MultiplePositional) {
         "4", "5", "6"                    //
     );
 
-    auto argo = Argo::Parser<"multiple positonal argument 1">("Sample Program");
-    auto parser =
-        argo  //
-            .addPositionalArg<"arg1", std::array<int, 3>, Argo::nargs(3)>()
-            .addArg<"arg3,c", float>()
-            .addPositionalArg<"arg2", int, Argo::nargs(3)>();
+    auto argo = Parser<"multiple positonal argument 1">("Sample Program");
+    auto parser = argo  //
+                      .addPositionalArg<"arg1", std::array<int, 3>, nargs(3)>()
+                      .addArg<"arg3,c", float>()
+                      .addPositionalArg<"arg2", int, nargs(3)>();
 
     parser.parse(argc, argv.get());
 
@@ -170,10 +172,10 @@ TEST(ArgoTest, MultiplePositional) {
         "4.2", "5", "Hello,World"        //
     );
 
-    auto argo = Argo::Parser<"multiple positonal argument 2">("Sample Program");
+    auto argo = Parser<"multiple positonal argument 2">("Sample Program");
     auto parser =
         argo  //
-            .addPositionalArg<"arg1", std::array<int, 3>, Argo::nargs(3)>()
+            .addPositionalArg<"arg1", std::array<int, 3>, nargs(3)>()
             .addArg<"arg3,c", float>()
             .addPositionalArg<"arg2", std::tuple<float, int, std::string>>();
 
@@ -192,10 +194,10 @@ TEST(ArgoTest, MultiplePositional) {
         "4.2", "5", "Hello,World"        //
     );
 
-    auto argo = Argo::Parser<"multiple positonal argument 3">("Sample Program");
+    auto argo = Parser<"multiple positonal argument 3">("Sample Program");
     auto parser =
         argo  //
-            .addPositionalArg<"arg1", int, Argo::nargs('+')>()
+            .addPositionalArg<"arg1", int, nargs('+')>()
             .addPositionalArg<"arg2", std::tuple<float, int, std::string>>()
             .addArg<"arg3,c", float>();
 
