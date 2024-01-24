@@ -70,6 +70,11 @@ if(${CMAKE_SOURCE_DIR} STREQUAL ${CMAKE_CURRENT_LIST_DIR})
 
     target_link_libraries(test-argo PRIVATE GTest::gtest GTest::gtest_main
                                             GTest::gmock Argo)
+    if(${ARGO_CLANG_TIDY_ENABLE})
+      set_target_properties(
+        test-argo PROPERTIES CXX_CLANG_TIDY
+                             "${CLANG_TIDY_EXE};-p;${CMAKE_BINARY_DIR}")
+    endif()
     if(${CMAKE_BUILD_TYPE} STREQUAL "Debug")
       message("Debug build")
       target_compile_options(test-argo PRIVATE -fprofile-instr-generate
