@@ -30,6 +30,11 @@ export struct ValidationBase {
     static_assert(false, "Invalid validation");
   };
 
+  ValidationBase() = default;
+  ValidationBase(const ValidationBase&) = default;
+  ValidationBase(ValidationBase&&) = default;
+  auto operator=(const ValidationBase&) -> ValidationBase& = default;
+  auto operator=(ValidationBase&&) -> ValidationBase& = default;
   virtual ~ValidationBase() = default;
 };
 

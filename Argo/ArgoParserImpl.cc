@@ -125,14 +125,14 @@ constexpr auto Parser<ID, Args, PArgs, HArg, SubParsers>::parse(int argc,
 
     if (i != 1 and is_flag) {
       if (!key.empty()) {
-        goto SetArgSection;
+        goto SetArgSection;  // NOLINT(cppcoreguidelines-avoid-goto)
       }
       if (!short_keys.empty()) {
-        goto SetShortArgSection;
+        goto SetShortArgSection;  // NOLINT(cppcoreguidelines-avoid-goto)
       }
       if constexpr (!std::is_same_v<PArgs, std::tuple<>>) {
         if (!values.empty()) {
-          goto SetArgSection;
+          goto SetArgSection;  // NOLINT(cppcoreguidelines-avoid-goto)
         }
       } else {
         if (!values.empty()) [[unlikely]] {
@@ -144,7 +144,7 @@ constexpr auto Parser<ID, Args, PArgs, HArg, SubParsers>::parse(int argc,
       this->setArg(key, values);
       key = "";
       values.clear();
-      goto End;
+      goto End;  // NOLINT(cppcoreguidelines-avoid-goto)
     SetShortArgSection:
       this->setShortKeyArg(short_keys, values);
       short_keys = "";
@@ -219,7 +219,7 @@ struct AnsiEscapeCode {
   }
 };
 
-inline size_t max_option_width = 26;
+constexpr size_t max_option_width = 26;
 
 constexpr auto createUsageSection(const auto& program_name,
                                   const auto& help_info, const auto& pargs_info,

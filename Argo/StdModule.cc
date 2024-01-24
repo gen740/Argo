@@ -2,6 +2,7 @@ module;
 
 // TODO(gen740): need to replace std
 // Declare all stds in this file
+// NOLINTBEGIN(misc-include-cleaner)
 #include <unistd.h>
 
 #include <array>
@@ -21,10 +22,11 @@ module;
 #include <tuple>
 #include <utility>
 #include <vector>
+// NOLINTEND(misc-include-cleaner)
 
 export module Argo:std_module;
 
-// NOLINTBEGIN(bugprone-reserved-identifier)
+// NOLINTBEGIN(misc-unused-*-decls, cert-dcl58-cpp)
 using ::isatty;
 using ::std::int64_t;
 using ::std::size_t;
@@ -136,6 +138,6 @@ using ::std::optional;
 using ::std::expected;
 using ::std::unexpected;
 
-// NOLINTEND(bugprone-reserved-identifier)
+// NOLINTEND(misc-unused-*-decls, cert-dcl58-cpp)
 
 }  // namespace std

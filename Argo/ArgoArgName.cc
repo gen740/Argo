@@ -29,7 +29,7 @@ struct ArgName {
     }
   };
 
-  [[nodiscard]] ARGO_ALWAYS_INLINE constexpr char getShortName() const {
+  [[nodiscard]] ARGO_ALWAYS_INLINE constexpr auto getShortName() const {
     return this->short_key_;
   }
 

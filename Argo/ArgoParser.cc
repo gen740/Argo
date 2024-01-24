@@ -24,8 +24,8 @@ export enum class RequiredFlag : bool {
   Required = true,
 };
 
-export using RequiredFlag::Required;
-export using RequiredFlag::Optional;
+export using RequiredFlag::Required;  // NOLINT(misc-unused-using-decls)
+export using RequiredFlag::Optional;  // NOLINT(misc-unused-using-decls)
 
 /*!
  * Helper function to create nargs
@@ -56,6 +56,7 @@ class Parser {
  private:
   bool parsed_ = false;
   std::unique_ptr<ParserInfo> info_ = nullptr;
+  SubParsers subParsers;
 
  public:
   constexpr explicit Parser() : info_(std::make_unique<ParserInfo>()){};
@@ -79,15 +80,17 @@ class Parser {
     this->info_->description = description.description;
   };
 
-  Parser(const Parser&) = delete;
-  Parser(Parser&&) = delete;
-
-  SubParsers subParsers;
-
   constexpr explicit Parser(SubParsers tuple) : subParsers(tuple) {}
 
   constexpr explicit Parser(std::unique_ptr<ParserInfo> info, SubParsers tuple)
       : info_(std::move(info)), subParsers(tuple){};
+
+  Parser(const Parser&) = delete;
+  Parser(Parser&&) = delete;
+
+  constexpr auto operator=(const Parser&) -> Parser& = delete;
+  constexpr auto operator=(Parser&&) -> Parser& = delete;
+  constexpr ~Parser() = default;
 
   template <class Type, ArgName Name, auto arg1 = Unspecified(),
             auto arg2 = Unspecified(), bool ISPArgs, class... T>

@@ -71,7 +71,7 @@ struct String {
   String() = default;
 
   consteval explicit String(const char (&str)[N + 1]) {
-    for (size_t i = 0; i < N; i++) {
+    for (std::size_t i = 0; i < N; i++) {
       str_[i] = str[i];
     }
   };

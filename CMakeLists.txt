@@ -16,7 +16,6 @@ if(${CMAKE_SOURCE_DIR} STREQUAL ${CMAKE_CURRENT_LIST_DIR})
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra -Werror -Winline")
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wnon-virtual-dtor -Wfloat-equal")
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fdiagnostics-color=always")
-  # set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-deprecated-declarations")
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -stdlib=libc++") # Force to use libc++
 
   message(STATUS "CXX Compiler: ${CMAKE_CXX_COMPILER}")
@@ -31,8 +30,17 @@ target_sources(Argo PUBLIC FILE_SET CXX_MODULES FILES ${ARGO_LIBRARY_SOURCES})
 target_compile_features(Argo PUBLIC cxx_std_23)
 target_include_directories(Argo PUBLIC ${CMAKE_CURRENT_LIST_DIR}/include)
 if(${ARGO_CLANG_TIDY_ENABLE})
-  set_target_properties(Argo PROPERTIES CXX_CLANG_TIDY
-                                        "clang-tidy;-p;${CMAKE_BINARY_DIR}")
+  find_program(
+    CLANG_TIDY_EXE
+    NAMES "clang-tidy"
+    DOC "Path to clang-tidy")
+  if(NOT CLANG_TIDY_EXE)
+    message(FATAL_ERROR "clang-tidy not found.")
+  else()
+    message(STATUS "Clang tidy: ${CLANG_TIDY_EXE}")
+    set_target_properties(
+      Argo PROPERTIES CXX_CLANG_TIDY "${CLANG_TIDY_EXE};-p;${CMAKE_BINARY_DIR}")
+  endif()
 endif()
 
 unset(ARGO_LIBRARY_SOURCES)
