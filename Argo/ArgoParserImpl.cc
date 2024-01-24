@@ -87,6 +87,8 @@ constexpr auto Parser<ID, Args, PArgs, HArg, SubParsers>::parse(int argc,
   std::string_view short_keys{};
   std::vector<std::string_view> values{};
 
+  // [[assume(this->info_)]]; // TODO(gen740): add assume when clang supports it
+
   if (!this->info_->program_name) {
     this->info_->program_name = std::string_view(argv[0]);
   }
@@ -379,6 +381,8 @@ constexpr auto Parser<ID, Args, PArgs, HArg, SubParsers>::formatHelp(
   std::vector<ArgInfo> pargs_info = HelpGenerator<PArgs>();
 
   auto sub_commands = SubParserInfo(subParsers);
+
+  // [[assume(this->info_)]]; // TODO(gen740): add assume when clang supports it
 
   if (this->info_->help) {
     ret.append(this->info_->help.value());
