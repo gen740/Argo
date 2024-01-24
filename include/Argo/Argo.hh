@@ -30,7 +30,7 @@ class ParserInternalError : public std::runtime_error {
  public:
   explicit ParserInternalError(const std::string& msg) : runtime_error(msg) {}
 
-  [[nodiscard]] const char* what() const noexcept override {
+  [[nodiscard]] auto what() const noexcept -> const char* override {
     return runtime_error::what();
   }
 };
@@ -39,7 +39,7 @@ class ParseError : public std::runtime_error {
  public:
   explicit ParseError(const std::string& msg) : runtime_error(msg) {}
 
-  [[nodiscard]] const char* what() const noexcept override {
+  [[nodiscard]] auto what() const noexcept -> const char* override {
     return runtime_error::what();
   }
 };
@@ -51,7 +51,7 @@ class InvalidArgument : public std::invalid_argument {
  public:
   explicit InvalidArgument(const std::string& msg) : invalid_argument(msg) {}
 
-  [[nodiscard]] const char* what() const noexcept override {
+  [[nodiscard]] auto what() const noexcept -> const char* override {
     return invalid_argument::what();
   }
 };
@@ -60,7 +60,7 @@ class ValidationError : public InvalidArgument {
  public:
   explicit ValidationError(const std::string& msg) : InvalidArgument(msg) {}
 
-  [[nodiscard]] const char* what() const noexcept override {
+  [[nodiscard]] auto what() const noexcept -> const char* override {
     return InvalidArgument::what();
   }
 };
@@ -211,6 +211,11 @@ struct ValidationBase {
     static_assert(false, "Invalid validation");
   };
 
+  ValidationBase() = default;
+  ValidationBase(const ValidationBase&) = default;
+  ValidationBase(ValidationBase&&) = default;
+  auto operator=(const ValidationBase&) -> ValidationBase& = default;
+  auto operator=(ValidationBase&&) -> ValidationBase& = default;
   virtual ~ValidationBase() = default;
 };
 
@@ -360,7 +365,7 @@ struct ArgName {
     }
   };
 
-  [[nodiscard]] ARGO_ALWAYS_INLINE constexpr char getShortName() const {
+  [[nodiscard]] ARGO_ALWAYS_INLINE constexpr auto getShortName() const {
     return this->short_key_;
   }
 
@@ -463,7 +468,7 @@ struct String {
   String() = default;
 
   consteval explicit String(const char (&str)[N + 1]) {
-    for (size_t i = 0; i < N; i++) {
+    for (std::size_t i = 0; i < N; i++) {
       str_[i] = str[i];
     }
   };
@@ -1210,8 +1215,8 @@ enum class RequiredFlag : bool {
   Required = true,
 };
 
-using RequiredFlag::Required;
-using RequiredFlag::Optional;
+using RequiredFlag::Required;  // NOLINT(misc-unused-using-decls)
+using RequiredFlag::Optional;  // NOLINT(misc-unused-using-decls)
 
 /*!
  * Helper function to create nargs
@@ -1242,6 +1247,7 @@ class Parser {
  private:
   bool parsed_ = false;
   std::unique_ptr<ParserInfo> info_ = nullptr;
+  SubParsers subParsers;
 
  public:
   constexpr explicit Parser() : info_(std::make_unique<ParserInfo>()){};
@@ -1265,15 +1271,17 @@ class Parser {
     this->info_->description = description.description;
   };
 
-  Parser(const Parser&) = delete;
-  Parser(Parser&&) = delete;
-
-  SubParsers subParsers;
-
   constexpr explicit Parser(SubParsers tuple) : subParsers(tuple) {}
 
   constexpr explicit Parser(std::unique_ptr<ParserInfo> info, SubParsers tuple)
       : info_(std::move(info)), subParsers(tuple){};
+
+  Parser(const Parser&) = delete;
+  Parser(Parser&&) = delete;
+
+  constexpr auto operator=(const Parser&) -> Parser& = delete;
+  constexpr auto operator=(Parser&&) -> Parser& = delete;
+  constexpr ~Parser() = default;
 
   template <class Type, ArgName Name, auto arg1 = Unspecified(),
             auto arg2 = Unspecified(), bool ISPArgs, class... T>
@@ -1644,14 +1652,14 @@ constexpr auto Parser<ID, Args, PArgs, HArg, SubParsers>::parse(int argc,
 
     if (i != 1 and is_flag) {
       if (!key.empty()) {
-        goto SetArgSection;
+        goto SetArgSection;  // NOLINT(cppcoreguidelines-avoid-goto)
       }
       if (!short_keys.empty()) {
-        goto SetShortArgSection;
+        goto SetShortArgSection;  // NOLINT(cppcoreguidelines-avoid-goto)
       }
       if constexpr (!std::is_same_v<PArgs, std::tuple<>>) {
         if (!values.empty()) {
-          goto SetArgSection;
+          goto SetArgSection;  // NOLINT(cppcoreguidelines-avoid-goto)
         }
       } else {
         if (!values.empty()) [[unlikely]] {
@@ -1663,7 +1671,7 @@ constexpr auto Parser<ID, Args, PArgs, HArg, SubParsers>::parse(int argc,
       this->setArg(key, values);
       key = "";
       values.clear();
-      goto End;
+      goto End;  // NOLINT(cppcoreguidelines-avoid-goto)
     SetShortArgSection:
       this->setShortKeyArg(short_keys, values);
       short_keys = "";
@@ -1738,7 +1746,7 @@ struct AnsiEscapeCode {
   }
 };
 
-inline size_t max_option_width = 26;
+constexpr size_t max_option_width = 26;
 
 constexpr auto createUsageSection(const auto& program_name,
                                   const auto& help_info, const auto& pargs_info,
