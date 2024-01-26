@@ -3,6 +3,7 @@ module;
 #include "Argo/ArgoMacros.hh"
 
 export module Argo:MetaParse;
+
 import :std_module;
 import :Arg;
 import :TypeTraits;
@@ -23,7 +24,7 @@ template <class SubParsers>
   requires(is_tuple_v<SubParsers>)
 ARGO_ALWAYS_INLINE constexpr auto MetaParse(SubParsers sub_parsers, int index,
                                             int argc, char** argv) -> bool {
-  return apply(
+  return std::apply(
       [&](auto&&... s) ARGO_ALWAYS_INLINE {
         std::int64_t idx = -1;
         return (... || (idx++, idx == index &&
@@ -37,7 +38,7 @@ template <class SubParsers>
 ARGO_ALWAYS_INLINE constexpr auto ParserIndex(SubParsers sub_parsers,  //
                                               std::string_view key)
     -> std::int64_t {
-  return apply(
+  return std::apply(
       [&](auto&&... s) ARGO_ALWAYS_INLINE {
         std::int64_t index = -1;
         bool found = (... || (index++, s.name.getKey() == key));
