@@ -25,9 +25,9 @@ module;
 export module Argo:std_module;
 
 // NOLINTBEGIN(misc-unused-*-decls, cert-dcl58-cpp)
-using ::isatty;
+export using ::isatty;
 
-namespace std {
+export namespace std {
 using ::std::exit;
 
 // utility
@@ -36,7 +36,6 @@ using ::std::operator==;
 using ::std::operator+;
 using ::std::begin;
 using ::std::end;
-using ::std::exchange;
 using ::std::forward;
 using ::std::move;
 

@@ -52,7 +52,7 @@ template <class T>
 ARGO_ALWAYS_INLINE constexpr auto SubParserInfo(T subparsers) {
   std::vector<SubCommandInfo> ret{};
   if constexpr (!std::is_same_v<T, std::tuple<>>) {
-    apply(
+    std::apply(
         [&ret]<class... Parser>(Parser... parser) ARGO_ALWAYS_INLINE {
           (..., ret.emplace_back(parser.name.getKey(), parser.description));
         },

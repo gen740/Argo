@@ -55,7 +55,7 @@ ARGO_ALWAYS_INLINE constexpr auto TupleAssign(
     std::tuple<T...>& t, const std::span<std::string_view>& v,
     std::index_sequence<N...> /* unused */, const std::string_view& key)
     -> void {
-  ((get<N>(t) = ArgCaster<std::remove_cvref_t<decltype(get<N>(t))>>(v[N], key)),
+  ((std::get<N>(t) = ArgCaster<std::remove_cvref_t<decltype(get<N>(t))>>(v[N], key)),
    ...);
 }
 

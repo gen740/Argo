@@ -800,7 +800,7 @@ template <class T>
 ARGO_ALWAYS_INLINE constexpr auto SubParserInfo(T subparsers) {
   std::vector<SubCommandInfo> ret{};
   if constexpr (!std::is_same_v<T, std::tuple<>>) {
-    apply(
+    std::apply(
         [&ret]<class... Parser>(Parser... parser) ARGO_ALWAYS_INLINE {
           (..., ret.emplace_back(parser.name.getKey(), parser.description));
         },
@@ -831,7 +831,7 @@ ARGO_ALWAYS_INLINE constexpr auto GetkeyFromShortKey(char key)
           return false;
         }() || ...);
       }(make_type_sequence_t<Arguments>())) [[likely]] {
-    return make_tuple(name, is_flag);
+    return std::make_tuple(name, is_flag);
   }
   throw ParserInternalError("Fail to lookup");
 }
@@ -919,7 +919,7 @@ ARGO_ALWAYS_INLINE constexpr auto TupleAssign(
     std::tuple<T...>& t, const std::span<std::string_view>& v,
     std::index_sequence<N...> /* unused */, const std::string_view& key)
     -> void {
-  ((get<N>(t) = ArgCaster<std::remove_cvref_t<decltype(get<N>(t))>>(v[N], key)),
+  ((std::get<N>(t) = ArgCaster<std::remove_cvref_t<decltype(get<N>(t))>>(v[N], key)),
    ...);
 }
 
@@ -1181,7 +1181,7 @@ template <class SubParsers>
   requires(is_tuple_v<SubParsers>)
 ARGO_ALWAYS_INLINE constexpr auto MetaParse(SubParsers sub_parsers, int index,
                                             int argc, char** argv) -> bool {
-  return apply(
+  return std::apply(
       [&](auto&&... s) ARGO_ALWAYS_INLINE {
         std::int64_t idx = -1;
         return (... || (idx++, idx == index &&
@@ -1195,7 +1195,7 @@ template <class SubParsers>
 ARGO_ALWAYS_INLINE constexpr auto ParserIndex(SubParsers sub_parsers,  //
                                               std::string_view key)
     -> std::int64_t {
-  return apply(
+  return std::apply(
       [&](auto&&... s) ARGO_ALWAYS_INLINE {
         std::int64_t index = -1;
         bool found = (... || (index++, s.name.getKey() == key));
@@ -1458,12 +1458,12 @@ class Parser {
       } else {
         static_assert(SearchIndex<Args, Name>() != -1,
                       "Argument does not exist");
-        return std::remove_cvref_t<decltype(get<SearchIndex<Args, Name>()>(
+        return std::remove_cvref_t<decltype(std::get<SearchIndex<Args, Name>()>(
             std::declval<Args>()))>::value;
       }
     } else {
       static_assert(SearchIndex<Args, Name>() != -1, "Argument does not exist");
-      return std::remove_cvref_t<decltype(get<SearchIndex<Args, Name>()>(
+      return std::remove_cvref_t<decltype(std::get<SearchIndex<Args, Name>()>(
           std::declval<Args>()))>::value;
     }
   }
@@ -1475,7 +1475,7 @@ class Parser {
     }
     static_assert(!(SearchIndex<SubParsers, Name>() == -1),
                   "Could not find subparser");
-    return get<SearchIndex<SubParsers, Name>()>(subParsers).parser.get();
+    return std::get<SearchIndex<SubParsers, Name>()>(subParsers).parser.get();
   }
 
   template <ArgName Name>
@@ -1499,7 +1499,7 @@ class Parser {
   template <ArgName Name, class T>
   ARGO_ALWAYS_INLINE constexpr auto addParser(T& sub_parser,
                                               Description description = {""}) {
-    auto s = make_tuple(
+    auto s = std::make_tuple(
         SubParser<Name, T>{ref(sub_parser), description.description});
     auto sub_parsers = std::tuple_cat(subParsers, s);
     return Parser<ID, Args, PArgs, HArg, decltype(sub_parsers)>(
