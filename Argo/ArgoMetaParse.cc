@@ -4,7 +4,8 @@ module;
 
 export module Argo:MetaParse;
 
-import :std_module;
+import std;
+
 import :Arg;
 import :TypeTraits;
 import :ArgName;

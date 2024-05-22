@@ -4,8 +4,9 @@ module;
 
 export module Argo:MetaLookup;
 
+import std;
+
 import :Exceptions;
-import :std_module;
 import :TypeTraits;
 import :Arg;
 import :ArgName;

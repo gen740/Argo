@@ -1,9 +1,10 @@
 export module Argo:Arg;
 
+import std;
+
 import :ArgName;
 import :Validation;
 import :TypeTraits;
-import :std_module;
 
 // generator start here
 

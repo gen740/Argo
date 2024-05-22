@@ -1,6 +1,6 @@
 export module Argo:Exceptions;
 
-import :std_module;
+import std;
 
 // generator start here
 

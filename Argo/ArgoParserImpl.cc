@@ -4,6 +4,8 @@ module;
 
 export module Argo:ParserImpl;
 
+import std;
+
 import :TypeTraits;
 import :MetaAssigner;
 import :Parser;
@@ -11,7 +13,6 @@ import :MetaLookup;
 import :MetaParse;
 import :HelpGenerator;
 import :Arg;
-import :std_module;
 import :Exceptions;
 
 // generator start here
@@ -370,7 +371,8 @@ constexpr auto Parser<ID, Args, PArgs, HArg, SubParsers>::formatHelp(
     bool no_color) const -> std::string {
   std::string ret;
 
-  AnsiEscapeCode ansi((::isatty(1) != 0) and !no_color);
+  AnsiEscapeCode ansi(true and !no_color);
+  // AnsiEscapeCode ansi((::isatty(1) != 0) and !no_color);
 
   std::vector<ArgInfo> help_info;
   if constexpr (std::is_same_v<HArg, void>) {

@@ -8,7 +8,7 @@ import :Validation;
 import :ArgName;
 import :Arg;
 
-import :std_module;
+import std;
 
 // generator start here
 

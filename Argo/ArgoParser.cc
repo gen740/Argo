@@ -4,6 +4,8 @@ module;
 
 export module Argo:Parser;
 
+import std;
+
 import :Exceptions;
 import :Initializer;
 import :MetaParse;
@@ -11,7 +13,6 @@ import :TypeTraits;
 import :MetaLookup;
 import :ArgName;
 import :Arg;
-import :std_module;
 
 // generator start here
 

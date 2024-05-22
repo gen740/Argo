@@ -4,12 +4,13 @@ module;
 
 export module Argo:MetaAssigner;
 
+import std;
+
 import :Exceptions;
 import :Validation;
 import :TypeTraits;
 import :MetaLookup;
 import :Arg;
-import :std_module;
 
 // generator start here
 

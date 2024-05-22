@@ -1,7 +1,7 @@
 export module Argo:TypeTraits;
 
 import :Exceptions;
-import :std_module;
+import std;
 
 #include "Argo/ArgoMacros.hh"
 

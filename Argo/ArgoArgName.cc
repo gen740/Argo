@@ -1,6 +1,6 @@
 export module Argo:ArgName;
 
-import :std_module;
+import std;
 
 #include "Argo/ArgoMacros.hh"
 

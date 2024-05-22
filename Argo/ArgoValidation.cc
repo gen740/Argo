@@ -2,7 +2,7 @@ export module Argo:Validation;
 
 import :Exceptions;
 import :TypeTraits;
-import :std_module;
+import std;
 
 // generator start here
 
@@ -91,7 +91,7 @@ struct InvertValidation : ValidationBase {
   template <class U>
   auto isValid(const U& value, std::span<std::string_view> raw_values) const
       -> bool {
-    return !this->lhs_(value, raw_values);
+    return !this->rhs_(value, raw_values);
   };
 };
 

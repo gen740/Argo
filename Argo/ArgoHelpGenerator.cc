@@ -4,9 +4,11 @@ module;
 
 export module Argo:HelpGenerator;
 
+
+import std;
+
 import :Arg;
 import :TypeTraits;
-import :std_module;
 
 // generator start here
 

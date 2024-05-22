@@ -7,21 +7,21 @@ vars:
 tasks:
   cmake:
     cmds:
-      - cmake -B build -S . -DARGO_TESTS_ENABLE=true -DARGO_BENCHMARKS_ENABLE=true -GNinja
+      - cmake -B build -S . -DARGO_TESTS_ENABLE=true -DARGO_BENCHMARKS_ENABLE=false -GNinja
     sources:
       - ./CMakeLists.txt
     generates:
       - ./build/CMakeCache.txt
   cmake-debug:
     cmds:
-      - cmake -B build_debug -S . -DARGO_TESTS_ENABLE=true -DARGO_BENCHMARKS_ENABLE=true -DCMAKE_BUILD_TYPE=Debug -GNinja -DCMAKE_CXX_FLAGS_DEBUG="{{.CXXFLAGS_DEBUG}}"
+      - cmake -B build_debug -S . -DARGO_TESTS_ENABLE=true -DARGO_BENCHMARKS_ENABLE=false -DCMAKE_BUILD_TYPE=Debug -GNinja -DCMAKE_CXX_FLAGS_DEBUG="{{.CXXFLAGS_DEBUG}}"
     sources:
       - ./CMakeLists.txt
     generates:
       - ./build_debug/CMakeCache.txt
   cmake-release:
     cmds:
-      - cmake -B build_release -S . -DARGO_TESTS_ENABLE=true -DARGO_BENCHMARKS_ENABLE=true -DCMAKE_BUILD_TYPE=Release -GNinja -DCMAKE_CXX_FLAGS_RELEASE="{{.CXXFLAGS_RELEASE}}"
+      - cmake -B build_release -S . -DARGO_TESTS_ENABLE=true -DARGO_BENCHMARKS_ENABLE=false -DCMAKE_BUILD_TYPE=Release -GNinja -DCMAKE_CXX_FLAGS_RELEASE="{{.CXXFLAGS_RELEASE}}"
     sources:
       - ./CMakeLists.txt
     generates:

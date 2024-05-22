@@ -1,6 +1,6 @@
 import Argo;
 
-#include <print>
+import std;
 
 using Argo::description;
 using Argo::nargs;
