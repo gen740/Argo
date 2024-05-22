@@ -3,7 +3,8 @@
 [![codecov](https://codecov.io/gh/gen740/Argo/graph/badge.svg?token=XYBQF8RPGM)](https://codecov.io/gh/gen740/Argo)
 
 # Argo
-C++ mordern and safest argument parser, using C++ modules and metaprogramming.
+Modern and safest C++ argument parser, using C++ modules and metaprogramming.
+This is still in an experimental state.
 
 ## Features
 
@@ -11,13 +12,13 @@ C++ mordern and safest argument parser, using C++ modules and metaprogramming.
 
 2. **Type Safety for All Flags**: Provides robust type safety for command line flags, reducing runtime errors and ensuring type preservation during retrieval.
 
-3. **Compile-Time Duplicate Argument Detection**: Detects duplicate flags at compile time, serving a better development experience.
+3. **Compile-Time Duplicate Argument Detection**: Detects duplicate flags at compile time, providing a better development experience.
 
 4. **Rich Feature Set**: Offers a comprehensive array of features for versatile command line parsing needs.
 
 5. **Fastest Parsing Mechanism**: Delivers high-speed parsing, ideal for performance-critical applications.
 
-6. **Compile-Time Calculations**: Performs certain operations at compile time for enhanced performance efficiency. 
+6. **Compile-Time Calculations**: Performs certain operations at compile time for enhanced performance efficiency.
 
 
 ## Table of Contents
